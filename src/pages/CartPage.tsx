@@ -113,6 +113,12 @@ const CartPage: React.FC = () => {
       setUpdating(productId);
       await api.updateCartItem(productId, newQuantity);
       
+      // Wait a bit to ensure API call is complete, then dispatch event
+      setTimeout(() => {
+        console.log('Dispatching cartUpdated event (CartPage update quantity)...');
+        window.dispatchEvent(new CustomEvent('cartUpdated'));
+      }, 100);
+      
       setCartItems(prev => prev.map(item => 
         item.productId === productId 
           ? { ...item, quantity: newQuantity }
@@ -159,6 +165,12 @@ const CartPage: React.FC = () => {
 
     try {
       await api.removeFromCart(productId);
+      
+      // Wait a bit to ensure API call is complete, then dispatch event
+      setTimeout(() => {
+        console.log('Dispatching cartUpdated event (CartPage remove item)...');
+        window.dispatchEvent(new CustomEvent('cartUpdated'));
+      }, 100);
       
       setCartItems(prev => prev.filter(item => item.productId !== productId));
 

@@ -43,7 +43,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth, getUserRoleName } from "@/contexts";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useNotifications } from "@/contexts/NotificationsContext";
+// import { useNotifications } from "@/contexts/NotificationsContext"; // Removed
 import { api } from "@/lib/api";
 
 interface AdminSidebarProps {
@@ -76,7 +76,8 @@ function AdminSidebar({ isOpen, onToggle }: AdminSidebarProps) {
   const { toast } = useToast();
   const { logout, user } = useAuth();
   const { language, setLanguage } = useLanguage();
-  const { unreadCount } = useNotifications();
+  // const { unreadCount } = useNotifications(); // Removed
+  const unreadCount = 0; // Temporary: NotificationsContext removed
   const [ordersCount, setOrdersCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 

@@ -68,12 +68,6 @@ export { useLanguage, LanguageProvider } from './LanguageContext';
 // ============================================================================
 // NOTIFICATIONS CONTEXT
 // ============================================================================
-
-/**
- * Notifications context hook and provider
- * @example
- * ```tsx
- * const { notifications, addNotification } = useNotifications();
- * ```
- */
-export { useNotifications, NotificationsProvider } from './NotificationsContext';
+// Notifications context has been removed
+// Uncomment below if NotificationsContext is recreated:
+// export { useNotifications, NotificationsProvider } from './NotificationsContext';

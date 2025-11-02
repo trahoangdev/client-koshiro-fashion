@@ -386,6 +386,14 @@ class ApiClient {
       }
 
       const data = await response.json();
+      
+      // If response has success field and it's false, throw error
+      if (data && typeof data === 'object' && 'success' in data && data.success === false) {
+        console.error(`API Error for ${endpoint}:`, data);
+        const errorMessage = data.message || 'Request failed';
+        throw new Error(errorMessage);
+      }
+      
       console.log(`API Success for ${endpoint}:`, data);
       return data;
     } catch (error) {

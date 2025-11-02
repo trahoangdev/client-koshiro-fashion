@@ -219,6 +219,8 @@ const Index = () => {
       // Add to cart via API if authenticated
       if (isAuthenticated) {
         await api.addToCart(product._id, 1);
+        // Dispatch custom event to notify Header to refresh cart count
+        window.dispatchEvent(new CustomEvent('cartUpdated'));
       }
       
       const existingItem = cartItems.find(item => 
@@ -280,6 +282,12 @@ const Index = () => {
         );
         if (item) {
           await api.updateCartItem(item.product._id, quantity);
+          
+          // Wait a bit to ensure API call is complete, then dispatch event
+          setTimeout(() => {
+            console.log('Dispatching cartUpdated event (update quantity)...');
+            window.dispatchEvent(new CustomEvent('cartUpdated'));
+          }, 100);
         }
       }
       
@@ -313,6 +321,12 @@ const Index = () => {
         );
         if (item) {
           await api.removeFromCart(item.product._id);
+          
+          // Wait a bit to ensure API call is complete, then dispatch event
+          setTimeout(() => {
+            console.log('Dispatching cartUpdated event (remove item)...');
+            window.dispatchEvent(new CustomEvent('cartUpdated'));
+          }, 100);
         }
       }
       
@@ -484,7 +498,7 @@ const Index = () => {
             alt="Koshiro Fashion Background"
             className="w-full h-full object-cover object-center"
             loading="eager"
-            fetchPriority="high"
+            fetchpriority="high"
           />
           {/* Gradient Overlay */}
           <div className="absolute inset-0 bg-gradient-to-br from-stone-900/70 via-stone-800/50 to-stone-900/70"></div>
@@ -508,7 +522,7 @@ const Index = () => {
                   alt="Koshino Fashion Logo"
                   className="h-16 md:h-20 lg:h-24 w-auto opacity-90 hover:opacity-100 transition-all duration-300 animate-logo-glow"
                   loading="eager"
-                  fetchPriority="high"
+                  fetchpriority="high"
                 />
                 {/* Subtle glow effect */}
                 <div className="absolute inset-0 bg-white/10 rounded-full blur-xl scale-110 opacity-50 animate-pulse"></div>
@@ -897,7 +911,7 @@ const Index = () => {
 
           {/* Cart Toggle Button - Modern Zen Style */}
           {cartItemsCount > 0 && (
-            <div className="fixed bottom-8 right-8 z-50">
+            <div className="fixed bottom-24 right-6 z-40">
               <Button
                 onClick={() => setShowCart(!showCart)}
                 size="lg"

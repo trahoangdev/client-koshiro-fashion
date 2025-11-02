@@ -43,7 +43,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import AdminLayout from "@/components/AdminLayout";
-import { useNotifications } from "@/contexts/NotificationsContext";
+// import { useNotifications } from "@/contexts/NotificationsContext"; // Removed
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts";
 import { Notification } from "@/lib/api";
@@ -64,21 +64,38 @@ export default function AdminNotificationsPage() {
   const navigate = useNavigate();
   const { language } = useLanguage();
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
-  const { 
-    notifications, 
-    unreadCount, 
-    isLoading, 
-    markAsRead, 
-    markAllAsRead, 
-    archiveNotification, 
-    deleteNotification, 
-    clearAll,
-    refreshNotifications,
-    createNotification,
-    updateNotification,
-    bulkMarkAsRead,
-    bulkDelete
-  } = useNotifications();
+  
+  // Temporary mock hook since NotificationsContext was removed
+  const notifications: Notification[] = [];
+  const unreadCount = 0;
+  const isLoading = false;
+  const markAsRead = async (id: string) => { console.warn('NotificationsContext removed'); };
+  const markAllAsRead = async () => { console.warn('NotificationsContext removed'); };
+  const archiveNotification = async (id: string) => { console.warn('NotificationsContext removed'); };
+  const deleteNotification = async (id: string) => { console.warn('NotificationsContext removed'); };
+  const clearAll = async () => { console.warn('NotificationsContext removed'); };
+  const refreshNotifications = async () => { console.warn('NotificationsContext removed'); };
+  const createNotification = async (notification: Partial<Notification>) => { console.warn('NotificationsContext removed'); };
+  const updateNotification = async (id: string, notification: Partial<Notification>) => { console.warn('NotificationsContext removed'); };
+  const bulkMarkAsRead = async (ids: string[]) => { console.warn('NotificationsContext removed'); };
+  const bulkDelete = async (ids: string[]) => { console.warn('NotificationsContext removed'); };
+  
+  // Original hook (removed):
+  // const { 
+  //   notifications, 
+  //   unreadCount, 
+  //   isLoading, 
+  //   markAsRead, 
+  //   markAllAsRead, 
+  //   archiveNotification, 
+  //   deleteNotification, 
+  //   clearAll,
+  //   refreshNotifications,
+  //   createNotification,
+  //   updateNotification,
+  //   bulkMarkAsRead,
+  //   bulkDelete
+  // } = useNotifications();
   
   const [filteredNotifications, setFilteredNotifications] = useState<Notification[]>([]);
   const [settings, setSettings] = useState<NotificationSettings>({

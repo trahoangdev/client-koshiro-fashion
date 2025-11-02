@@ -323,6 +323,13 @@ const ProductDetail: React.FC = () => {
 
     try {
       await api.addToCart(product._id, quantity);
+      
+      // Wait a bit to ensure API call is complete, then dispatch event
+      setTimeout(() => {
+        console.log('Dispatching cartUpdated event...');
+        window.dispatchEvent(new CustomEvent('cartUpdated'));
+      }, 100);
+      
       toast({
         title: language === 'vi' ? "Đã thêm vào giỏ hàng" : 
                language === 'ja' ? "カートに追加されました" : 
@@ -460,6 +467,13 @@ const ProductDetail: React.FC = () => {
     try {
       // Add to cart first, then navigate to checkout
       await api.addToCart(product._id, quantity);
+      
+      // Wait a bit to ensure API call is complete, then dispatch event
+      setTimeout(() => {
+        console.log('Dispatching cartUpdated event (Buy Now)...');
+        window.dispatchEvent(new CustomEvent('cartUpdated'));
+      }, 100);
+      
       toast({
         title: language === 'vi' ? "Đã thêm vào giỏ hàng" : 
                language === 'ja' ? "カートに追加されました" : 

@@ -342,57 +342,164 @@ const CategoryPage: React.FC = () => {
   }, [products, searchQuery, priceRange, selectedSizes, selectedColors, inStock, onSale, minRating, sortBy, language, getProductName]);
 
   useEffect(() => {
+    let isMounted = true;
+    
     const loadCategoryData = async () => {
-      if (!slug) return;
+      if (!slug) {
+        setLoading(false);
+        return;
+      }
       
       try {
         setLoading(true);
         console.log('Loading category data for slug:', slug);
         
+        // Normalize slug to lowercase (backend stores slugs in lowercase)
+        const normalizedSlug = slug.toLowerCase().trim();
+        console.log('Normalized slug:', normalizedSlug);
+        
         // Load category info
-        const categoryResponse = await api.getCategoryBySlug(slug);
-        console.log('Category loaded:', categoryResponse.category);
-        setCategory(categoryResponse.category);
+        let categoryResponse;
+        try {
+          categoryResponse = await api.getCategoryBySlug(normalizedSlug);
+          console.log('Category response:', categoryResponse);
+        } catch (apiError: any) {
+          console.error('API Error loading category:', apiError);
+          console.error('Error message:', apiError?.message);
+          console.error('Error details:', apiError);
+          if (!isMounted) return;
+          setLoading(false);
+          setCategory(null);
+          toast({
+            title: language === 'vi' ? 'Lỗi tải danh mục' : language === 'ja' ? 'カテゴリ読み込みエラー' : 'Error Loading Category',
+            description: language === 'vi' ? `Không thể tải danh mục "${slug}". Vui lòng thử lại.` : 
+                         language === 'ja' ? `カテゴリ「${slug}」を読み込めません。もう一度お試しください。` : 
+                         `Unable to load category "${slug}". Please try again.`,
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        if (!isMounted) return;
+        
+        // Handle different response formats
+        let categoryData = null;
+        if (categoryResponse) {
+          // Check if response has success field (server format)
+          if ('success' in categoryResponse && categoryResponse.success && categoryResponse.category) {
+            categoryData = categoryResponse.category;
+          } else if (categoryResponse.category) {
+            // Direct format
+            categoryData = categoryResponse.category;
+          } else if ('_id' in categoryResponse && 'name' in categoryResponse) {
+            // Category object itself
+            categoryData = categoryResponse;
+          }
+        }
+        
+        if (!categoryData || !categoryData._id) {
+          console.error('Category not found or invalid response');
+          console.error('Response structure:', categoryResponse);
+          console.error('Normalized slug used:', normalizedSlug);
+          if (!isMounted) return;
+          setLoading(false);
+          setCategory(null);
+          return;
+        }
+        
+        console.log('Category data:', categoryData);
+        setCategory(categoryData);
         
         // Load products in category
-        console.log('Loading products for category ID:', categoryResponse.category._id);
-        const productsResponse = await api.getCategoryWithProducts(categoryResponse.category._id, {
-          page: currentPage,
-          limit: 12
-        });
-        
-        console.log('Products loaded:', productsResponse.products.length, 'products');
-        setProducts(productsResponse.products);
-        setTotalPages(productsResponse.pagination.pages);
+        console.log('Loading products for category ID:', categoryData._id);
+        let productsResponse = null;
+        try {
+          productsResponse = await api.getCategoryWithProducts(categoryData._id, {
+            page: currentPage,
+            limit: 12
+          });
+          
+          if (!isMounted) return;
+          
+          console.log('Products response:', productsResponse);
+          
+          // Handle different response formats
+          let products = [];
+          let pagination = { pages: 1 };
+          
+          if (productsResponse) {
+            // Check if response has success field (server format)
+            if ('success' in productsResponse && productsResponse.success) {
+              products = productsResponse.products || [];
+              pagination = productsResponse.pagination || { pages: 1 };
+            } else if (productsResponse.products) {
+              // Direct format
+              products = productsResponse.products;
+              pagination = productsResponse.pagination || { pages: 1 };
+            } else if (Array.isArray(productsResponse)) {
+              // Array format
+              products = productsResponse;
+            }
+          }
+          
+          console.log('Products loaded:', products.length, 'products');
+          console.log('Pagination:', pagination);
+          
+          setProducts(products);
+          setTotalPages(pagination.pages || 1);
 
-        // Extract available sizes and colors
-        const allSizes = new Set<string>();
-        const allColors = new Set<string>();
-        const prices = productsResponse.products.map(p => p.salePrice || p.price);
-        const maxPrice = prices.length > 0 ? Math.max(...prices) : 2000000; // Default max price if no products
-        
-        productsResponse.products.forEach(product => {
-          product.sizes?.forEach(size => allSizes.add(size));
-          product.colors?.forEach(color => allColors.add(color));
-        });
+          // Extract available sizes and colors
+          const allSizes = new Set<string>();
+          const allColors = new Set<string>();
+          const prices = products.map(p => (p.salePrice || p.price));
+          const maxPrice = prices.length > 0 ? Math.max(...prices) : 2000000;
+          
+          products.forEach(product => {
+            if (product.sizes) {
+              product.sizes.forEach(size => allSizes.add(size));
+            }
+            if (product.colors) {
+              product.colors.forEach(color => {
+                const colorStr = typeof color === 'string' ? color : (color as any).name || color;
+                allColors.add(colorStr);
+              });
+            }
+          });
 
-        setAvailableSizes(Array.from(allSizes));
-        setAvailableColors(Array.from(allColors));
-        setPriceRange([0, Math.ceil(maxPrice / 100000) * 100000]); // Round up to nearest 100k
-      } catch (error) {
+          setAvailableSizes(Array.from(allSizes));
+          setAvailableColors(Array.from(allColors));
+          setPriceRange([0, Math.ceil(maxPrice / 100000) * 100000]);
+        } catch (productsError: any) {
+          console.error('Error loading products:', productsError);
+          if (!isMounted) return;
+          setProducts([]);
+          setTotalPages(1);
+          setAvailableSizes([]);
+          setAvailableColors([]);
+        }
+      } catch (error: any) {
         console.error('Error loading category data:', error);
+        if (!isMounted) return;
         toast({
-          title: t.errorLoading,
-          description: t.errorLoadingDesc,
+          title: language === 'vi' ? 'Lỗi tải dữ liệu' : language === 'ja' ? 'データ読み込みエラー' : 'Error Loading Data',
+          description: language === 'vi' ? 'Không thể tải thông tin danh mục' : 
+                       language === 'ja' ? 'カテゴリ情報を読み込めません' : 
+                       'Unable to load category information',
           variant: "destructive",
         });
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     loadCategoryData();
-  }, [slug, currentPage, toast, t.errorLoading, t.errorLoadingDesc]);
+    
+    return () => {
+      isMounted = false;
+    };
+  }, [slug, currentPage, language, toast]);
 
   const handleSortChange = (value: string) => {
     setSortBy(value);

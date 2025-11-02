@@ -184,6 +184,10 @@ const ProductsPage = () => {
   const addToCart = async (product: Product) => {
     try {
       await api.addToCart(product._id, 1);
+      
+      // Dispatch custom event to notify Header to refresh cart count
+      window.dispatchEvent(new CustomEvent('cartUpdated'));
+      
       toast({
         title: language === 'vi' ? 'Thành công' : language === 'ja' ? '成功' : 'Success',
         description: language === 'vi' ? 'Đã thêm sản phẩm vào giỏ hàng' : 
@@ -306,46 +310,43 @@ const ProductsPage = () => {
   const t = translations[language as keyof typeof translations] || translations.en;
 
   return (
-    <div className="min-h-screen bg-stone-50 dark:bg-stone-900">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       <Header cartItemsCount={0} onSearch={() => {}} />
       
-      <main className="pt-20">
-        {/* Hero Section with Banner Background */}
-        <section className="py-16 relative overflow-hidden mx-4 rounded-2xl">
-          {/* Banner Background */}
-          <div className="absolute inset-0 rounded-2xl overflow-hidden">
-            <img 
-              src="/images/banners/banner-01.png" 
-              alt="Products Banner"
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-black/40 dark:bg-black/60"></div>
-          </div>
-          
-          {/* Content */}
-          <div className="container mx-auto px-4 relative z-10">
-            <div className="text-center max-w-3xl mx-auto">
-              <h1 className="text-4xl md:text-5xl font-bold text-white mb-4 drop-shadow-lg">
-                {t.title}
-              </h1>
-              <p className="text-lg text-white/90 mb-6 drop-shadow-md">
-                {t.subtitle}
-              </p>
+      <main className="py-8">
+        <div className="container space-y-8">
+          {/* Hero Section with Banner Background */}
+          <section className="text-center">
+            <div className="relative overflow-hidden rounded-xl shadow-2xl">
+              {/* Banner Background */}
+              <div className="absolute inset-0">
+                <img 
+                  src="/images/banners/banner-01.png" 
+                  alt="Products Banner"
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-black/50"></div>
+              </div>
               
-              {/* Results count */}
-              <div className="flex items-center justify-center gap-2">
-                <Badge variant="outline" className="bg-white/90 text-stone-800 border-white/20 backdrop-blur-sm">
+              {/* Content */}
+              <div className="relative z-10 py-16 text-white">
+                <h1 className="text-4xl md:text-6xl font-bold mb-4 animate-fade-in">
+                  {t.title}
+                </h1>
+                <p className="text-xl md:text-2xl mb-4 opacity-90">
+                  {t.subtitle}
+                </p>
+                
+                {/* Results count */}
+                <Badge variant="secondary" className="bg-white/20 text-white text-lg px-4 py-2">
                   {filteredProducts.length} {t.results}
                 </Badge>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
 
-        {/* Filters and Controls */}
-        <section className="py-8">
-          <div className="container mx-auto px-4">
-            <div className="space-y-6">
+          {/* Filters and Controls */}
+          <section className="space-y-6">
               {/* Filters Card */}
               <Card>
                 <CardHeader>
@@ -470,27 +471,20 @@ const ProductsPage = () => {
                   </div>
                 </CardContent>
               </Card>
+          </section>
 
-            </div>
-          </div>
-        </section>
-
-        {/* Products Grid */}
-        <section className="py-12">
-          <div className="container mx-auto px-4">
+          {/* Products Grid */}
+          <section>
             {isLoading ? (
-              <div className="text-center py-20">
-                <div className="relative">
-                  <div className="w-12 h-12 border-2 border-stone-200 dark:border-stone-700 rounded-full mx-auto mb-6"></div>
-                  <div className="w-12 h-12 border-2 border-stone-400 dark:border-stone-500 border-t-transparent rounded-full animate-spin absolute top-0 left-1/2 transform -translate-x-1/2"></div>
-                </div>
-                <p className="text-stone-500 dark:text-stone-500 font-light animate-pulse">
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                <p className="text-muted-foreground">
                   {t.loading}
                 </p>
               </div>
             ) : filteredProducts.length === 0 ? (
-              <div className="text-center py-20">
-                <p className="text-stone-500 dark:text-stone-500 font-light text-lg">
+              <div className="text-center py-12">
+                <p className="text-muted-foreground text-lg">
                   {t.noProducts}
                 </p>
                 <Button
@@ -510,8 +504,8 @@ const ProductsPage = () => {
                 loading={isLoading}
               />
             )}
-          </div>
-        </section>
+          </section>
+        </div>
       </main>
 
       <Footer />

@@ -13,7 +13,7 @@ import { api, Product, Category } from '@/lib/api';
 import { formatCurrency } from '@/lib/currency';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useNavigate } from 'react-router-dom';
-import { debounce } from 'lodash';
+import { useDebounce } from '@/hooks/use-debounce';
 
 interface SearchFilters {
   query: string;
@@ -57,6 +57,9 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({
     'Kimono', 'Hakama', 'Yukata', 'Haori', 'Obi', 'Geta'
   ]);
 
+  // Debounce search query
+  const debouncedQuery = useDebounce(filters.query, 300);
+
   // Load categories
   useEffect(() => {
     const loadCategories = async () => {
@@ -78,17 +81,17 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({
     }
   }, []);
 
-  // Debounced search suggestions
-  const debouncedGetSuggestions = useCallback(
-    debounce(async (query: string) => {
-      if (query.length < 2) {
+  // Fetch suggestions when debounced query changes
+  useEffect(() => {
+    const fetchSuggestions = async () => {
+      if (debouncedQuery.length < 2) {
         setSuggestions([]);
         return;
       }
 
       try {
         const response = await api.getProducts({ 
-          search: query, 
+          search: debouncedQuery, 
           limit: 5 
         });
         setSuggestions(response.products || []);
@@ -96,14 +99,14 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({
         console.error('Error getting suggestions:', error);
         setSuggestions([]);
       }
-    }, 300),
-    []
-  );
+    };
+
+    fetchSuggestions();
+  }, [debouncedQuery]);
 
   // Handle query change
   const handleQueryChange = (value: string) => {
     setFilters(prev => ({ ...prev, query: value }));
-    debouncedGetSuggestions(value);
     setShowSuggestions(true);
   };
 

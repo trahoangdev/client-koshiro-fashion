@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Search, ShoppingBag, Menu, X, User, Globe, Heart, LogOut, Settings, Package, CreditCard, MapPin, Bell, LogIn, UserPlus, GitCompare, ChevronDown } from "lucide-react";
 import EnhancedMobileMenu from "./EnhancedMobileMenu";
 import { Button } from "@/components/ui/button";
@@ -25,14 +25,100 @@ interface HeaderProps {
   refreshWishlistTrigger?: number; // Add this to trigger wishlist count refresh
 }
 
-const Header = ({ cartItemsCount, onSearch, refreshWishlistTrigger }: HeaderProps) => {
+const Header = ({ cartItemsCount: propCartItemsCount, onSearch, refreshWishlistTrigger }: HeaderProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [wishlistCount, setWishlistCount] = useState(0);
+  const [cartCount, setCartCount] = useState(propCartItemsCount || 0);
   const [categories, setCategories] = useState<Category[]>([]);
   const { language, setLanguage } = useLanguage();
   const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
+
+  // Debug: Log cartCount changes
+  useEffect(() => {
+    console.log('cartCount state changed to:', cartCount, 'cartCount > 0:', cartCount > 0);
+  }, [cartCount]);
+
+  // Load cart count from API
+  const loadCartCount = useCallback(async () => {
+    if (!isAuthenticated) {
+      setCartCount(0);
+      return;
+    }
+
+    try {
+      console.log('Loading cart count from API...');
+      const response = await api.getCart();
+      const items = response.items || [];
+      // Calculate total quantity of all items
+      const totalQuantity = items.reduce((sum: number, item: { quantity: number }) => sum + (item.quantity || 0), 0);
+      console.log('Cart count loaded:', totalQuantity, 'items:', items.length);
+      console.log('Setting cartCount state to:', totalQuantity);
+      setCartCount(totalQuantity);
+      console.log('cartCount state after setCartCount:', totalQuantity);
+    } catch (error) {
+      console.error('Failed to load cart count:', error);
+      setCartCount(0);
+    }
+  }, [isAuthenticated]);
+
+  // Load cart count on mount and when authenticated status changes
+  useEffect(() => {
+    loadCartCount();
+  }, [loadCartCount]);
+
+  // Setup event listeners early (before authentication check)
+  // Use ref to avoid dependency on loadCartCount
+  useEffect(() => {
+    // Listen for custom cart update events
+    const handleCartUpdate = () => {
+      console.log('Cart updated event received, refreshing cart count...');
+      // Call loadCartCount directly
+      if (isAuthenticated) {
+        loadCartCount();
+      }
+    };
+    
+    window.addEventListener('cartUpdated', handleCartUpdate);
+
+    return () => {
+      window.removeEventListener('cartUpdated', handleCartUpdate);
+    };
+  }, [isAuthenticated, loadCartCount]);
+
+  // Refresh cart count periodically (every 5 seconds) and on storage events
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    // Initial load
+    loadCartCount();
+
+    // Set up interval to refresh cart count
+    const interval = setInterval(loadCartCount, 5000);
+
+    // Listen for storage events (when cart is updated in another tab)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'cart' || e.key === 'token') {
+        loadCartCount();
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [isAuthenticated, loadCartCount]);
+
+  // Sync with prop if provided (fallback for non-authenticated or server-side updates)
+  // Only sync if prop is provided and different, but prioritize API-loaded cart count
+  useEffect(() => {
+    if (propCartItemsCount !== undefined && propCartItemsCount !== cartCount && !isAuthenticated) {
+      console.log('Syncing cartCount with prop:', propCartItemsCount);
+      setCartCount(propCartItemsCount);
+    }
+  }, [propCartItemsCount, cartCount, isAuthenticated]);
 
   // Load wishlist count
   useEffect(() => {
@@ -238,27 +324,36 @@ const Header = ({ cartItemsCount, onSearch, refreshWishlistTrigger }: HeaderProp
               <ChevronDown className="ml-2 h-4 w-4" />
             </Button>
             
-            {/* Hover Dropdown */}
-            <div className="absolute top-full left-0 w-64 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 ease-out transform translate-y-2 group-hover:translate-y-0 z-50">
+            {/* Hover Dropdown - Synced with UI/UX design system */}
+            <div className="absolute top-full left-0 w-64 bg-popover border border-border rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 ease-out transform translate-y-2 group-hover:translate-y-0 z-50 backdrop-blur-sm">
               <div className="p-2">
-                <div className="px-3 py-2 text-sm font-semibold text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700 mb-2">
-                  Shop by Category
+                {/* Header with separator */}
+                <div className="px-3 py-2 mb-2">
+                  <h3 className="text-sm font-semibold text-popover-foreground mb-2">
+                    Shop by Category
+                  </h3>
+                  <div className="h-px bg-border/50"></div>
                 </div>
-                <div className="space-y-1">
+                
+                {/* Category List */}
+                <div className="space-y-0.5">
                   {categories.map((category) => (
                     <Link 
                       key={category._id} 
                       to={`/category/${category.slug}`} 
-                      className="block px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors duration-200"
+                      className="block px-3 py-2 text-sm text-popover-foreground/90 hover:bg-accent hover:text-accent-foreground rounded-md transition-colors duration-200 font-normal"
                     >
                       {getCategoryName(category)}
                     </Link>
                   ))}
                 </div>
-                <div className="border-t border-gray-200 dark:border-gray-700 mt-2 pt-2">
+                
+                {/* Footer with separator and View All */}
+                <div className="mt-2 pt-2">
+                  <div className="h-px bg-border/50 mb-2"></div>
                   <Link 
                     to="/categories" 
-                    className="block px-3 py-2 text-sm font-medium text-primary hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors duration-200"
+                    className="block px-3 py-2 text-sm font-semibold text-primary hover:bg-accent hover:text-accent-foreground rounded-md transition-colors duration-200"
                   >
                     View All Categories
                   </Link>
@@ -424,9 +519,12 @@ const Header = ({ cartItemsCount, onSearch, refreshWishlistTrigger }: HeaderProp
               className="relative h-10 w-10 hover:bg-primary/10 transition-colors duration-300"
             >
               <ShoppingBag className="h-5 w-5" />
-              {cartItemsCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
-                  {cartItemsCount}
+              {cartCount > 0 && (
+                <span 
+                  className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full min-w-[1.25rem] h-5 px-1 flex items-center justify-center font-medium z-0 shadow-lg"
+                  title={`${cartCount} items in cart`}
+                >
+                  {cartCount > 99 ? '99+' : cartCount}
                 </span>
               )}
             </Button>
@@ -501,7 +599,7 @@ const Header = ({ cartItemsCount, onSearch, refreshWishlistTrigger }: HeaderProp
       <EnhancedMobileMenu
         isOpen={isMenuOpen}
         onClose={() => setIsMenuOpen(false)}
-        cartItemsCount={cartItemsCount}
+        cartItemsCount={cartCount}
         wishlistCount={wishlistCount}
         onSearch={onSearch}
       />

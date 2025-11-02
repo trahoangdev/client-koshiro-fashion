@@ -147,15 +147,31 @@ export const getCategoryBySlug = asyncHandler(async (req: Request, res: Response
       });
     }
     
-    const category = await Category.findOne({ slug }).lean();
+    // Normalize slug to lowercase to match schema (slug field has lowercase: true)
+    const normalizedSlug = slug.toLowerCase().trim();
+    
+    console.log('Looking for category with slug:', normalizedSlug);
+    
+    // Try to find category by slug (case-insensitive search)
+    const category = await Category.findOne({ 
+      $or: [
+        { slug: normalizedSlug },
+        { slug: { $regex: new RegExp(`^${normalizedSlug}$`, 'i') } }
+      ],
+      isActive: true
+    }).lean();
     
     if (!category) {
+      console.log('Category not found. Available slugs:', 
+        await Category.find({ isActive: true }).select('slug name').lean()
+      );
       return res.status(404).json({ 
         success: false,
         message: 'Category not found' 
       });
     }
 
+    console.log('Category found:', category.name, 'with slug:', category.slug);
     res.json({ 
       success: true,
       category 

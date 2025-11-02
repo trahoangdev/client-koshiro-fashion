@@ -472,19 +472,29 @@ const CheckoutPage = () => {
 
   if (isCompleted) {
     return (
-      <div className="min-h-screen bg-gradient-zen">
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
         <Header cartItemsCount={0} onSearch={handleSearch} />
-        <main className="py-16">
-          <div className="container max-w-2xl mx-auto text-center">
-            <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
-            <h1 className="text-3xl font-bold mb-2">{t.orderComplete}</h1>
-            <p className="text-muted-foreground mb-4">{t.orderCompleteDescription}</p>
-            <Badge variant="secondary" className="mb-8">{t.orderNumber}</Badge>
-            <div className="space-x-4">
-              <Link to="/">
-                <Button>{t.continueShopping}</Button>
-              </Link>
-            </div>
+        <main className="py-8">
+          <div className="container space-y-8">
+            {/* Hero Banner */}
+            <section className="text-center">
+              <div className="relative overflow-hidden rounded-xl shadow-2xl">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-primary/10 to-transparent"></div>
+                <div className="relative z-10 py-16">
+                  <CheckCircle className="h-20 w-20 text-green-500 mx-auto mb-6 animate-bounce" />
+                  <h1 className="text-4xl md:text-5xl font-bold mb-4">{t.orderComplete}</h1>
+                  <p className="text-xl text-muted-foreground mb-6">{t.orderCompleteDescription}</p>
+                  <Badge variant="secondary" className="text-lg px-6 py-2 mb-8">{t.orderNumber}</Badge>
+                  <div className="flex justify-center gap-4">
+                    <Link to="/">
+                      <Button size="lg" className="modern-gradient text-white">
+                        {t.continueShopping}
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </section>
           </div>
         </main>
         <Footer />
@@ -494,12 +504,16 @@ const CheckoutPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-zen">
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
         <Header cartItemsCount={0} onSearch={handleSearch} />
-        <main className="py-16">
-          <div className="container max-w-2xl mx-auto text-center">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-            <p>Đang tải...</p>
+        <main className="py-8">
+          <div className="container space-y-8">
+            <section className="text-center py-16">
+              <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-primary" />
+              <p className="text-muted-foreground text-lg">
+                {language === 'vi' ? 'Đang tải...' : language === 'ja' ? '読み込み中...' : 'Loading...'}
+              </p>
+            </section>
           </div>
         </main>
         <Footer />
@@ -508,37 +522,58 @@ const CheckoutPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-zen">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       <Header cartItemsCount={cartItemsCount} onSearch={handleSearch} />
 
-      <main className="py-16">
-        <div className="container max-w-6xl mx-auto">
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h1 className="text-3xl font-bold">{t.title}</h1>
-              <p className="text-muted-foreground">{t.subtitle}</p>
+      <main className="py-8">
+        <div className="container space-y-8">
+          {/* Hero Banner */}
+          <section className="text-center">
+            <div className="relative overflow-hidden rounded-xl shadow-2xl">
+              {/* Banner Background */}
+              <div className="absolute inset-0">
+                <img 
+                  src="/images/banners/banner-01.png" 
+                  alt="Checkout Banner"
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-black/50"></div>
+              </div>
+              
+              {/* Content */}
+              <div className="relative z-10 py-12 text-white">
+                <h1 className="text-4xl md:text-5xl font-bold mb-4 animate-fade-in">
+                  {t.title}
+                </h1>
+                <p className="text-xl md:text-2xl mb-4 opacity-90">
+                  {t.subtitle}
+                </p>
+                <Link to="/cart">
+                  <Button variant="outline" className="bg-white/10 hover:bg-white/20 text-white border-white/30">
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    {t.backToCart}
+                  </Button>
+                </Link>
+              </div>
             </div>
-            <Link to="/cart">
-              <Button variant="outline">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                {t.backToCart}
-              </Button>
-            </Link>
-          </div>
+          </section>
 
+          {/* Checkout Form and Order Summary */}
           <div className="grid lg:grid-cols-3 gap-8">
             {/* Checkout Form */}
-            <div className="lg:col-span-2 space-y-8">
-              <form onSubmit={handleSubmit} className="space-y-8">
+            <div className="lg:col-span-2 space-y-6">
+              <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Shipping Information */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <Truck className="h-5 w-5 mr-2" />
+                <Card className="bg-gradient-to-br from-white via-white to-stone-50/50 dark:from-stone-800 dark:via-stone-800 dark:to-stone-900/50 border-stone-200/60 dark:border-stone-700/60 shadow-lg hover:shadow-xl transition-shadow duration-300 rounded-xl overflow-hidden">
+                  <CardHeader className="bg-gradient-to-r from-stone-50 to-stone-100/50 dark:from-stone-800 dark:to-stone-900/50 border-b border-stone-200/50 dark:border-stone-700/50">
+                    <CardTitle className="flex items-center text-lg">
+                      <div className="p-2 rounded-lg bg-primary/10 mr-3">
+                        <Truck className="h-5 w-5 text-primary" />
+                      </div>
                       {t.shippingInfo}
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-4">
+                  <CardContent className="space-y-4 pt-6">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="text-sm font-medium mb-2 block">{t.firstName}</label>
@@ -628,24 +663,26 @@ const CheckoutPage = () => {
                 </Card>
 
                 {/* Payment Information */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <CreditCard className="h-5 w-5 mr-2" />
+                <Card className="bg-gradient-to-br from-white via-white to-stone-50/50 dark:from-stone-800 dark:via-stone-800 dark:to-stone-900/50 border-stone-200/60 dark:border-stone-700/60 shadow-lg hover:shadow-xl transition-shadow duration-300 rounded-xl overflow-hidden">
+                  <CardHeader className="bg-gradient-to-r from-stone-50 to-stone-100/50 dark:from-stone-800 dark:to-stone-900/50 border-b border-stone-200/50 dark:border-stone-700/50">
+                    <CardTitle className="flex items-center text-lg">
+                      <div className="p-2 rounded-lg bg-primary/10 mr-3">
+                        <CreditCard className="h-5 w-5 text-primary" />
+                      </div>
                       {t.payment}
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-6">
+                  <CardContent className="space-y-6 pt-6">
                     {/* Payment Method Selection */}
                     <div>
                       <label className="text-sm font-medium mb-6 block">{t.paymentMethod}</label>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* COD Option */}
                         <div
-                          className={`p-6 border-2 rounded-xl cursor-pointer transition-all hover:shadow-md ${
+                          className={`p-6 border-2 rounded-xl cursor-pointer transition-all duration-300 hover:shadow-lg ${
                             paymentMethod === 'cod'
-                              ? 'border-primary bg-primary/5 shadow-sm'
-                              : 'border-muted hover:border-primary/50'
+                              ? 'border-primary bg-gradient-to-br from-primary/10 to-primary/5 shadow-md scale-[1.02]'
+                              : 'border-stone-200/60 dark:border-stone-700/60 hover:border-primary/50 bg-white dark:bg-stone-800/50'
                           }`}
                           onClick={() => setPaymentMethod('cod')}
                         >
@@ -670,10 +707,10 @@ const CheckoutPage = () => {
 
                         {/* Online Payment Option */}
                         <div
-                          className={`p-6 border-2 rounded-xl cursor-pointer transition-all hover:shadow-md ${
+                          className={`p-6 border-2 rounded-xl cursor-pointer transition-all duration-300 hover:shadow-lg ${
                             paymentMethod === 'online'
-                              ? 'border-primary bg-primary/5 shadow-sm'
-                              : 'border-muted hover:border-primary/50'
+                              ? 'border-primary bg-gradient-to-br from-primary/10 to-primary/5 shadow-md scale-[1.02]'
+                              : 'border-stone-200/60 dark:border-stone-700/60 hover:border-primary/50 bg-white dark:bg-stone-800/50'
                           }`}
                           onClick={() => setPaymentMethod('online')}
                         >
@@ -708,14 +745,16 @@ const CheckoutPage = () => {
 
                     {/* Online Payment Details */}
                     {paymentMethod === 'online' && (
-                      <div className="space-y-6 p-6 bg-muted/30 rounded-xl">
-                        <div className="flex items-center space-x-2 mb-4">
-                          <Lock className="h-4 w-4 text-green-600" />
-                          <span className="text-sm font-medium text-green-800">Secure Payment</span>
+                      <div className="space-y-6 p-6 bg-gradient-to-br from-muted/30 via-muted/20 to-transparent rounded-xl border border-stone-200/50 dark:border-stone-700/50 shadow-sm">
+                        <div className="flex items-center space-x-3 mb-5 pb-4 border-b border-stone-200/50 dark:border-stone-700/50">
+                          <div className="p-2 rounded-full bg-green-100 dark:bg-green-900/50">
+                            <Lock className="h-4 w-4 text-green-600 dark:text-green-400" />
+                          </div>
+                          <span className="text-sm font-semibold text-green-700 dark:text-green-300">Secure Payment</span>
                         </div>
                         
                         {/* Card Details */}
-                        <div className="space-y-5">
+                        <div className="space-y-4">
                           <div>
                             <label className="text-sm font-medium mb-2 block">{t.cardNumber}</label>
                             <Input
@@ -779,39 +818,39 @@ const CheckoutPage = () => {
                         </div>
 
                         {/* Alternative Payment Methods */}
-                        <div className="pt-6 border-t">
-                          <p className="text-sm font-medium mb-4">Or pay with:</p>
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="pt-5 border-t border-stone-200/50 dark:border-stone-700/50">
+                          <p className="text-sm font-semibold mb-4 text-stone-700 dark:text-stone-300">Or pay with:</p>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                             <Button 
                               variant="outline" 
                               size="sm" 
-                              className="h-16 flex-col hover:bg-primary/5 hover:border-primary/50 transition-colors"
+                              className="h-20 flex-col hover:bg-gradient-to-br hover:from-primary/10 hover:to-primary/5 hover:border-primary/50 transition-all duration-300 hover:scale-105 border-stone-200/60 dark:border-stone-700/60"
                             >
-                              <Wallet className="h-5 w-5 mb-2" />
+                              <Wallet className="h-5 w-5 mb-2 text-primary" />
                               <span className="text-xs font-medium">Momo</span>
                             </Button>
                             <Button 
                               variant="outline" 
                               size="sm" 
-                              className="h-16 flex-col hover:bg-primary/5 hover:border-primary/50 transition-colors"
+                              className="h-20 flex-col hover:bg-gradient-to-br hover:from-primary/10 hover:to-primary/5 hover:border-primary/50 transition-all duration-300 hover:scale-105 border-stone-200/60 dark:border-stone-700/60"
                             >
-                              <Smartphone className="h-5 w-5 mb-2" />
+                              <Smartphone className="h-5 w-5 mb-2 text-primary" />
                               <span className="text-xs font-medium">ZaloPay</span>
                             </Button>
                             <Button 
                               variant="outline" 
                               size="sm" 
-                              className="h-16 flex-col hover:bg-primary/5 hover:border-primary/50 transition-colors"
+                              className="h-20 flex-col hover:bg-gradient-to-br hover:from-primary/10 hover:to-primary/5 hover:border-primary/50 transition-all duration-300 hover:scale-105 border-stone-200/60 dark:border-stone-700/60"
                             >
-                              <QrCode className="h-5 w-5 mb-2" />
+                              <QrCode className="h-5 w-5 mb-2 text-primary" />
                               <span className="text-xs font-medium">VietQR</span>
                             </Button>
                             <Button 
                               variant="outline" 
                               size="sm" 
-                              className="h-16 flex-col hover:bg-primary/5 hover:border-primary/50 transition-colors"
+                              className="h-20 flex-col hover:bg-gradient-to-br hover:from-primary/10 hover:to-primary/5 hover:border-primary/50 transition-all duration-300 hover:scale-105 border-stone-200/60 dark:border-stone-700/60"
                             >
-                              <CreditCard className="h-5 w-5 mb-2" />
+                              <CreditCard className="h-5 w-5 mb-2 text-primary" />
                               <span className="text-xs font-medium">Visa/MC</span>
                             </Button>
                           </div>
@@ -821,18 +860,18 @@ const CheckoutPage = () => {
 
                     {/* COD Information */}
                     {paymentMethod === 'cod' && (
-                      <div className="p-6 bg-blue-50 rounded-xl border border-blue-200">
+                      <div className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl border border-blue-200/50 dark:border-blue-800/50">
                         <div className="flex items-start space-x-4">
-                          <div className="p-2 rounded-full bg-blue-100">
-                            <Banknote className="h-5 w-5 text-blue-600" />
+                          <div className="p-2.5 rounded-full bg-blue-100 dark:bg-blue-900/50 flex-shrink-0">
+                            <Banknote className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                           </div>
-                          <div className="flex-1">
-                            <h4 className="font-semibold text-blue-900 mb-3 text-lg">{t.codInstructions}</h4>
-                            <ul className="text-sm text-blue-800 space-y-2">
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-semibold text-blue-900 dark:text-blue-300 mb-3 text-lg">{t.codInstructions}</h4>
+                            <ul className="text-sm text-blue-800 dark:text-blue-400 space-y-2.5">
                               {t.codInstructionsList.map((instruction, index) => (
-                                <li key={index} className="flex items-start space-x-2">
-                                  <span className="text-blue-500 mt-1">•</span>
-                                  <span className="leading-relaxed">{instruction}</span>
+                                <li key={index} className="flex items-start space-x-2.5">
+                                  <span className="text-blue-500 dark:text-blue-400 mt-1 font-bold">•</span>
+                                  <span className="leading-relaxed flex-1">{instruction}</span>
                                 </li>
                               ))}
                             </ul>
@@ -844,7 +883,7 @@ const CheckoutPage = () => {
                 </Card>
 
                 {/* Order Notes */}
-                <Card>
+                <Card className="bg-gradient-to-br from-white via-white to-stone-50/50 dark:from-stone-800 dark:via-stone-800 dark:to-stone-900/50 border-stone-200/60 dark:border-stone-700/60 shadow-lg hover:shadow-xl transition-shadow duration-300 rounded-xl">
                   <CardContent className="pt-6">
                     <label className="text-sm font-medium mb-2 block">{t.notes}</label>
                     <Textarea
@@ -852,6 +891,7 @@ const CheckoutPage = () => {
                       onChange={(e) => handleInputChange('notes', e.target.value)}
                       rows={3}
                       placeholder="Any special instructions or notes..."
+                      className="resize-none"
                     />
                   </CardContent>
                 </Card>
@@ -860,73 +900,77 @@ const CheckoutPage = () => {
 
             {/* Order Summary */}
             <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>{t.orderSummary}</CardTitle>
+              <Card className="bg-gradient-to-br from-white via-white to-stone-50/50 dark:from-stone-800 dark:via-stone-800 dark:to-stone-900/50 border-stone-200/60 dark:border-stone-700/60 shadow-xl rounded-xl overflow-hidden sticky top-8">
+                <CardHeader className="bg-gradient-to-r from-stone-50 to-stone-100/50 dark:from-stone-800 dark:to-stone-900/50 border-b border-stone-200/50 dark:border-stone-700/50">
+                  <CardTitle className="text-lg font-semibold">{t.orderSummary}</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-4 pt-6">
                   {/* Cart Items */}
-                  <div className="space-y-3">
+                  <div className="space-y-3 max-h-64 overflow-y-auto">
                     {cartItems.map((item, index) => (
-                      <div key={`${item.productId}-${item.selectedSize}-${item.selectedColor}-${index}`} className="flex items-center space-x-3">
+                      <div key={`${item.productId}-${item.selectedSize}-${item.selectedColor}-${index}`} className="flex items-center space-x-3 p-2 rounded-lg hover:bg-stone-50 dark:hover:bg-stone-800/50 transition-colors">
                         <img
-                          src={item.product.images[0] || '/placeholder.svg'}
+                          src={item.product.images?.[0] || '/placeholder.svg'}
                           alt={item.product.name}
-                          className="w-12 h-12 object-cover rounded"
+                          className="w-14 h-14 object-cover rounded-lg border border-stone-200 dark:border-stone-700"
                         />
-                        <div className="flex-1">
-                          <p className="font-medium text-sm">{item.product.name}</p>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm truncate">{item.product.name}</p>
                           <p className="text-xs text-muted-foreground">
                             {item.selectedSize} • {item.selectedColor} • Qty: {item.quantity}
                           </p>
                         </div>
-                        <p className="font-medium">{formatCurrency(item.product.price * item.quantity, language)}</p>
+                        <p className="font-semibold text-sm flex-shrink-0">{formatCurrency(item.product.price * item.quantity, language)}</p>
                       </div>
                     ))}
                   </div>
 
-                  <Separator />
+                  <Separator className="my-4" />
 
                   {/* Totals */}
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span>{t.subtotal}</span>
-                      <span>{formatCurrency(subtotal, language)}</span>
+                  <div className="space-y-3">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">{t.subtotal}</span>
+                      <span className="font-medium">{formatCurrency(subtotal, language)}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span>{t.shipping}</span>
-                      <span>{formatCurrency(shipping, language)}</span>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">{t.shipping}</span>
+                      <span className="font-medium">{formatCurrency(shipping, language)}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span>{t.tax}</span>
-                      <span>{formatCurrency(tax, language)}</span>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">{t.tax}</span>
+                      <span className="font-medium">{formatCurrency(tax, language)}</span>
                     </div>
-                    <Separator />
-                    <div className="flex justify-between font-bold text-lg">
+                    <Separator className="my-3" />
+                    <div className="flex justify-between font-bold text-lg pt-2">
                       <span>{t.total}</span>
-                      <span>{formatCurrency(total, language)}</span>
+                      <span className="bg-gradient-to-r from-red-600 to-red-500 bg-clip-text text-transparent">
+                        {formatCurrency(total, language)}
+                      </span>
                     </div>
                   </div>
 
                   {/* Security Notice */}
-                  <div className="flex items-start space-x-2 p-3 bg-green-50 rounded-lg">
-                    <Shield className="h-4 w-4 text-green-600 mt-0.5" />
-                    <div>
-                      <p className="text-sm font-medium text-green-800">{t.secure}</p>
-                      <p className="text-xs text-green-600">{t.secureDescription}</p>
+                  <div className="flex items-start space-x-3 p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-lg border border-green-200/50 dark:border-green-800/50">
+                    <div className="p-1.5 rounded-full bg-green-100 dark:bg-green-900/50 flex-shrink-0">
+                      <Shield className="h-4 w-4 text-green-600 dark:text-green-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-green-800 dark:text-green-300">{t.secure}</p>
+                      <p className="text-xs text-green-700 dark:text-green-400 mt-1">{t.secureDescription}</p>
                     </div>
                   </div>
 
                   {/* Place Order Button */}
                   <Button 
-                    className="w-full" 
+                    className="w-full bg-gradient-to-r from-stone-700 to-stone-800 dark:from-stone-600 dark:to-stone-700 hover:from-stone-800 hover:to-stone-900 dark:hover:from-stone-500 dark:hover:to-stone-600 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 font-semibold hover:scale-[1.02]" 
                     size="lg"
                     onClick={handleSubmit}
                     disabled={isProcessing}
                   >
                     {isProcessing ? (
                       <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
                         {t.processing}
                       </>
                     ) : (

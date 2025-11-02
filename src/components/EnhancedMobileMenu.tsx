@@ -313,9 +313,9 @@ const EnhancedMobileMenu: React.FC<EnhancedMobileMenuProps> = ({
 
   return (
     <>
-      {/* Enhanced Backdrop with blur effect */}
+      {/* Enhanced Backdrop with stronger blur effect */}
       <div 
-        className="mobile-menu-backdrop fixed inset-0 bg-black/60 backdrop-blur-sm lg:hidden"
+        className="mobile-menu-backdrop fixed inset-0 bg-black/80 dark:bg-black/90 backdrop-blur-md lg:hidden z-[100]"
         onClick={onClose}
         style={{
           animation: 'fadeIn 300ms ease-out',
@@ -323,16 +323,16 @@ const EnhancedMobileMenu: React.FC<EnhancedMobileMenuProps> = ({
         }}
       />
 
-      {/* Enhanced Menu with improved animations */}
+      {/* Enhanced Menu with improved animations and darker background */}
       <div 
-        className="mobile-menu-panel fixed top-0 right-0 h-screen w-[380px] bg-background/95 backdrop-blur-md border-l border-border/50 shadow-2xl lg:hidden overflow-hidden"
+        className="mobile-menu-panel fixed top-0 right-0 h-screen w-[380px] bg-gradient-to-br from-background via-background to-stone-50/50 dark:from-stone-900 dark:via-stone-900 dark:to-stone-950/95 backdrop-blur-xl border-l border-stone-200/60 dark:border-stone-700/60 shadow-2xl lg:hidden overflow-hidden z-[101]"
         style={{
           transform: 'translateX(0)',
           transition: 'all 300ms cubic-bezier(0.4, 0, 0.2, 1)'
         }}
       >
-        {/* Enhanced Header with gradient */}
-        <div className="flex items-center justify-between p-6 border-b border-border/50 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5">
+        {/* Enhanced Header with gradient - no notification badge */}
+        <div className="flex items-center justify-between p-6 border-b border-stone-200/60 dark:border-stone-700/60 bg-gradient-to-r from-stone-50 via-primary/10 to-stone-50 dark:from-stone-800 dark:via-primary/10 dark:to-stone-800">
           <div className="flex items-center space-x-3">
             <div className="p-2 rounded-full bg-primary/10 backdrop-blur-sm">
               <Menu className="h-5 w-5 text-primary" />
@@ -345,16 +345,17 @@ const EnhancedMobileMenu: React.FC<EnhancedMobileMenuProps> = ({
             variant="ghost" 
             size="icon" 
             onClick={onClose}
-            className="h-10 w-10 hover:bg-destructive/10 hover:text-destructive transition-all duration-300 rounded-full hover:scale-110"
+            className="h-10 w-10 hover:bg-destructive/10 hover:text-destructive transition-all duration-300 rounded-full hover:scale-110 relative"
           >
             <X className="h-5 w-5" />
+            {/* Notification badge hidden - removed per user request */}
           </Button>
         </div>
 
         {/* Content */}
         <div className="flex flex-col h-full">
           {/* Enhanced Search with focus effects */}
-          <div className="p-6 border-b border-border/50 flex-shrink-0">
+          <div className="p-6 border-b border-stone-200/60 dark:border-stone-700/60 flex-shrink-0 bg-gradient-to-r from-stone-50/50 to-transparent dark:from-stone-800/50">
             <form onSubmit={handleSearch}>
               <div className="relative group">
                 <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5 transition-all duration-300 group-focus-within:text-primary group-focus-within:scale-110" />
@@ -366,10 +367,10 @@ const EnhancedMobileMenu: React.FC<EnhancedMobileMenuProps> = ({
                   onFocus={() => setSearchFocused(true)}
                   onBlur={() => setSearchFocused(false)}
                   className={cn(
-                    "pl-12 pr-4 py-3 text-base rounded-full border-2 transition-all duration-300 bg-muted/50 backdrop-blur-sm enhanced-focus",
+                    "pl-12 pr-4 py-3 text-base rounded-full border-2 transition-all duration-300 bg-white/80 dark:bg-stone-800/80 backdrop-blur-sm enhanced-focus",
                     searchFocused 
-                      ? "border-primary shadow-lg shadow-primary/20 bg-background scale-[1.02]" 
-                      : "border-border hover:border-primary/50 hover:scale-[1.01]"
+                      ? "border-primary shadow-lg shadow-primary/20 bg-background dark:bg-stone-800 scale-[1.02]" 
+                      : "border-stone-200/60 dark:border-stone-700/60 hover:border-primary/50 hover:scale-[1.01]"
                   )}
                 />
                 {searchQuery && (
@@ -828,7 +829,7 @@ const EnhancedMobileMenu: React.FC<EnhancedMobileMenuProps> = ({
           </div>
 
           {/* Enhanced Footer with improved styling */}
-          <div className="p-6 border-t border-border/50 bg-gradient-to-r from-muted/30 via-muted/20 to-muted/30 flex-shrink-0 backdrop-blur-sm">
+          <div className="p-6 border-t border-stone-200/60 dark:border-stone-700/60 bg-gradient-to-r from-stone-50/80 via-stone-100/60 to-stone-50/80 dark:from-stone-900/80 dark:via-stone-800/60 dark:to-stone-900/80 flex-shrink-0 backdrop-blur-xl">
             <div className="text-center space-y-3">
               <div className="flex items-center justify-center space-x-2">
                 <img 
