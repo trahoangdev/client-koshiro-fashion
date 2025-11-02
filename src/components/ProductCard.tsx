@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import MarkdownRenderer from "./MarkdownRenderer";
 import { CloudinaryImage } from "./CloudinaryImage";
+import { useMemo, useCallback, memo } from "react";
 
 interface ProductCardProps {
   product: Product;
@@ -146,24 +147,26 @@ const ProductCard = ({ product, viewMode = 'grid', onAddToCart, onAddToWishlist,
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const getName = () => {
+  // Memoize product name based on language
+  const productName = useMemo(() => {
     switch (language) {
       case 'vi': return product.name;
       case 'ja': return product.nameJa || product.name;
       default: return product.nameEn || product.name;
     }
-  };
+  }, [product.name, product.nameEn, product.nameJa, language]);
 
-  const getDescription = () => {
+  // Memoize product description based on language
+  const productDescription = useMemo(() => {
     switch (language) {
       case 'vi': return product.description;
       case 'ja': return product.descriptionJa || product.description;
       default: return product.descriptionEn || product.description;
     }
-  };
+  }, [product.description, product.descriptionEn, product.descriptionJa, language]);
 
-  // Calculate discount percentage
-  const getDiscountPercentage = () => {
+  // Memoize discount percentage calculation
+  const discountPercentage = useMemo(() => {
     if (product.salePrice && product.salePrice < product.price) {
       return Math.round(((product.price - product.salePrice) / product.price) * 100);
     }
@@ -171,12 +174,15 @@ const ProductCard = ({ product, viewMode = 'grid', onAddToCart, onAddToWishlist,
       return Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100);
     }
     return 0;
-  };
+  }, [product.price, product.salePrice, product.originalPrice]);
 
-  const discountPercentage = getDiscountPercentage();
-  const isOnSale = product.onSale || (product.salePrice && product.salePrice < product.price);
-  const displayPrice = product.salePrice && product.salePrice < product.price ? product.salePrice : product.price;
-  const originalDisplayPrice = product.salePrice && product.salePrice < product.price ? product.price : product.originalPrice;
+  // Memoize price calculations
+  const { isOnSale, displayPrice, originalDisplayPrice } = useMemo(() => {
+    const isOnSale = product.onSale || (product.salePrice && product.salePrice < product.price);
+    const displayPrice = product.salePrice && product.salePrice < product.price ? product.salePrice : product.price;
+    const originalDisplayPrice = product.salePrice && product.salePrice < product.price ? product.price : product.originalPrice;
+    return { isOnSale, displayPrice, originalDisplayPrice };
+  }, [product.onSale, product.salePrice, product.price, product.originalPrice]);
 
   const handleAddToWishlist = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -219,19 +225,19 @@ const ProductCard = ({ product, viewMode = 'grid', onAddToCart, onAddToWishlist,
             {/* Gradient Overlay on Hover */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-10"></div>
             {/* Primary Image - Default */}
-            {renderProductImage(product, 0, getName(), "w-full h-full object-cover transition-all duration-700 group-hover:opacity-0 group-hover:scale-110")}
+            {renderProductImage(product, 0, productName, "w-full h-full object-cover transition-all duration-700 group-hover:opacity-0 group-hover:scale-110")}
             
             {/* Secondary Image - On Hover */}
             {getImageSource(product, 1) !== '/placeholder.svg' && (
               <div className="absolute inset-0 w-full h-full transition-all duration-700 opacity-0 group-hover:opacity-100">
-                {renderProductImage(product, 1, getName(), "w-full h-full object-cover transition-transform duration-700 group-hover:scale-110")}
+                {renderProductImage(product, 1, productName, "w-full h-full object-cover transition-transform duration-700 group-hover:scale-110")}
               </div>
             )}
             
             {/* Fallback: If no second image, show zoom effect on first image */}
             {getImageSource(product, 1) === '/placeholder.svg' && (
               <div className="absolute inset-0 w-full h-full transition-all duration-700 opacity-0 group-hover:opacity-100">
-                {renderProductImage(product, 0, getName(), "w-full h-full object-cover transition-transform duration-700 group-hover:scale-125")}
+                {renderProductImage(product, 0, productName, "w-full h-full object-cover transition-transform duration-700 group-hover:scale-125")}
               </div>
             )}
             
@@ -310,10 +316,10 @@ const ProductCard = ({ product, viewMode = 'grid', onAddToCart, onAddToWishlist,
           <CardContent className="flex-1 p-5 pb-4 bg-gradient-to-b from-transparent to-stone-50/30 dark:to-stone-900/30 overflow-hidden relative z-10">
             <div className="flex flex-col h-full min-h-0">
               <div className="space-y-3 flex-1 min-h-0 overflow-hidden">
-                <h3 className="font-semibold text-lg leading-tight mb-2.5 text-stone-900 dark:text-stone-100 group-hover:text-primary dark:group-hover:text-primary transition-colors duration-300 line-clamp-2 min-h-[3rem]">{getName()}</h3>
+                <h3 className="font-semibold text-lg leading-tight mb-2.5 text-stone-900 dark:text-stone-100 group-hover:text-primary dark:group-hover:text-primary transition-colors duration-300 line-clamp-2 min-h-[3rem]">{productName}</h3>
                 <div className="text-muted-foreground text-sm line-clamp-3 flex-shrink-0">
                   <MarkdownRenderer 
-                    content={getDescription() || 'Premium Japanese fashion item with authentic design and quality materials.'}
+                    content={productDescription || 'Premium Japanese fashion item with authentic design and quality materials.'}
                     className="text-sm"
                   />
                 </div>
@@ -425,19 +431,19 @@ const ProductCard = ({ product, viewMode = 'grid', onAddToCart, onAddToWishlist,
         {/* Gradient Overlay on Hover */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-10"></div>
         {/* Primary Image - Default */}
-        {renderProductImage(product, 0, getName(), "w-full h-full object-cover transition-all duration-700 group-hover:opacity-0 group-hover:scale-110")}
+        {renderProductImage(product, 0, productName, "w-full h-full object-cover transition-all duration-700 group-hover:opacity-0 group-hover:scale-110")}
         
         {/* Secondary Image - On Hover */}
         {getImageSource(product, 1) !== '/placeholder.svg' && (
           <div className="absolute inset-0 w-full h-full transition-all duration-700 opacity-0 group-hover:opacity-100">
-            {renderProductImage(product, 1, getName(), "w-full h-full object-cover transition-transform duration-700 group-hover:scale-110")}
+            {renderProductImage(product, 1, productName, "w-full h-full object-cover transition-transform duration-700 group-hover:scale-110")}
           </div>
         )}
         
         {/* Fallback: If no second image, show zoom effect on first image */}
         {getImageSource(product, 1) === '/placeholder.svg' && (
           <div className="absolute inset-0 w-full h-full transition-all duration-700 opacity-0 group-hover:opacity-100">
-            {renderProductImage(product, 0, getName(), "w-full h-full object-cover transition-transform duration-700 group-hover:scale-125")}
+            {renderProductImage(product, 0, productName, "w-full h-full object-cover transition-transform duration-700 group-hover:scale-125")}
           </div>
         )}
         
@@ -518,13 +524,13 @@ const ProductCard = ({ product, viewMode = 'grid', onAddToCart, onAddToWishlist,
         <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
           {/* Product Name */}
           <h3 className="font-semibold text-base leading-tight mb-2 text-stone-900 dark:text-stone-100 group-hover:text-primary dark:group-hover:text-primary transition-colors duration-300 line-clamp-2 flex-shrink-0">
-            {getName()}
+                {productName}
           </h3>
             
           {/* Product Description - Compact */}
           <div className="text-muted-foreground text-xs line-clamp-2 mb-2 leading-relaxed flex-shrink-0">
             <MarkdownRenderer 
-              content={getDescription() || 'Premium Japanese fashion item with authentic design and quality materials.'}
+              content={productDescription || 'Premium Japanese fashion item with authentic design and quality materials.'}
               className="text-xs"
             />
           </div>
@@ -616,7 +622,8 @@ const ProductCard = ({ product, viewMode = 'grid', onAddToCart, onAddToWishlist,
         </div>
       </CardContent>
     </Card>
-  );
+    );
 };
 
-export default ProductCard;
+// Memoize component to prevent unnecessary re-renders
+export default memo(ProductCard);

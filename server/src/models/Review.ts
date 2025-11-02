@@ -55,5 +55,11 @@ const reviewSchema = new Schema<IReview>({
 // Index for efficient queries
 reviewSchema.index({ productId: 1, createdAt: -1 });
 reviewSchema.index({ userId: 1, createdAt: -1 });
+reviewSchema.index({ rating: 1 });
+reviewSchema.index({ verified: 1 });
+// Compound indexes for common queries
+reviewSchema.index({ productId: 1, rating: 1 });
+reviewSchema.index({ productId: 1, verified: 1 });
+reviewSchema.index({ userId: 1, productId: 1 }); // Prevent duplicate reviews
 
 export const Review = mongoose.model<IReview>('Review', reviewSchema); 

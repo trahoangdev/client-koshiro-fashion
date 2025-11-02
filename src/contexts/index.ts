@@ -68,6 +68,11 @@ export { useLanguage, LanguageProvider } from './LanguageContext';
 // ============================================================================
 // NOTIFICATIONS CONTEXT
 // ============================================================================
-// Notifications context has been removed
-// Uncomment below if NotificationsContext is recreated:
-// export { useNotifications, NotificationsProvider } from './NotificationsContext';
+/**
+ * Notifications context hook and provider (Admin only)
+ * @example
+ * ```tsx
+ * const { notifications, unreadCount, markAsRead } = useNotifications();
+ * ```
+ */
+export { useNotifications, NotificationsProvider } from './NotificationsContext';

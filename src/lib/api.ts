@@ -1,3 +1,5 @@
+import { logger } from './logger';
+
 const API_BASE_URL = 'http://localhost:3000/api';
 
 // Types
@@ -90,6 +92,7 @@ export interface Product {
   isLimitedEdition: boolean;
   isBestSeller: boolean;
   tags: string[];
+  views?: number; // Product view count
   // New fields
   slug?: string;
   metaTitle?: string;
@@ -102,6 +105,11 @@ export interface Product {
   };
   materials?: string[];
   careInstructions?: string;
+  careInstructionsEn?: string;
+  careInstructionsJa?: string;
+  origin?: string;
+  originEn?: string;
+  originJa?: string;
   sku?: string;
   barcode?: string;
   createdAt: string;
@@ -366,9 +374,9 @@ class ApiClient {
 
     if (this.token) {
       (headers as Record<string, string>).Authorization = `Bearer ${this.token}`;
-      console.log(`API Request to ${endpoint} with token: ${this.token.substring(0, 20)}...`);
+      logger.debug(`API Request to ${endpoint} with token`, { token: this.token.substring(0, 20) + '...' });
     } else {
-      console.log(`API Request to ${endpoint} without token`);
+      logger.debug(`API Request to ${endpoint} without token`);
     }
 
     const config: RequestInit = {
@@ -381,7 +389,7 @@ class ApiClient {
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        console.error(`API Error for ${endpoint}:`, errorData);
+        logger.error(`API Error for ${endpoint}`, errorData);
         throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
       }
 
@@ -389,15 +397,15 @@ class ApiClient {
       
       // If response has success field and it's false, throw error
       if (data && typeof data === 'object' && 'success' in data && data.success === false) {
-        console.error(`API Error for ${endpoint}:`, data);
+        logger.error(`API Error for ${endpoint}`, data);
         const errorMessage = data.message || 'Request failed';
         throw new Error(errorMessage);
       }
       
-      console.log(`API Success for ${endpoint}:`, data);
+      logger.debug(`API Success for ${endpoint}`, data);
       return data;
     } catch (error) {
-      console.error('API request failed:', error);
+      logger.error('API request failed', error);
       throw error;
     }
   }
@@ -420,7 +428,7 @@ class ApiClient {
         user: response.user
       };
     } catch (error) {
-      console.error('Login API error:', error);
+      logger.error('Login API error', error);
       throw error;
     }
   }
@@ -442,7 +450,7 @@ class ApiClient {
         user: response.user
       };
     } catch (error) {
-      console.error('Admin login API error:', error);
+      logger.error('Admin login API error', error);
       throw error;
     }
   }
@@ -464,7 +472,7 @@ class ApiClient {
         user: response.user
       };
     } catch (error) {
-      console.error('Register API error:', error);
+      logger.error('Register API error', error);
       throw error;
     }
   }
@@ -473,7 +481,7 @@ class ApiClient {
     try {
       return await this.request<{ user: User }>('/auth/profile');
     } catch (error) {
-      console.error('Get profile API error:', error);
+      logger.error('Get profile API error', error);
       throw error;
     }
   }
@@ -489,7 +497,7 @@ class ApiClient {
         body: JSON.stringify(userData),
       });
     } catch (error) {
-      console.error('Update profile API error:', error);
+      logger.error('Update profile API error', error);
       throw error;
     }
   }
@@ -501,7 +509,7 @@ class ApiClient {
         body: JSON.stringify({ email }),
       });
     } catch (error) {
-      console.error('Forgot password API error:', error);
+      logger.error('Forgot password API error', error);
       throw error;
     }
   }
@@ -513,7 +521,7 @@ class ApiClient {
         body: JSON.stringify({ token, newPassword }),
       });
     } catch (error) {
-      console.error('Reset password API error:', error);
+      logger.error('Reset password API error', error);
       throw error;
     }
   }
@@ -537,7 +545,7 @@ class ApiClient {
     try {
       return await this.request<PaymentMethod[]>('/payment-methods');
     } catch (error) {
-      console.error('Get customer payment methods API error:', error);
+      logger.error('Get customer payment methods API error', error);
       throw error;
     }
   }
@@ -557,7 +565,7 @@ class ApiClient {
         body: JSON.stringify(paymentData),
       });
     } catch (error) {
-      console.error('Add customer payment method API error:', error);
+      logger.error('Add customer payment method API error', error);
       throw error;
     }
   }
@@ -577,7 +585,7 @@ class ApiClient {
         body: JSON.stringify(paymentData),
       });
     } catch (error) {
-      console.error('Update customer payment method API error:', error);
+      logger.error('Update customer payment method API error', error);
       throw error;
     }
   }
@@ -588,7 +596,7 @@ class ApiClient {
         method: 'DELETE',
       });
     } catch (error) {
-      console.error('Delete customer payment method API error:', error);
+      logger.error('Delete customer payment method API error', error);
       throw error;
     }
   }
@@ -599,7 +607,7 @@ class ApiClient {
         method: 'PUT',
       });
     } catch (error) {
-      console.error('Set default payment method API error:', error);
+      logger.error('Set default payment method API error', error);
       throw error;
     }
   }
@@ -614,7 +622,7 @@ class ApiClient {
     try {
       return await this.request<{ addresses: Address[] }>('/auth/addresses');
     } catch (error) {
-      console.error('Get addresses API error:', error);
+      logger.error('Get addresses API error', error);
       throw error;
     }
   }
@@ -636,7 +644,7 @@ class ApiClient {
         body: JSON.stringify(addressData),
       });
     } catch (error) {
-      console.error('Add address API error:', error);
+      logger.error('Add address API error', error);
       throw error;
     }
   }
@@ -658,7 +666,7 @@ class ApiClient {
         body: JSON.stringify(addressData),
       });
     } catch (error) {
-      console.error('Update address API error:', error);
+      logger.error('Update address API error', error);
       throw error;
     }
   }
@@ -669,7 +677,7 @@ class ApiClient {
         method: 'DELETE',
       });
     } catch (error) {
-      console.error('Delete address API error:', error);
+      logger.error('Delete address API error', error);
       throw error;
     }
   }
@@ -680,7 +688,7 @@ class ApiClient {
         method: 'PUT',
       });
     } catch (error) {
-      console.error('Set default address API error:', error);
+      logger.error('Set default address API error', error);
       throw error;
     }
   }
@@ -714,8 +722,9 @@ class ApiClient {
     return this.request<{ products: Product[] }>(endpoint);
   }
 
-  async getProduct(id: string): Promise<{ product: Product }> {
-    return this.request<{ product: Product }>(`/products/${id}`);
+  async getProduct(id: string, trackView: boolean = false): Promise<{ product: Product }> {
+    const url = trackView ? `/products/${id}?trackView=true` : `/products/${id}`;
+    return this.request<{ product: Product }>(url);
   }
 
   async getFeaturedProducts(limit: number = 6): Promise<{ products: Product[] }> {
@@ -2356,6 +2365,50 @@ class ApiClient {
       body: JSON.stringify({ permissions }),
     });
   }
+
+  // Color API methods
+  async getColors(params?: { activeOnly?: boolean; language?: 'vi' | 'en' | 'ja' }): Promise<{ success: boolean; colors: Color[]; total: number }> {
+    const searchParams = new URLSearchParams();
+    if (params?.activeOnly !== undefined) searchParams.append('activeOnly', params.activeOnly.toString());
+    if (params?.language) searchParams.append('language', params.language);
+
+    const queryString = searchParams.toString();
+    const endpoint = `/colors${queryString ? `?${queryString}` : ''}`;
+    
+    return this.request(endpoint);
+  }
+
+  async getColor(id: string): Promise<{ success: boolean; color: Color }> {
+    return this.request(`/colors/${id}`);
+  }
+
+  async getColorByName(name: string): Promise<{ success: boolean; color: Color }> {
+    return this.request(`/colors/name/${encodeURIComponent(name)}`);
+  }
+
+  async getColorHex(name: string): Promise<{ success: boolean; name: string; hexValue: string }> {
+    return this.request(`/colors/hex/${encodeURIComponent(name)}`);
+  }
+
+  async createColor(color: CreateColorRequest): Promise<{ success: boolean; message: string; color: Color; isExisting?: boolean }> {
+    return this.request('/colors', {
+      method: 'POST',
+      body: JSON.stringify(color),
+    });
+  }
+
+  async updateColor(id: string, color: UpdateColorRequest): Promise<{ success: boolean; message: string; color: Color }> {
+    return this.request(`/colors/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(color),
+    });
+  }
+
+  async deleteColor(id: string): Promise<{ success: boolean; message: string }> {
+    return this.request(`/colors/${id}`, {
+      method: 'DELETE',
+    });
+  }
 }
 
 // FlashSale types
@@ -2385,6 +2438,37 @@ export interface FlashSale {
   textColor?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+// Color types
+export interface Color {
+  _id: string;
+  name: string;
+  nameEn?: string;
+  nameJa?: string;
+  hexValue: string;
+  isActive: boolean;
+  isDefault: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateColorRequest {
+  name: string;
+  nameEn?: string;
+  nameJa?: string;
+  hexValue: string;
+  isActive?: boolean;
+  isDefault?: boolean;
+}
+
+export interface UpdateColorRequest {
+  name?: string;
+  nameEn?: string;
+  nameJa?: string;
+  hexValue?: string;
+  isActive?: boolean;
+  isDefault?: boolean;
 }
 
 // Create and export API client instance

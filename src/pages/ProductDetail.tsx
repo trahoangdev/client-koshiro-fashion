@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts';
-import { api, Product, ProductVideo } from '@/lib/api';
+import { api, Product, ProductVideo, Color } from '@/lib/api';
 import { formatCurrency } from '@/lib/currency';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -40,7 +40,9 @@ import {
   Twitter,
   Mail,
   ArrowLeft,
-  MoreHorizontal
+  MoreHorizontal,
+  Ruler,
+  Package
 } from 'lucide-react';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
 
@@ -62,6 +64,8 @@ const ProductDetail: React.FC = () => {
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const [isInWishlist, setIsInWishlist] = useState(false);
   const [shareMenuOpen, setShareMenuOpen] = useState(false);
+  const [apiColors, setApiColors] = useState<Color[]>([]);
+  const [colorsLoading, setColorsLoading] = useState(false);
   const [reviews] = useState([
     {
       id: 1,
@@ -199,6 +203,24 @@ const ProductDetail: React.FC = () => {
     }
   };
 
+  const getCareInstructions = () => {
+    if (!product) return '';
+    switch (language) {
+      case 'vi': return product.careInstructions || '';
+      case 'ja': return product.careInstructionsJa || product.careInstructions || '';
+      default: return product.careInstructionsEn || product.careInstructions || '';
+    }
+  };
+
+  const getOrigin = () => {
+    if (!product) return '';
+    switch (language) {
+      case 'vi': return product.origin || '';
+      case 'ja': return product.originJa || product.origin || '';
+      default: return product.originEn || product.origin || '';
+    }
+  };
+
   const getCategoryName = () => {
     if (!product || typeof product.categoryId === 'string') return 'Category';
     switch (language) {
@@ -208,13 +230,156 @@ const ProductDetail: React.FC = () => {
     }
   };
 
+  // Fetch colors from API
+  useEffect(() => {
+    const loadColors = async () => {
+      try {
+        setColorsLoading(true);
+        const response = await api.getColors({ 
+          activeOnly: true, 
+          language: language as 'vi' | 'en' | 'ja'
+        });
+        setApiColors(response.colors || []);
+      } catch (error) {
+        console.error('Error loading colors:', error);
+        // Fallback to empty array if API fails
+        setApiColors([]);
+      } finally {
+        setColorsLoading(false);
+      }
+    };
+
+    loadColors();
+  }, [language]);
+
+  // Helper function to get hex color from color name (with API fallback)
+  const getColorHex = (colorName: string): string => {
+    // Check if it's already a hex code
+    if (/^#[0-9A-Fa-f]{6}$/.test(colorName) || /^#[0-9A-Fa-f]{3}$/.test(colorName)) {
+      return colorName;
+    }
+    
+    // Try to find color in API colors first
+    if (apiColors.length > 0) {
+      const normalizedName = colorName.trim();
+      const colorInApi = apiColors.find(c => 
+        c.name.toLowerCase() === normalizedName.toLowerCase() ||
+        c.nameEn?.toLowerCase() === normalizedName.toLowerCase() ||
+        c.nameJa?.toLowerCase() === normalizedName.toLowerCase()
+      );
+      
+      if (colorInApi) {
+        return colorInApi.hexValue;
+      }
+    }
+    
+    // Fallback to hardcoded color map if API colors not loaded yet
+    const colorMap: { [key: string]: string } = {
+      // Vietnamese colors
+      'Đỏ': '#ef4444',
+      'Xanh dương': '#3b82f6',
+      'Xanh ngọc': '#06b6d4',
+      'Xanh nhạt': '#93c5fd',
+      'Xanh lá': '#22c55e',
+      'Vàng': '#eab308',
+      'Hồng': '#ec4899',
+      'Pink': '#ec4899',
+      'Tím': '#a855f7',
+      'Cam': '#f97316',
+      'Nâu': '#a16207',
+      'Đen': '#000000',
+      'Black': '#000000',
+      'Trắng': '#ffffff',
+      'White': '#ffffff',
+      'Xám': '#6b7280',
+      'Xám đậm': '#374151',
+      'Xám nhạt': '#d1d5db',
+      'Bạc': '#c0c0c0',
+      'Vàng kim': '#ffd700',
+      
+      // English colors
+      'Red': '#ef4444',
+      'Blue': '#3b82f6',
+      'Green': '#22c55e',
+      'Yellow': '#eab308',
+      'Purple': '#a855f7',
+      'Orange': '#f97316',
+      'Brown': '#a16207',
+      'Gray': '#6b7280',
+      'Grey': '#6b7280',
+      'Silver': '#c0c0c0',
+      'Gold': '#ffd700',
+      
+      // Japanese colors
+      '赤': '#ef4444',
+      '青': '#3b82f6',
+      '緑': '#22c55e',
+      '黄色': '#eab308',
+      'ピンク': '#ec4899',
+      '紫': '#a855f7',
+      'オレンジ': '#f97316',
+      '茶色': '#a16207',
+      '黒': '#000000',
+      '白': '#ffffff',
+      '灰色': '#6b7280',
+      '銀': '#c0c0c0',
+      '金': '#ffd700'
+    };
+    
+    // Check if it's already a hex code
+    if (/^#[0-9A-Fa-f]{6}$/.test(colorName) || /^#[0-9A-Fa-f]{3}$/.test(colorName)) {
+      return colorName;
+    }
+    
+    // Check color map (case-insensitive)
+    const normalizedName = colorName.trim();
+    if (colorMap[normalizedName]) {
+      return colorMap[normalizedName];
+    }
+    
+    // Try case-insensitive search
+    const lowerName = normalizedName.toLowerCase();
+    for (const [key, value] of Object.entries(colorMap)) {
+      if (key.toLowerCase() === lowerName) {
+        return value;
+      }
+    }
+    
+    // Default fallback
+    return '#6b7280';
+  };
+
+  // Helper function to get color name and value
+  const getColorInfo = (color: string | { name: string; value: string }): { name: string; value: string } => {
+    if (typeof color === 'string') {
+      // Check if color string is a hex code
+      if (/^#[0-9A-Fa-f]{6}$/.test(color) || /^#[0-9A-Fa-f]{3}$/.test(color)) {
+        return {
+          name: color,
+          value: color
+        };
+      }
+      // Otherwise, treat as color name and get hex
+      return {
+        name: color,
+        value: getColorHex(color)
+      };
+    }
+    // If it's already an object
+    return {
+      name: color.name,
+      value: color.value || getColorHex(color.name)
+    };
+  };
+
   useEffect(() => {
     const loadProduct = async () => {
       if (!id) return;
       
       try {
         setLoading(true);
-        const response = await api.getProduct(id);
+        // Track view when loading product detail
+        const response = await api.getProduct(id, true);
         setProduct(response.product);
         
         // Create media items from images and videos
@@ -812,19 +977,64 @@ const ProductDetail: React.FC = () => {
               {product.colors.length > 0 && (
                 <div className="space-y-3">
                   <label className="text-sm font-semibold">{t.color}</label>
-                  <div className="flex flex-wrap gap-2">
-                    {product.colors.map((color) => (
-                      <Button
-                        key={color}
-                        variant={selectedColor === color ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setSelectedColor(color)}
-                        className="min-w-[4rem] h-10"
-                      >
-                        {color}
-                      </Button>
-                    ))}
+                  <div className="flex flex-wrap gap-3">
+                    {product.colors.map((color) => {
+                      if (!color) return null;
+                      
+                      const colorInfo = getColorInfo(color);
+                      let colorName: string;
+                      
+                      if (typeof color === 'string') {
+                        colorName = color;
+                      } else if (typeof color === 'object' && 'name' in color) {
+                        colorName = (color as { name: string; value?: string }).name;
+                      } else {
+                        colorName = String(color);
+                      }
+                      
+                      const isSelected = selectedColor === colorName;
+                      
+                      return (
+                        <button
+                          key={colorName}
+                          type="button"
+                          onClick={() => setSelectedColor(colorName)}
+                          className={`
+                            relative flex flex-col items-center justify-center
+                            w-14 h-14 rounded-full
+                            border-2 transition-all duration-200
+                            ${isSelected 
+                              ? 'border-primary ring-2 ring-primary ring-offset-2 scale-110' 
+                              : 'border-muted-foreground/30 hover:border-primary/50 hover:scale-105'
+                            }
+                            shadow-md hover:shadow-lg
+                          `}
+                          style={{
+                            backgroundColor: colorInfo.value,
+                          }}
+                          title={colorInfo.name}
+                        >
+                          {/* White or black checkmark for contrast */}
+                          {(colorInfo.value === '#ffffff' || colorInfo.value === '#FFFFFF' || colorInfo.value.toLowerCase() === '#ffffff') && isSelected && (
+                            <CheckCircle className="h-5 w-5 text-gray-800" />
+                          )}
+                          {colorInfo.value !== '#ffffff' && colorInfo.value !== '#FFFFFF' && colorInfo.value.toLowerCase() !== '#ffffff' && isSelected && (
+                            <CheckCircle className="h-5 w-5 text-white drop-shadow-lg" />
+                          )}
+                          {!isSelected && (
+                            <span className="sr-only">{colorInfo.name}</span>
+                          )}
+                        </button>
+                      );
+                    })}
                   </div>
+                  {/* Show selected color name */}
+                  {selectedColor && (
+                    <p className="text-sm text-muted-foreground">
+                      {language === 'vi' ? 'Đã chọn: ' : language === 'ja' ? '選択済み: ' : 'Selected: '}
+                      <span className="font-medium text-foreground">{selectedColor}</span>
+                    </p>
+                  )}
                 </div>
               )}
 
@@ -927,34 +1137,48 @@ const ProductDetail: React.FC = () => {
                       />
                     </div>
                     
-                    <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <h4 className="font-semibold mb-3 text-foreground">Key Features</h4>
-                        <ul className="space-y-2 text-sm text-muted-foreground">
-                          <li className="flex items-center space-x-2">
-                            <CheckCircle className="h-4 w-4 text-green-500" />
-                            <span>High-quality materials</span>
-                          </li>
-                          <li className="flex items-center space-x-2">
-                            <CheckCircle className="h-4 w-4 text-green-500" />
-                            <span>Durable construction</span>
-                          </li>
-                          <li className="flex items-center space-x-2">
-                            <CheckCircle className="h-4 w-4 text-green-500" />
-                            <span>Modern design</span>
-                          </li>
-                        </ul>
+                    {/* Key Features & Care Instructions */}
+                    {(product.materials && product.materials.length > 0) || getCareInstructions() || getOrigin() ? (
+                      <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {product.materials && product.materials.length > 0 && (
+                          <div>
+                            <h4 className="font-semibold mb-3 text-foreground flex items-center gap-2">
+                              <Package className="h-4 w-4" />
+                              {language === 'vi' ? 'Chất Liệu' : language === 'ja' ? '素材' : 'Materials'}
+                            </h4>
+                            <div className="flex flex-wrap gap-2">
+                              {product.materials.map((material, index) => (
+                                <Badge key={index} variant="secondary" className="text-sm">
+                                  {material}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        <div className="space-y-4">
+                          {getOrigin() && (
+                            <div>
+                              <h4 className="font-semibold mb-2 text-foreground flex items-center gap-2">
+                                <CheckCircle className="h-4 w-4" />
+                                {language === 'vi' ? 'Xuất Xứ' : language === 'ja' ? '原産国' : 'Origin'}
+                              </h4>
+                              <p className="text-sm text-muted-foreground">{getOrigin()}</p>
+                            </div>
+                          )}
+                          {getCareInstructions() && (
+                            <div>
+                              <h4 className="font-semibold mb-2 text-foreground flex items-center gap-2">
+                                <Shield className="h-4 w-4" />
+                                {language === 'vi' ? 'Hướng Dẫn Bảo Quản' : language === 'ja' ? 'お手入れ方法' : 'Care Instructions'}
+                              </h4>
+                              <div className="text-sm text-muted-foreground whitespace-pre-line">
+                                {getCareInstructions()}
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      <div>
-                        <h4 className="font-semibold mb-3 text-foreground">Care Instructions</h4>
-                        <ul className="space-y-2 text-sm text-muted-foreground">
-                          <li>• Machine washable</li>
-                          <li>• Do not bleach</li>
-                          <li>• Tumble dry low</li>
-                          <li>• Iron if needed</li>
-                        </ul>
-                      </div>
-                    </div>
+                    ) : null}
                   </div>
                 </CardContent>
               </Card>
@@ -962,39 +1186,150 @@ const ProductDetail: React.FC = () => {
             
             <TabsContent value="specifications" className="mt-8">
               <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Ruler className="h-5 w-5" />
+                    {t.specifications}
+                  </CardTitle>
+                </CardHeader>
                 <CardContent className="pt-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Left Column */}
                     <div className="space-y-4">
-                      <div className="flex justify-between py-2 border-b">
-                        <span className="font-medium">Category</span>
+                      {/* Category */}
+                      <div className="flex justify-between py-3 border-b">
+                        <span className="font-medium text-foreground">
+                          {language === 'vi' ? 'Danh Mục' : language === 'ja' ? 'カテゴリ' : 'Category'}
+                        </span>
                         <span className="text-muted-foreground">
                           {getCategoryName()}
                         </span>
                       </div>
-                      <div className="flex justify-between py-2 border-b">
-                        <span className="font-medium">Stock</span>
-                        <span className="text-muted-foreground">{product.stock} items</span>
+
+                      {/* Stock */}
+                      <div className="flex justify-between py-3 border-b">
+                        <span className="font-medium text-foreground">
+                          {language === 'vi' ? 'Tồn Kho' : language === 'ja' ? '在庫' : 'Stock'}
+                        </span>
+                        <span className="text-muted-foreground">
+                          {product.stock} {language === 'vi' ? 'sản phẩm' : language === 'ja' ? '個' : 'items'}
+                        </span>
                       </div>
-                      <div className="flex justify-between py-2 border-b">
-                        <span className="font-medium">Weight</span>
-                        <span className="text-muted-foreground">1.2 kg</span>
-                      </div>
+
+                      {/* Dimensions */}
+                      {product.dimensions && (product.dimensions.length > 0 || product.dimensions.width > 0 || product.dimensions.height > 0) && (
+                        <div className="flex justify-between py-3 border-b">
+                          <span className="font-medium text-foreground flex items-center gap-2">
+                            <Ruler className="h-4 w-4" />
+                            {language === 'vi' ? 'Kích Thước' : language === 'ja' ? 'サイズ' : 'Dimensions'}
+                          </span>
+                          <span className="text-muted-foreground">
+                            {product.dimensions.length} × {product.dimensions.width} × {product.dimensions.height} cm
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Weight */}
+                      {product.weight && product.weight > 0 && (
+                        <div className="flex justify-between py-3 border-b">
+                          <span className="font-medium text-foreground flex items-center gap-2">
+                            <Package className="h-4 w-4" />
+                            {language === 'vi' ? 'Trọng Lượng' : language === 'ja' ? '重量' : 'Weight'}
+                          </span>
+                          <span className="text-muted-foreground">{product.weight} kg</span>
+                        </div>
+                      )}
+
+                      {/* SKU */}
+                      {product.sku && (
+                        <div className="flex justify-between py-3 border-b">
+                          <span className="font-medium text-foreground">SKU</span>
+                          <span className="text-muted-foreground font-mono text-sm">{product.sku}</span>
+                        </div>
+                      )}
+
+                      {/* Barcode */}
+                      {product.barcode && (
+                        <div className="flex justify-between py-3 border-b">
+                          <span className="font-medium text-foreground">
+                            {language === 'vi' ? 'Mã Vạch' : language === 'ja' ? 'バーコード' : 'Barcode'}
+                          </span>
+                          <span className="text-muted-foreground font-mono text-sm">{product.barcode}</span>
+                        </div>
+                      )}
                     </div>
+
+                    {/* Right Column */}
                     <div className="space-y-4">
-                      <div className="flex justify-between py-2 border-b">
-                        <span className="font-medium">Dimensions</span>
-                        <span className="text-muted-foreground">30 x 20 x 10 cm</span>
+                      {/* Materials - Always show section */}
+                      <div className="flex flex-col py-3 border-b">
+                        <span className="font-medium text-foreground mb-2 flex items-center gap-2">
+                          <Package className="h-4 w-4" />
+                          {language === 'vi' ? 'Chất Liệu' : language === 'ja' ? '素材' : 'Materials'}
+                        </span>
+                        {product.materials && Array.isArray(product.materials) && product.materials.length > 0 ? (
+                          <div className="flex flex-wrap gap-2">
+                            {product.materials.map((material, index) => {
+                              const materialText = typeof material === 'string' 
+                                ? material 
+                                : (material && typeof material === 'object' && ('name' in material || 'value' in material))
+                                  ? ((material as { name?: string; value?: string }).name || (material as { name?: string; value?: string }).value || String(material))
+                                  : String(material);
+                              return (
+                                <Badge key={index} variant="secondary" className="text-sm">
+                                  {materialText}
+                                </Badge>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <span className="text-sm text-muted-foreground italic">
+                            {language === 'vi' ? 'Chưa có thông tin' : language === 'ja' ? '情報なし' : 'No information available'}
+                          </span>
+                        )}
                       </div>
-                      <div className="flex justify-between py-2 border-b">
-                        <span className="font-medium">Material</span>
-                        <span className="text-muted-foreground">Cotton blend</span>
-                      </div>
-                      <div className="flex justify-between py-2 border-b">
-                        <span className="font-medium">Origin</span>
-                        <span className="text-muted-foreground">Japan</span>
-                      </div>
+
+                      {/* Origin */}
+                      {getOrigin() && (
+                        <div className="flex justify-between py-3 border-b">
+                          <span className="font-medium text-foreground flex items-center gap-2">
+                            <CheckCircle className="h-4 w-4" />
+                            {language === 'vi' ? 'Xuất Xứ' : language === 'ja' ? '原産国' : 'Origin'}
+                          </span>
+                          <span className="text-muted-foreground">{getOrigin()}</span>
+                        </div>
+                      )}
+
+                      {/* Care Instructions */}
+                      {getCareInstructions() && (
+                        <div className="flex flex-col py-3 border-b">
+                          <span className="font-medium text-foreground mb-2 flex items-center gap-2">
+                            <Shield className="h-4 w-4" />
+                            {language === 'vi' ? 'Hướng Dẫn Bảo Quản' : language === 'ja' ? 'お手入れ方法' : 'Care Instructions'}
+                          </span>
+                          <span className="text-muted-foreground text-sm whitespace-pre-line">
+                            {getCareInstructions()}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
+
+                  {/* Additional Info Section */}
+                  {(product.tags && product.tags.length > 0) && (
+                    <div className="mt-6 pt-6 border-t">
+                      <h4 className="font-semibold mb-3 text-foreground">
+                        {language === 'vi' ? 'Thẻ' : language === 'ja' ? 'タグ' : 'Tags'}
+                      </h4>
+                      <div className="flex flex-wrap gap-2">
+                        {product.tags.map((tag, index) => (
+                          <Badge key={index} variant="outline" className="text-sm">
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>

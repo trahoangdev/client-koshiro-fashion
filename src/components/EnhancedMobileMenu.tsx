@@ -41,6 +41,7 @@ import { useAuth } from '@/contexts';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Link, useNavigate } from 'react-router-dom';
 import { api } from '@/lib/api';
+import { logger } from '@/lib/logger';
 
 interface EnhancedMobileMenuProps {
   isOpen: boolean;
@@ -75,7 +76,7 @@ const EnhancedMobileMenu: React.FC<EnhancedMobileMenuProps> = ({
         const categoriesArray = Array.isArray(response) ? response : response.categories || [];
         setCategories(categoriesArray.slice(0, 6)); // Limit to 6 categories for mobile
       } catch (error) {
-        console.error('Failed to load categories:', error);
+        logger.error('Failed to load categories', error);
       } finally {
         setIsLoading(false);
       }
@@ -331,10 +332,10 @@ const EnhancedMobileMenu: React.FC<EnhancedMobileMenuProps> = ({
           transition: 'all 300ms cubic-bezier(0.4, 0, 0.2, 1)'
         }}
       >
-        {/* Enhanced Header with gradient - no notification badge */}
+        {/* Enhanced Header with gradient */}
         <div className="flex items-center justify-between p-6 border-b border-stone-200/60 dark:border-stone-700/60 bg-gradient-to-r from-stone-50 via-primary/10 to-stone-50 dark:from-stone-800 dark:via-primary/10 dark:to-stone-800">
           <div className="flex items-center space-x-3">
-            <div className="p-2 rounded-full bg-primary/10 backdrop-blur-sm">
+            <div className="p-2 rounded-xl bg-primary/10 backdrop-blur-sm border border-primary/20">
               <Menu className="h-5 w-5 text-primary" />
             </div>
             <span className="font-bold text-xl tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
@@ -345,10 +346,9 @@ const EnhancedMobileMenu: React.FC<EnhancedMobileMenuProps> = ({
             variant="ghost" 
             size="icon" 
             onClick={onClose}
-            className="h-10 w-10 hover:bg-destructive/10 hover:text-destructive transition-all duration-300 rounded-full hover:scale-110 relative"
+            className="h-10 w-10 hover:bg-destructive/10 hover:text-destructive transition-all duration-300 rounded-xl hover:scale-110 relative"
           >
             <X className="h-5 w-5" />
-            {/* Notification badge hidden - removed per user request */}
           </Button>
         </div>
 
@@ -358,7 +358,7 @@ const EnhancedMobileMenu: React.FC<EnhancedMobileMenuProps> = ({
           <div className="p-6 border-b border-stone-200/60 dark:border-stone-700/60 flex-shrink-0 bg-gradient-to-r from-stone-50/50 to-transparent dark:from-stone-800/50">
             <form onSubmit={handleSearch}>
               <div className="relative group">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5 transition-all duration-300 group-focus-within:text-primary group-focus-within:scale-110" />
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5 transition-all duration-300 group-focus-within:text-primary group-focus-within:scale-110 z-10" />
                 <Input
                   type="search"
                   placeholder={tr.search}
@@ -367,17 +367,17 @@ const EnhancedMobileMenu: React.FC<EnhancedMobileMenuProps> = ({
                   onFocus={() => setSearchFocused(true)}
                   onBlur={() => setSearchFocused(false)}
                   className={cn(
-                    "pl-12 pr-4 py-3 text-base rounded-full border-2 transition-all duration-300 bg-white/80 dark:bg-stone-800/80 backdrop-blur-sm enhanced-focus",
+                    "pl-12 pr-4 py-3 text-base rounded-xl border-2 transition-all duration-300 bg-white dark:bg-stone-800 border-stone-200/60 dark:border-stone-700/60",
                     searchFocused 
-                      ? "border-primary shadow-lg shadow-primary/20 bg-background dark:bg-stone-800 scale-[1.02]" 
-                      : "border-stone-200/60 dark:border-stone-700/60 hover:border-primary/50 hover:scale-[1.01]"
+                      ? "border-primary shadow-lg shadow-primary/20 scale-[1.02] focus:border-primary" 
+                      : "hover:border-primary/50 hover:scale-[1.01]"
                   )}
                 />
                 {searchQuery && (
                   <Button
                     type="submit"
                     size="sm"
-                    className="absolute right-2 top-1/2 transform -translate-y-1/2 h-8 w-8 rounded-full bg-primary hover:bg-primary/90 transition-all duration-300 hover:scale-110 micro-scale ripple"
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 h-8 w-8 rounded-xl bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary transition-all duration-300 hover:scale-110 shadow-md"
                   >
                     <Zap className="h-4 w-4" />
                   </Button>
@@ -388,16 +388,16 @@ const EnhancedMobileMenu: React.FC<EnhancedMobileMenuProps> = ({
 
           {/* Enhanced User Section with improved animations */}
           {isAuthenticated ? (
-            <div className="p-6 border-b border-border/50 flex-shrink-0">
-              <div className="flex items-center space-x-3 mb-6 p-4 bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 rounded-xl border border-primary/20 backdrop-blur-sm hover:shadow-lg transition-all duration-300 menu-card-hover">
-                <Avatar className="h-14 w-14 ring-2 ring-primary/20 hover:ring-primary/40 transition-all duration-300 micro-scale">
+            <div className="p-6 border-b border-stone-200/60 dark:border-stone-700/60 flex-shrink-0">
+              <div className="flex items-center space-x-3 mb-6 p-4 bg-gradient-to-br from-white via-white to-stone-50/50 dark:from-stone-800 dark:via-stone-800 dark:to-stone-900/50 rounded-xl border border-stone-200/60 dark:border-stone-700/60 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
+                <Avatar className="h-14 w-14 ring-2 ring-primary/20 hover:ring-primary/40 transition-all duration-300 rounded-xl">
                   <AvatarImage src={user?.avatar} />
-                  <AvatarFallback className="bg-primary/10 text-primary font-bold">
+                  <AvatarFallback className="bg-gradient-to-br from-primary/10 to-primary/5 text-primary font-bold rounded-xl">
                     {getUserInitials(user?.name || '')}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
-                  <p className="font-bold text-lg truncate">{user?.name}</p>
+                  <p className="font-bold text-lg truncate text-foreground">{user?.name}</p>
                   <p className="text-sm text-muted-foreground truncate">{user?.email}</p>
                   <div className="flex items-center mt-1">
                     <Star className="h-3 w-3 text-yellow-500 mr-1 animate-pulse" />
@@ -409,27 +409,27 @@ const EnhancedMobileMenu: React.FC<EnhancedMobileMenuProps> = ({
               {/* Enhanced Quick Stats with hover effects */}
               <div className="grid grid-cols-2 gap-4">
                 <Link to="/cart" onClick={handleLinkClick}>
-                  <div className="group flex flex-col items-center space-y-2 p-4 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 rounded-xl hover:shadow-lg transition-all duration-300 border border-blue-200 dark:border-blue-800 hover:scale-105 hover:bg-gradient-to-br hover:from-blue-100 hover:to-blue-200 dark:hover:from-blue-900 dark:hover:to-blue-800 menu-card-hover stagger-item">
-                    <div className="p-2 bg-blue-500/10 rounded-full group-hover:bg-blue-500/20 transition-all duration-300 group-hover:scale-110 micro-scale">
+                  <div className="group flex flex-col items-center space-y-2 p-4 bg-gradient-to-br from-white via-white to-stone-50/50 dark:from-stone-800 dark:via-stone-800 dark:to-stone-900/50 rounded-xl hover:shadow-lg transition-all duration-300 border border-stone-200/60 dark:border-stone-700/60 hover:scale-105 hover:border-primary/50">
+                    <div className="p-2 bg-blue-500/10 rounded-xl group-hover:bg-blue-500/20 transition-all duration-300 group-hover:scale-110">
                       <ShoppingCart className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                     </div>
-                    <span className="text-sm font-semibold text-blue-900 dark:text-blue-100">{tr.cart}</span>
+                    <span className="text-sm font-semibold text-foreground">{tr.cart}</span>
                     {cartItemsCount > 0 && (
-                      <Badge variant="destructive" className="h-6 w-6 text-xs p-0 flex items-center justify-center animate-pulse group-hover:scale-110 transition-transform duration-300 micro-scale">
-                        {cartItemsCount}
+                      <Badge variant="destructive" className="h-6 w-6 text-xs p-0 flex items-center justify-center rounded-full animate-pulse group-hover:scale-110 transition-transform duration-300">
+                        {cartItemsCount > 99 ? '99+' : cartItemsCount}
                       </Badge>
                     )}
                   </div>
                 </Link>
                 <Link to="/wishlist" onClick={handleLinkClick}>
-                  <div className="group flex flex-col items-center space-y-2 p-4 bg-gradient-to-br from-pink-50 to-pink-100 dark:from-pink-950 dark:to-pink-900 rounded-xl hover:shadow-lg transition-all duration-300 border border-pink-200 dark:border-pink-800 hover:scale-105 hover:bg-gradient-to-br hover:from-pink-100 hover:to-pink-200 dark:hover:from-pink-900 dark:hover:to-pink-800 menu-card-hover stagger-item">
-                    <div className="p-2 bg-pink-500/10 rounded-full group-hover:bg-pink-500/20 transition-all duration-300 group-hover:scale-110 micro-scale">
+                  <div className="group flex flex-col items-center space-y-2 p-4 bg-gradient-to-br from-white via-white to-stone-50/50 dark:from-stone-800 dark:via-stone-800 dark:to-stone-900/50 rounded-xl hover:shadow-lg transition-all duration-300 border border-stone-200/60 dark:border-stone-700/60 hover:scale-105 hover:border-primary/50">
+                    <div className="p-2 bg-pink-500/10 rounded-xl group-hover:bg-pink-500/20 transition-all duration-300 group-hover:scale-110">
                       <Heart className="h-5 w-5 text-pink-600 dark:text-pink-400" />
                     </div>
-                    <span className="text-sm font-semibold text-pink-900 dark:text-pink-100">{tr.wishlist}</span>
+                    <span className="text-sm font-semibold text-foreground">{tr.wishlist}</span>
                     {wishlistCount > 0 && (
-                      <Badge variant="secondary" className="h-6 w-6 text-xs p-0 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 micro-scale">
-                        {wishlistCount}
+                      <Badge variant="secondary" className="h-6 w-6 text-xs p-0 flex items-center justify-center rounded-full group-hover:scale-110 transition-transform duration-300">
+                        {wishlistCount > 99 ? '99+' : wishlistCount}
                       </Badge>
                     )}
                   </div>
@@ -437,9 +437,9 @@ const EnhancedMobileMenu: React.FC<EnhancedMobileMenuProps> = ({
               </div>
             </div>
           ) : (
-            <div className="p-6 border-b border-border/50 space-y-4 flex-shrink-0">
+            <div className="p-6 border-b border-stone-200/60 dark:border-stone-700/60 space-y-4 flex-shrink-0">
               <div className="text-center mb-6">
-                <div className="p-4 bg-gradient-to-br from-primary/10 to-primary/5 rounded-full w-16 h-16 mx-auto mb-3 flex items-center justify-center backdrop-blur-sm">
+                <div className="p-4 bg-gradient-to-br from-primary/10 to-primary/5 rounded-xl w-16 h-16 mx-auto mb-3 flex items-center justify-center border border-primary/20">
                   <User className="h-8 w-8 text-primary" />
                 </div>
                 <h3 className="font-semibold text-lg mb-1 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
@@ -448,13 +448,13 @@ const EnhancedMobileMenu: React.FC<EnhancedMobileMenuProps> = ({
                 <p className="text-sm text-muted-foreground">{tr.signInAccess}</p>
               </div>
               <Link to="/login" onClick={handleLinkClick}>
-                <Button className="w-full justify-center h-12 text-base font-semibold rounded-xl bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary transition-all duration-300 hover:scale-105 hover:shadow-lg menu-button-hover ripple" size="lg">
+                <Button className="w-full justify-center h-12 text-base font-semibold rounded-xl bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary transition-all duration-300 hover:scale-105 hover:shadow-lg shadow-md" size="lg">
                   <LogIn className="h-5 w-5 mr-3" />
                   {tr.signIn}
                 </Button>
               </Link>
               <Link to="/register" onClick={handleLinkClick}>
-                <Button variant="outline" className="w-full justify-center h-12 text-base font-semibold rounded-xl border-2 hover:bg-primary/5 hover:border-primary transition-all duration-300 hover:scale-105 menu-button-hover ripple" size="lg">
+                <Button variant="outline" className="w-full justify-center h-12 text-base font-semibold rounded-xl border-2 border-stone-200/60 dark:border-stone-700/60 hover:bg-primary/5 hover:border-primary transition-all duration-300 hover:scale-105" size="lg">
                   <UserPlus className="h-5 w-5 mr-3" />
                   {tr.signUp}
                 </Button>
@@ -472,8 +472,8 @@ const EnhancedMobileMenu: React.FC<EnhancedMobileMenuProps> = ({
               </h4>
               
               <Link to="/" onClick={handleLinkClick}>
-                  <Button variant="ghost" className="w-full justify-start h-14 text-base font-medium rounded-xl hover:bg-primary/10 transition-all duration-300 group hover:scale-[1.02]">
-                    <div className="p-2 bg-green-500/10 rounded-lg mr-4 group-hover:bg-green-500/20 transition-all duration-300 group-hover:scale-110">
+                  <Button variant="ghost" className="w-full justify-start h-14 text-base font-medium rounded-xl hover:bg-primary/10 transition-all duration-300 group hover:scale-[1.02] border border-transparent hover:border-primary/20">
+                    <div className="p-2 bg-green-500/10 rounded-xl mr-4 group-hover:bg-green-500/20 transition-all duration-300 group-hover:scale-110 border border-green-500/20">
                     <Home className="h-5 w-5 text-green-600 dark:text-green-400" />
                   </div>
                   {tr.home}
@@ -484,11 +484,11 @@ const EnhancedMobileMenu: React.FC<EnhancedMobileMenuProps> = ({
               <div>
                 <Button
                   variant="ghost"
-                    className="w-full justify-between h-14 text-base font-medium rounded-xl hover:bg-primary/10 transition-all duration-300 group hover:scale-[1.02]"
+                    className="w-full justify-between h-14 text-base font-medium rounded-xl hover:bg-primary/10 transition-all duration-300 group hover:scale-[1.02] border border-transparent hover:border-primary/20"
                   onClick={() => setActiveSection(activeSection === 'categories' ? null : 'categories')}
                 >
                   <div className="flex items-center">
-                      <div className="p-2 bg-blue-500/10 rounded-lg mr-4 group-hover:bg-blue-500/20 transition-all duration-300 group-hover:scale-110">
+                      <div className="p-2 bg-blue-500/10 rounded-xl mr-4 group-hover:bg-blue-500/20 transition-all duration-300 group-hover:scale-110 border border-blue-500/20">
                       <ShoppingBag className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                     </div>
                     {tr.categories}
@@ -506,7 +506,7 @@ const EnhancedMobileMenu: React.FC<EnhancedMobileMenuProps> = ({
                     "overflow-hidden transition-all duration-500 ease-out",
                   activeSection === 'categories' ? "max-h-96 opacity-100 mt-2" : "max-h-0 opacity-0"
                 )}>
-                    <div className="ml-4 space-y-1 p-2 bg-muted/50 rounded-xl border border-border/50 backdrop-blur-sm">
+                    <div className="ml-4 space-y-1 p-2 bg-gradient-to-br from-white via-white to-stone-50/50 dark:from-stone-800 dark:via-stone-800 dark:to-stone-900/50 rounded-xl border border-stone-200/60 dark:border-stone-700/60 backdrop-blur-sm">
                     {isLoading ? (
                       <div className="flex items-center justify-center py-4">
                         <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
@@ -517,7 +517,7 @@ const EnhancedMobileMenu: React.FC<EnhancedMobileMenuProps> = ({
                           <Link key={category._id} to={`/category/${category.slug}`} onClick={handleLinkClick}>
                               <Button 
                                 variant="ghost" 
-                                className="w-full justify-start text-sm h-11 rounded-lg hover:bg-muted transition-all duration-300 hover:scale-[1.02]"
+                                className="w-full justify-start text-sm h-11 rounded-xl hover:bg-primary/10 transition-all duration-300 hover:scale-[1.02]"
                                 style={{ animationDelay: `${index * 50}ms` }}
                               >
                                 <div className="w-2 h-2 bg-primary/50 rounded-full mr-3 animate-pulse"></div>
@@ -526,7 +526,7 @@ const EnhancedMobileMenu: React.FC<EnhancedMobileMenuProps> = ({
                           </Link>
                         ))}
                         <Link to="/categories" onClick={handleLinkClick}>
-                            <Button variant="ghost" className="w-full justify-start text-sm h-11 rounded-lg hover:bg-muted font-medium text-primary transition-all duration-300 hover:scale-[1.02]">
+                            <Button variant="ghost" className="w-full justify-start text-sm h-11 rounded-xl hover:bg-primary/10 font-medium text-primary transition-all duration-300 hover:scale-[1.02]">
                             <ChevronRight className="h-4 w-4 mr-3" />
                             {tr.viewAll}
                           </Button>
@@ -538,22 +538,22 @@ const EnhancedMobileMenu: React.FC<EnhancedMobileMenuProps> = ({
               </div>
 
               <Link to="/sale" onClick={handleLinkClick}>
-                  <Button variant="ghost" className="w-full justify-between h-14 text-base font-medium rounded-xl hover:bg-primary/10 transition-all duration-300 group hover:scale-[1.02]">
+                  <Button variant="ghost" className="w-full justify-between h-14 text-base font-medium rounded-xl hover:bg-primary/10 transition-all duration-300 group hover:scale-[1.02] border border-transparent hover:border-primary/20">
                   <div className="flex items-center">
-                      <div className="p-2 bg-red-500/10 rounded-lg mr-4 group-hover:bg-red-500/20 transition-all duration-300 group-hover:scale-110">
+                      <div className="p-2 bg-red-500/10 rounded-xl mr-4 group-hover:bg-red-500/20 transition-all duration-300 group-hover:scale-110 border border-red-500/20">
                       <Percent className="h-5 w-5 text-red-600 dark:text-red-400" />
                     </div>
                     {tr.sale}
                   </div>
-                    <Badge variant="destructive" className="animate-pulse font-semibold group-hover:scale-110 transition-transform duration-300">
+                    <Badge variant="destructive" className="animate-pulse font-semibold group-hover:scale-110 transition-transform duration-300 rounded-full">
                     {language === 'vi' ? 'NÓNG' : language === 'ja' ? 'ホット' : 'HOT'}
                   </Badge>
                 </Button>
               </Link>
 
               <Link to="/about" onClick={handleLinkClick}>
-                  <Button variant="ghost" className="w-full justify-start h-14 text-base font-medium rounded-xl hover:bg-primary/10 transition-all duration-300 group hover:scale-[1.02]">
-                    <div className="p-2 bg-purple-500/10 rounded-lg mr-4 group-hover:bg-purple-500/20 transition-all duration-300 group-hover:scale-110">
+                  <Button variant="ghost" className="w-full justify-start h-14 text-base font-medium rounded-xl hover:bg-primary/10 transition-all duration-300 group hover:scale-[1.02] border border-transparent hover:border-primary/20">
+                    <div className="p-2 bg-purple-500/10 rounded-xl mr-4 group-hover:bg-purple-500/20 transition-all duration-300 group-hover:scale-110 border border-purple-500/20">
                     <Info className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                   </div>
                   {tr.about}
@@ -561,8 +561,8 @@ const EnhancedMobileMenu: React.FC<EnhancedMobileMenuProps> = ({
               </Link>
 
               <Link to="/contact" onClick={handleLinkClick}>
-                  <Button variant="ghost" className="w-full justify-start h-14 text-base font-medium rounded-xl hover:bg-primary/10 transition-all duration-300 group hover:scale-[1.02]">
-                    <div className="p-2 bg-orange-500/10 rounded-lg mr-4 group-hover:bg-orange-500/20 transition-all duration-300 group-hover:scale-110">
+                  <Button variant="ghost" className="w-full justify-start h-14 text-base font-medium rounded-xl hover:bg-primary/10 transition-all duration-300 group hover:scale-[1.02] border border-transparent hover:border-primary/20">
+                    <div className="p-2 bg-orange-500/10 rounded-xl mr-4 group-hover:bg-orange-500/20 transition-all duration-300 group-hover:scale-110 border border-orange-500/20">
                     <Phone className="h-5 w-5 text-orange-600 dark:text-orange-400" />
                   </div>
                   {tr.contact}
@@ -609,8 +609,8 @@ const EnhancedMobileMenu: React.FC<EnhancedMobileMenuProps> = ({
                 </h4>
                 
                 <Link to="/profile" onClick={handleLinkClick}>
-                    <Button variant="ghost" className="w-full justify-start h-14 text-base font-medium rounded-xl hover:bg-primary/10 transition-all duration-300 group hover:scale-[1.02]">
-                      <div className="p-2 bg-blue-500/10 rounded-lg mr-4 group-hover:bg-blue-500/20 transition-all duration-300 group-hover:scale-110">
+                    <Button variant="ghost" className="w-full justify-start h-14 text-base font-medium rounded-xl hover:bg-primary/10 transition-all duration-300 group hover:scale-[1.02] border border-transparent hover:border-primary/20">
+                      <div className="p-2 bg-blue-500/10 rounded-xl mr-4 group-hover:bg-blue-500/20 transition-all duration-300 group-hover:scale-110 border border-blue-500/20">
                       <User className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                     </div>
                     {tr.profile}
@@ -618,8 +618,8 @@ const EnhancedMobileMenu: React.FC<EnhancedMobileMenuProps> = ({
                 </Link>
 
                 <Link to="/profile/orders" onClick={handleLinkClick}>
-                    <Button variant="ghost" className="w-full justify-start h-14 text-base font-medium rounded-xl hover:bg-primary/10 transition-all duration-300 group hover:scale-[1.02]">
-                      <div className="p-2 bg-green-500/10 rounded-lg mr-4 group-hover:bg-green-500/20 transition-all duration-300 group-hover:scale-110">
+                    <Button variant="ghost" className="w-full justify-start h-14 text-base font-medium rounded-xl hover:bg-primary/10 transition-all duration-300 group hover:scale-[1.02] border border-transparent hover:border-primary/20">
+                      <div className="p-2 bg-green-500/10 rounded-xl mr-4 group-hover:bg-green-500/20 transition-all duration-300 group-hover:scale-110 border border-green-500/20">
                       <Package className="h-5 w-5 text-green-600 dark:text-green-400" />
                     </div>
                     {tr.orders}
@@ -627,8 +627,8 @@ const EnhancedMobileMenu: React.FC<EnhancedMobileMenuProps> = ({
                 </Link>
 
                 <Link to="/profile/addresses" onClick={handleLinkClick}>
-                    <Button variant="ghost" className="w-full justify-start h-14 text-base font-medium rounded-xl hover:bg-primary/10 transition-all duration-300 group hover:scale-[1.02]">
-                      <div className="p-2 bg-purple-500/10 rounded-lg mr-4 group-hover:bg-purple-500/20 transition-all duration-300 group-hover:scale-110">
+                    <Button variant="ghost" className="w-full justify-start h-14 text-base font-medium rounded-xl hover:bg-primary/10 transition-all duration-300 group hover:scale-[1.02] border border-transparent hover:border-primary/20">
+                      <div className="p-2 bg-purple-500/10 rounded-xl mr-4 group-hover:bg-purple-500/20 transition-all duration-300 group-hover:scale-110 border border-purple-500/20">
                       <MapPin className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                     </div>
                     {tr.addresses}
@@ -636,8 +636,8 @@ const EnhancedMobileMenu: React.FC<EnhancedMobileMenuProps> = ({
                 </Link>
 
                 <Link to="/profile/payment" onClick={handleLinkClick}>
-                    <Button variant="ghost" className="w-full justify-start h-14 text-base font-medium rounded-xl hover:bg-primary/10 transition-all duration-300 group hover:scale-[1.02]">
-                      <div className="p-2 bg-yellow-500/10 rounded-lg mr-4 group-hover:bg-yellow-500/20 transition-all duration-300 group-hover:scale-110">
+                    <Button variant="ghost" className="w-full justify-start h-14 text-base font-medium rounded-xl hover:bg-primary/10 transition-all duration-300 group hover:scale-[1.02] border border-transparent hover:border-primary/20">
+                      <div className="p-2 bg-yellow-500/10 rounded-xl mr-4 group-hover:bg-yellow-500/20 transition-all duration-300 group-hover:scale-110 border border-yellow-500/20">
                       <CreditCard className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
                     </div>
                     {tr.payment}
@@ -645,8 +645,8 @@ const EnhancedMobileMenu: React.FC<EnhancedMobileMenuProps> = ({
                 </Link>
 
                 <Link to="/compare" onClick={handleLinkClick}>
-                    <Button variant="ghost" className="w-full justify-start h-14 text-base font-medium rounded-xl hover:bg-primary/10 transition-all duration-300 group hover:scale-[1.02]">
-                      <div className="p-2 bg-indigo-500/10 rounded-lg mr-4 group-hover:bg-indigo-500/20 transition-all duration-300 group-hover:scale-110">
+                    <Button variant="ghost" className="w-full justify-start h-14 text-base font-medium rounded-xl hover:bg-primary/10 transition-all duration-300 group hover:scale-[1.02] border border-transparent hover:border-primary/20">
+                      <div className="p-2 bg-indigo-500/10 rounded-xl mr-4 group-hover:bg-indigo-500/20 transition-all duration-300 group-hover:scale-110 border border-indigo-500/20">
                       <GitCompare className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
                     </div>
                     {tr.compare}
@@ -657,10 +657,10 @@ const EnhancedMobileMenu: React.FC<EnhancedMobileMenuProps> = ({
 
                 <Button 
                   variant="ghost" 
-                    className="w-full justify-start h-14 text-base font-medium rounded-xl text-destructive hover:text-destructive hover:bg-destructive/10 transition-all duration-300 group hover:scale-[1.02]"
+                    className="w-full justify-start h-14 text-base font-medium rounded-xl text-destructive hover:text-destructive hover:bg-destructive/10 transition-all duration-300 group hover:scale-[1.02] border border-transparent hover:border-destructive/20"
                   onClick={handleLogout}
                 >
-                    <div className="p-2 bg-red-500/10 rounded-lg mr-4 group-hover:bg-red-500/20 transition-all duration-300 group-hover:scale-110">
+                    <div className="p-2 bg-red-500/10 rounded-xl mr-4 group-hover:bg-red-500/20 transition-all duration-300 group-hover:scale-110 border border-red-500/20">
                     <LogOut className="h-5 w-5 text-red-600 dark:text-red-400" />
                   </div>
                   {tr.signOut}
@@ -724,17 +724,17 @@ const EnhancedMobileMenu: React.FC<EnhancedMobileMenuProps> = ({
               <div>
                 <Button
                   variant="ghost"
-                    className="w-full justify-between h-14 text-base font-medium rounded-xl hover:bg-primary/10 transition-all duration-300 group hover:scale-[1.02]"
+                    className="w-full justify-between h-14 text-base font-medium rounded-xl hover:bg-primary/10 transition-all duration-300 group hover:scale-[1.02] border border-transparent hover:border-primary/20"
                   onClick={() => setActiveSection(activeSection === 'language' ? null : 'language')}
                 >
                   <div className="flex items-center">
-                      <div className="p-2 bg-emerald-500/10 rounded-lg mr-4 group-hover:bg-emerald-500/20 transition-all duration-300 group-hover:scale-110">
+                      <div className="p-2 bg-emerald-500/10 rounded-xl mr-4 group-hover:bg-emerald-500/20 transition-all duration-300 group-hover:scale-110 border border-emerald-500/20">
                       <Globe className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                     </div>
                     {tr.language}
                   </div>
                   <div className="flex items-center space-x-3">
-                      <div className="flex items-center space-x-2 px-3 py-1 bg-muted/50 rounded-full backdrop-blur-sm">
+                      <div className="flex items-center space-x-2 px-3 py-1 bg-gradient-to-br from-white via-white to-stone-50/50 dark:from-stone-800 dark:via-stone-800 dark:to-stone-900/50 rounded-full border border-stone-200/60 dark:border-stone-700/60 backdrop-blur-sm">
                       <span className="text-lg">
                         {languages.find(l => l.code === language)?.flag}
                       </span>
@@ -756,12 +756,12 @@ const EnhancedMobileMenu: React.FC<EnhancedMobileMenuProps> = ({
                     "overflow-hidden transition-all duration-500 ease-out",
                   activeSection === 'language' ? "max-h-48 opacity-100 mt-2" : "max-h-0 opacity-0"
                 )}>
-                    <div className="ml-4 space-y-1 p-2 bg-muted/50 rounded-xl border border-border/50 backdrop-blur-sm">
+                    <div className="ml-4 space-y-1 p-2 bg-gradient-to-br from-white via-white to-stone-50/50 dark:from-stone-800 dark:via-stone-800 dark:to-stone-900/50 rounded-xl border border-stone-200/60 dark:border-stone-700/60 backdrop-blur-sm">
                       {languages.map((lang, index) => (
                       <Button
                         key={lang.code}
                         variant={language === lang.code ? "secondary" : "ghost"}
-                          className="w-full justify-start text-sm h-12 rounded-lg transition-all duration-300 hover:scale-[1.02]"
+                          className="w-full justify-start text-sm h-12 rounded-xl transition-all duration-300 hover:scale-[1.02]"
                         onClick={() => {
                           setLanguage(lang.code as 'vi' | 'en' | 'ja');
                           setActiveSection(null);
@@ -792,35 +792,35 @@ const EnhancedMobileMenu: React.FC<EnhancedMobileMenuProps> = ({
               </h4>
               
                 {/* Enhanced Promo Card */}
-                <div className="mx-3 p-4 bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 rounded-xl border border-primary/20 backdrop-blur-sm hover:shadow-lg transition-all duration-300 hover:scale-[1.02]">
+                <div className="mx-3 p-4 bg-gradient-to-br from-white via-white to-stone-50/50 dark:from-stone-800 dark:via-stone-800 dark:to-stone-900/50 rounded-xl border border-stone-200/60 dark:border-stone-700/60 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
                 <div className="flex items-center space-x-3 mb-3">
-                  <div className="p-2 bg-primary/10 rounded-full">
+                  <div className="p-2 bg-primary/10 rounded-xl border border-primary/20">
                       <Gift className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <h5 className="font-bold text-sm">{tr.firstOrderDiscount}</h5>
+                    <h5 className="font-bold text-sm text-foreground">{tr.firstOrderDiscount}</h5>
                     <p className="text-xs text-muted-foreground">{tr.firstOrderDescription}</p>
                   </div>
                 </div>
                 <Link to="/sale" onClick={handleLinkClick}>
-                    <Button size="sm" className="w-full text-xs font-semibold bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary transition-all duration-300 hover:scale-105">
+                    <Button size="sm" className="w-full text-xs font-semibold rounded-xl bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary transition-all duration-300 hover:scale-105 shadow-md">
                     {tr.shopNow}
                   </Button>
                 </Link>
               </div>
 
                 {/* Enhanced Newsletter Signup */}
-                <div className="mx-3 p-4 bg-gradient-to-r from-muted/30 via-muted/20 to-muted/30 rounded-xl border border-border/50 backdrop-blur-sm hover:shadow-lg transition-all duration-300 hover:scale-[1.02]">
+                <div className="mx-3 p-4 bg-gradient-to-br from-white via-white to-stone-50/50 dark:from-stone-800 dark:via-stone-800 dark:to-stone-900/50 rounded-xl border border-stone-200/60 dark:border-stone-700/60 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
                 <div className="flex items-center space-x-3 mb-3">
-                  <div className="p-2 bg-secondary/50 rounded-full">
+                  <div className="p-2 bg-secondary/50 rounded-xl border border-stone-200/60 dark:border-stone-700/60">
                     <Bell className="h-5 w-5 text-secondary-foreground" />
                   </div>
                   <div>
-                    <h5 className="font-bold text-sm">{tr.stayUpdated}</h5>
+                    <h5 className="font-bold text-sm text-foreground">{tr.stayUpdated}</h5>
                     <p className="text-xs text-muted-foreground">{tr.newsletterDescription}</p>
                   </div>
                 </div>
-                  <Button variant="outline" size="sm" className="w-full text-xs font-semibold hover:bg-primary/5 hover:border-primary transition-all duration-300 hover:scale-105">
+                  <Button variant="outline" size="sm" className="w-full text-xs font-semibold rounded-xl border-2 border-stone-200/60 dark:border-stone-700/60 hover:bg-primary/5 hover:border-primary transition-all duration-300 hover:scale-105">
                   {tr.subscribeNewsletter}
                 </Button>
               </div>

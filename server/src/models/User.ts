@@ -41,7 +41,7 @@ const userSchema = new Schema<IUser>({
   email: {
     type: String,
     required: true,
-    unique: true,
+    unique: false, // Remove unique from schema, use index instead
     lowercase: true,
     trim: true
   },
@@ -173,5 +173,14 @@ userSchema.pre('save', async function(next) {
 userSchema.methods.comparePassword = async function(candidatePassword: string): Promise<boolean> {
   return bcrypt.compare(candidatePassword, this.password);
 };
+
+// Indexes for better performance
+userSchema.index({ email: 1 }, { unique: true }); // Already unique, but explicit index
+userSchema.index({ role: 1 });
+userSchema.index({ status: 1 });
+userSchema.index({ createdAt: -1 });
+// Compound indexes for common queries
+userSchema.index({ role: 1, status: 1 });
+userSchema.index({ status: 1, createdAt: -1 });
 
 export const User = mongoose.model<IUser>('User', userSchema); 

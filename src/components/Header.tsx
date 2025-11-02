@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { api, Product, Category } from "@/lib/api";
+import { logger } from "@/lib/logger";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -35,11 +36,6 @@ const Header = ({ cartItemsCount: propCartItemsCount, onSearch, refreshWishlistT
   const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
 
-  // Debug: Log cartCount changes
-  useEffect(() => {
-    console.log('cartCount state changed to:', cartCount, 'cartCount > 0:', cartCount > 0);
-  }, [cartCount]);
-
   // Load cart count from API
   const loadCartCount = useCallback(async () => {
     if (!isAuthenticated) {
@@ -48,17 +44,15 @@ const Header = ({ cartItemsCount: propCartItemsCount, onSearch, refreshWishlistT
     }
 
     try {
-      console.log('Loading cart count from API...');
+      logger.debug('Loading cart count from API...');
       const response = await api.getCart();
       const items = response.items || [];
       // Calculate total quantity of all items
       const totalQuantity = items.reduce((sum: number, item: { quantity: number }) => sum + (item.quantity || 0), 0);
-      console.log('Cart count loaded:', totalQuantity, 'items:', items.length);
-      console.log('Setting cartCount state to:', totalQuantity);
+      logger.debug('Cart count loaded', { totalQuantity, itemCount: items.length });
       setCartCount(totalQuantity);
-      console.log('cartCount state after setCartCount:', totalQuantity);
     } catch (error) {
-      console.error('Failed to load cart count:', error);
+      logger.error('Failed to load cart count', error);
       setCartCount(0);
     }
   }, [isAuthenticated]);

@@ -7,8 +7,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
+import { NotificationsProvider } from "@/contexts/NotificationsContext";
 import ProtectedAdminRoute from "./components/ProtectedAdminRoute";
 import ScrollToTop from "./components/ScrollToTop";
+import ErrorBoundary from "./components/ErrorBoundary";
 import { Loader2 } from "lucide-react";
 
 // Eager load Index page (homepage) for fast initial load
@@ -99,12 +101,14 @@ function App() {
         enableSystem
         disableTransitionOnChange
       >
-        <LanguageProvider>
+            <LanguageProvider>
           <AuthProvider>
-            <TooltipProvider>
-              <Router>
-                <ScrollToTop />
-                <Routes>
+            <NotificationsProvider>
+              <TooltipProvider>
+                <ErrorBoundary>
+                  <Router>
+                  <ScrollToTop />
+                  <Routes>
                       {/* Public Routes */}
                       <Route path="/" element={<Index />} />
                       <Route path="/profile" element={
@@ -462,8 +466,10 @@ function App() {
                         </Suspense>
                       } />
                   </Routes>
-                </Router>
+                  </Router>
+                </ErrorBoundary>
               </TooltipProvider>
+            </NotificationsProvider>
           </AuthProvider>
         </LanguageProvider>
       </ThemeProvider>

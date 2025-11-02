@@ -6,6 +6,7 @@ import { User } from '../models/User';
 import { Category } from '../models/Category';
 import { ActivityLog } from '../models/ActivityLog';
 import { Notification } from '../models/Notification';
+import { Review } from '../models/Review';
 
 // Helper function to update product count for categories
 const updateCategoryProductCount = async (categoryId: string) => {
@@ -1040,13 +1041,31 @@ export const getProductAnalytics = asyncHandler(async (req: Request, res: Respon
       }
     ]);
 
-    // Get product performance (simplified - using mock data for views and ratings)
-    const performance = topSelling.map(item => ({
-      name: item.name,
-      views: Math.floor(Math.random() * 1000) + 500, // Mock data
-      sales: item.sales,
-      rating: Math.round((Math.random() * 2 + 3) * 10) / 10 // Mock rating between 3-5
-    }));
+    // Get product performance with real data
+    const performance = await Promise.all(
+      topSelling.map(async (item) => {
+        // Get product views
+        const product = await Product.findById(item._id).select('views').lean();
+        const views = product?.views || 0;
+        
+        // Calculate average rating from reviews
+        const reviews = await Review.aggregate([
+          { $match: { productId: item._id } },
+          { $group: { _id: null, avgRating: { $avg: '$rating' }, count: { $sum: 1 } } }
+        ]);
+        
+        const rating = reviews.length > 0 && reviews[0].avgRating 
+          ? Math.round(reviews[0].avgRating * 10) / 10 
+          : 0;
+        
+        return {
+          name: item.name,
+          views,
+          sales: item.sales,
+          rating
+        };
+      })
+    );
 
     // Get low stock products
     const lowStock = await Product.find({ stock: { $lt: 10 } })

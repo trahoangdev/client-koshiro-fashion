@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { api, Product, Category } from "@/lib/api";
 import { formatCurrency } from "@/lib/currency";
+import { logger } from "@/lib/logger";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -94,8 +95,10 @@ const Index = () => {
           api.getCategories({ isActive: true })
         ]);
         
-        console.log('Products response:', productsResponse);
-        console.log('Categories response:', categoriesResponse);
+        logger.debug('Data loaded', { 
+          productCount: productsResponse.products?.length || 0,
+          categoryCount: categoriesResponse.categories?.length || 0
+        });
         
         // Handle response structures
         const productsData = productsResponse.products || [];
@@ -104,7 +107,7 @@ const Index = () => {
         setProducts(productsData);
         setCategories(categoriesData);
       } catch (error) {
-        console.error('Error loading data:', error);
+        logger.error('Error loading data', error);
         toast({
           title: language === 'vi' ? "Lỗi tải dữ liệu" : 
                  language === 'ja' ? "データ読み込みエラー" : 
@@ -148,7 +151,7 @@ const Index = () => {
           setCartItems(cartItemsData);
         }
       } catch (error) {
-        console.error('Error loading cart:', error);
+        logger.error('Error loading cart', error);
         // Don't show error toast for cart loading as it's not critical
       }
     };
@@ -156,12 +159,12 @@ const Index = () => {
     loadCart();
   }, [isAuthenticated]);
 
-  // Helper function to get product name in current language
-  const getProductName = (product: Product) => {
+  // Helper function to get product name in current language - memoized
+  const getProductName = useCallback((product: Product) => {
     if (language === 'vi') return product.name;
     if (language === 'ja') return product.nameJa || product.name;
     return product.nameEn || product.name;
-  };
+  }, [language]);
 
   // Filter products based on current filters
   const filteredProducts = useMemo(() => {
@@ -210,7 +213,7 @@ const Index = () => {
     });
   }, [products, selectedCategory, selectedPriceRange, selectedColor, searchQuery]);
 
-  const addToCart = async (product: Product) => {
+  const addToCart = useCallback(async (product: Product) => {
     try {
       // For demo purposes, use default color and size
       const selectedColor = product.colors[0];
@@ -255,7 +258,7 @@ const Index = () => {
                      `${getProductName(product)} has been added to your cart.`,
       });
     } catch (error) {
-      console.error('Error adding to cart:', error);
+      logger.error('Error adding to cart', error);
       toast({
         title: language === 'vi' ? "Lỗi" : 
                language === 'ja' ? "エラー" : 
@@ -266,11 +269,32 @@ const Index = () => {
         variant: "destructive",
       });
     }
-  };
+  }, [isAuthenticated, language, toast, getProductName, cartItems]);
 
-  const updateCartQuantity = async (itemId: string, quantity: number) => {
+  const updateCartQuantity = useCallback(async (itemId: string, quantity: number) => {
     if (quantity <= 0) {
-      removeFromCart(itemId);
+      // Note: removeFromCart will be defined below, but we need to handle this circular dependency
+      // For now, we'll handle quantity 0 directly
+      try {
+        if (isAuthenticated) {
+          const item = cartItems.find(item => 
+            `${item.product._id}-${item.selectedColor}-${item.selectedSize}` === itemId
+          );
+          if (item) {
+            await api.removeFromCart(item.product._id);
+            setTimeout(() => {
+              window.dispatchEvent(new CustomEvent('cartUpdated'));
+            }, 100);
+          }
+        }
+        setCartItems(items =>
+          items.filter(item => 
+            `${item.product._id}-${item.selectedColor}-${item.selectedSize}` !== itemId
+          )
+        );
+      } catch (error) {
+        logger.error('Error removing from cart', error);
+      }
       return;
     }
     
@@ -285,7 +309,7 @@ const Index = () => {
           
           // Wait a bit to ensure API call is complete, then dispatch event
           setTimeout(() => {
-            console.log('Dispatching cartUpdated event (update quantity)...');
+            logger.debug('Dispatching cartUpdated event (update quantity)');
             window.dispatchEvent(new CustomEvent('cartUpdated'));
           }, 100);
         }
@@ -299,7 +323,7 @@ const Index = () => {
         )
       );
     } catch (error) {
-      console.error('Error updating cart quantity:', error);
+      logger.error('Error updating cart quantity', error);
       toast({
         title: language === 'vi' ? "Lỗi" : 
                language === 'ja' ? "エラー" : 
@@ -310,9 +334,9 @@ const Index = () => {
         variant: "destructive",
       });
     }
-  };
+  }, [isAuthenticated, language, toast, cartItems]);
 
-  const removeFromCart = async (itemId: string) => {
+  const removeFromCart = useCallback(async (itemId: string) => {
     try {
       // Remove from cart via API if authenticated
       if (isAuthenticated) {
@@ -324,7 +348,7 @@ const Index = () => {
           
           // Wait a bit to ensure API call is complete, then dispatch event
           setTimeout(() => {
-            console.log('Dispatching cartUpdated event (remove item)...');
+            logger.debug('Dispatching cartUpdated event (remove item)');
             window.dispatchEvent(new CustomEvent('cartUpdated'));
           }, 100);
         }
@@ -336,7 +360,7 @@ const Index = () => {
         )
       );
     } catch (error) {
-      console.error('Error removing from cart:', error);
+      logger.error('Error removing from cart', error);
       toast({
         title: language === 'vi' ? "Lỗi" : 
                language === 'ja' ? "エラー" : 
@@ -347,7 +371,7 @@ const Index = () => {
         variant: "destructive",
       });
     }
-  };
+  }, [isAuthenticated, language, toast, cartItems]);
 
   const handleCheckout = () => {
     if (cartItems.length === 0) {
@@ -418,7 +442,7 @@ const Index = () => {
                      `${getProductName(product)} has been added to wishlist`,
       });
     } catch (error) {
-      console.error('Error adding to wishlist:', error);
+      logger.error('Error adding to wishlist', error);
       toast({
         title: language === 'vi' ? "Lỗi" : 
                language === 'ja' ? "エラー" : 
@@ -439,7 +463,7 @@ const Index = () => {
       try {
         compareList = JSON.parse(savedCompareList);
       } catch (error) {
-        console.error('Error parsing compare list:', error);
+        logger.error('Error parsing compare list', error);
       }
     }
 

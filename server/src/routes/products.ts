@@ -12,14 +12,15 @@ import {
 } from '../controllers/productController';
 import { authenticateToken, requireAdmin } from '../middleware/auth';
 import { uploadProductImages as uploadMiddleware, handleUploadError } from '../middleware/upload';
+import { productLimiter } from '../middleware/rateLimit';
 
 const router = express.Router();
 
-// Public routes
-router.get('/', getProducts);
-router.get('/featured', getFeaturedProducts);
-router.get('/search', searchProducts);
-router.get('/:id', getProduct);
+// Public routes with rate limiting
+router.get('/', productLimiter, getProducts);
+router.get('/featured', productLimiter, getFeaturedProducts);
+router.get('/search', productLimiter, searchProducts);
+router.get('/:id', productLimiter, getProduct);
 
 // Admin routes (protected)
 router.post('/', authenticateToken, requireAdmin, uploadMiddleware.array('images', 10), handleUploadError, createProduct);

@@ -40,11 +40,16 @@ const cartSchema = new Schema<ICart>({
     type: Schema.Types.ObjectId,
     ref: 'User',
     required: true,
-    unique: true
+    unique: false // Remove unique from schema, use index instead
   },
   items: [cartItemSchema]
 }, {
   timestamps: true
 });
+
+// Indexes for better performance
+cartSchema.index({ userId: 1 }, { unique: true }); // Already unique, but explicit index
+cartSchema.index({ createdAt: -1 });
+cartSchema.index({ updatedAt: -1 });
 
 export const Cart = mongoose.model<ICart>('Cart', cartSchema); 

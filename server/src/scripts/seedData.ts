@@ -14,6 +14,7 @@ import { AdminPaymentMethod } from '../models/Payment';
 import { Review } from '../models/Review';
 import Role from '../models/Role';
 import Permission from '../models/Permission';
+import Color from '../models/Color';
 
 dotenv.config();
 
@@ -163,6 +164,42 @@ const seedData = async () => {
     });
     await adminUser.save();
     console.log('✅ Created admin user with role');
+
+    // Seed colors
+    console.log('🎨 Seeding colors...');
+    const defaultColors = [
+      { name: 'Đen', nameEn: 'Black', nameJa: '黒', hexValue: '#000000', isDefault: true },
+      { name: 'Trắng', nameEn: 'White', nameJa: '白', hexValue: '#FFFFFF', isDefault: true },
+      { name: 'Đỏ', nameEn: 'Red', nameJa: '赤', hexValue: '#FF0000', isDefault: true },
+      { name: 'Xanh dương', nameEn: 'Blue', nameJa: '青', hexValue: '#0000FF', isDefault: true },
+      { name: 'Xanh lá', nameEn: 'Green', nameJa: '緑', hexValue: '#00FF00', isDefault: true },
+      { name: 'Hồng', nameEn: 'Pink', nameJa: 'ピンク', hexValue: '#FFC0CB', isDefault: true },
+      { name: 'Tím', nameEn: 'Purple', nameJa: '紫', hexValue: '#800080', isDefault: true },
+      { name: 'Vàng', nameEn: 'Yellow', nameJa: '黄色', hexValue: '#FFFF00', isDefault: true },
+      { name: 'Cam', nameEn: 'Orange', nameJa: 'オレンジ', hexValue: '#FFA500', isDefault: true },
+      { name: 'Nâu', nameEn: 'Brown', nameJa: '茶色', hexValue: '#A52A2A', isDefault: true },
+      { name: 'Xám', nameEn: 'Gray', nameJa: 'グレー', hexValue: '#808080', isDefault: true },
+      { name: 'Xanh ngọc', nameEn: 'Turquoise', nameJa: 'ターコイズ', hexValue: '#40E0D0', isDefault: true },
+      { name: 'Bạc', nameEn: 'Silver', nameJa: 'シルバー', hexValue: '#C0C0C0', isDefault: true },
+      { name: 'Vàng kim', nameEn: 'Gold', nameJa: 'ゴールド', hexValue: '#FFD700', isDefault: true },
+      { name: 'Xanh nhạt', nameEn: 'Light Blue', nameJa: '薄い青', hexValue: '#93C5FD', isDefault: true },
+      { name: 'Xám đậm', nameEn: 'Dark Gray', nameJa: '濃いグレー', hexValue: '#374151', isDefault: true },
+      { name: 'Xám nhạt', nameEn: 'Light Gray', nameJa: '薄いグレー', hexValue: '#D1D5DB', isDefault: true },
+      { name: 'Xanh đen', nameEn: 'Navy', nameJa: 'ネイビー', hexValue: '#000080', isDefault: true }
+    ];
+
+    // Upsert colors (update if exists, create if not)
+    for (const colorData of defaultColors) {
+      await Color.findOneAndUpdate(
+        { name: colorData.name },
+        { 
+          ...colorData,
+          isActive: true
+        },
+        { upsert: true, new: true }
+      );
+    }
+    console.log(`✅ Seeded ${defaultColors.length} colors`);
 
     // Create sample users
     const sampleUsers = [
@@ -1269,6 +1306,7 @@ const seedData = async () => {
     console.log(`   - Users: ${await User.countDocuments()}`);
     console.log(`   - Roles: ${await Role.countDocuments()}`);
     console.log(`   - Permissions: ${await Permission.countDocuments()}`);
+    console.log(`   - Colors: ${await Color.countDocuments()}`);
     console.log(`   - Categories: ${await Category.countDocuments()}`);
     console.log(`   - Products: ${await Product.countDocuments()}`);
     console.log(`   - Orders: ${await Order.countDocuments()}`);

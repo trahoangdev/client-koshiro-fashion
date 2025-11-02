@@ -9,7 +9,9 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { api, Product, Category } from "@/lib/api";
+import { logger } from "@/lib/logger";
 
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -59,7 +61,7 @@ const ProductsPage = () => {
         const categoriesResponse = await api.getCategories({ isActive: true });
         setCategories(categoriesResponse.categories || []);
       } catch (error) {
-        console.error('Error loading data:', error);
+        logger.error('Error loading data', error);
         toast({
           title: language === 'vi' ? 'Lỗi' : language === 'ja' ? 'エラー' : 'Error',
           description: language === 'vi' ? 'Không thể tải dữ liệu sản phẩm' : 
@@ -195,7 +197,7 @@ const ProductsPage = () => {
                      'Product added to cart',
       });
     } catch (error) {
-      console.error('Error adding to cart:', error);
+      logger.error('Error adding to cart', error);
       toast({
         title: language === 'vi' ? 'Lỗi' : language === 'ja' ? 'エラー' : 'Error',
         description: language === 'vi' ? 'Không thể thêm sản phẩm vào giỏ hàng' : 
@@ -217,7 +219,7 @@ const ProductsPage = () => {
                      'Product added to wishlist',
       });
     } catch (error) {
-      console.error('Error adding to wishlist:', error);
+      logger.error('Error adding to wishlist', error);
       toast({
         title: language === 'vi' ? 'Lỗi' : language === 'ja' ? 'エラー' : 'Error',
         description: language === 'vi' ? 'Không thể thêm sản phẩm vào danh sách yêu thích' : 
@@ -239,7 +241,7 @@ const ProductsPage = () => {
                      'Product added to compare list',
       });
     } catch (error) {
-      console.error('Error adding to compare:', error);
+      logger.error('Error adding to compare', error);
       toast({
         title: language === 'vi' ? 'Lỗi' : language === 'ja' ? 'エラー' : 'Error',
         description: language === 'vi' ? 'Không thể thêm sản phẩm vào danh sách so sánh' : 
@@ -364,106 +366,109 @@ const ProductsPage = () => {
                                    'Search products...'}
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="max-w-md"
+                      className="max-w-md bg-white dark:bg-stone-800 border-stone-200/60 dark:border-stone-700/60 rounded-xl hover:border-primary/50 focus:border-primary transition-all duration-300"
                     />
                   </div>
 
                   {/* Filter Controls */}
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div>
-                      <label className="text-sm font-medium mb-2 block">
+                      <label className="text-sm font-medium mb-2 block text-foreground">
                         {language === 'vi' ? 'Danh mục' : language === 'ja' ? 'カテゴリー' : 'Category'}
                       </label>
-                      <select
-                        value={selectedCategory}
-                        onChange={(e) => setSelectedCategory(e.target.value)}
-                        className="w-full px-3 py-2 border border-stone-300 dark:border-stone-600 rounded-md bg-white dark:bg-stone-700 text-stone-800 dark:text-stone-200"
-                      >
-                        <option value="all">
-                          {language === 'vi' ? 'Tất cả danh mục' : language === 'ja' ? 'すべてのカテゴリー' : 'All Categories'}
-                        </option>
-                        {categories.map((category) => (
-                          <option key={category._id} value={category._id}>
-                            {category.name}
-                          </option>
-                        ))}
-                      </select>
+                      <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                        <SelectTrigger className="w-full bg-white dark:bg-stone-800 border-stone-200/60 dark:border-stone-700/60 hover:border-primary/50 transition-all duration-300 hover:shadow-md rounded-xl h-11">
+                          <SelectValue placeholder={language === 'vi' ? 'Tất cả danh mục' : language === 'ja' ? 'すべてのカテゴリー' : 'All Categories'} />
+                        </SelectTrigger>
+                        <SelectContent className="bg-white dark:bg-stone-800 border-stone-200/60 dark:border-stone-700/60 rounded-xl shadow-xl backdrop-blur-sm">
+                          <SelectItem value="all" className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg">
+                            {language === 'vi' ? 'Tất cả danh mục' : language === 'ja' ? 'すべてのカテゴリー' : 'All Categories'}
+                          </SelectItem>
+                          {categories.map((category) => (
+                            <SelectItem key={category._id} value={category._id} className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg">
+                              {category.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
 
                     <div>
-                      <label className="text-sm font-medium mb-2 block">
+                      <label className="text-sm font-medium mb-2 block text-foreground">
                         {language === 'vi' ? 'Khoảng giá' : language === 'ja' ? '価格帯' : 'Price Range'}
                       </label>
-                      <select
-                        value={selectedPriceRange}
-                        onChange={(e) => setSelectedPriceRange(e.target.value)}
-                        className="w-full px-3 py-2 border border-stone-300 dark:border-stone-600 rounded-md bg-white dark:bg-stone-700 text-stone-800 dark:text-stone-200"
-                      >
-                        <option value="all">
-                          {language === 'vi' ? 'Tất cả giá' : language === 'ja' ? 'すべての価格' : 'All Prices'}
-                        </option>
-                        <option value="0-200000">
-                          {language === 'vi' ? 'Dưới 200K' : language === 'ja' ? '200円未満' : 'Under $200'}
-                        </option>
-                        <option value="200000-500000">
-                          {language === 'vi' ? '200K - 500K' : language === 'ja' ? '200円 - 500円' : '$200 - $500'}
-                        </option>
-                        <option value="500000-1000000">
-                          {language === 'vi' ? '500K - 1M' : language === 'ja' ? '500円 - 1,000円' : '$500 - $1000'}
-                        </option>
-                        <option value="1000000-">
-                          {language === 'vi' ? 'Trên 1M' : language === 'ja' ? '1,000円以上' : 'Over $1000'}
-                        </option>
-                      </select>
+                      <Select value={selectedPriceRange} onValueChange={setSelectedPriceRange}>
+                        <SelectTrigger className="w-full bg-white dark:bg-stone-800 border-stone-200/60 dark:border-stone-700/60 hover:border-primary/50 transition-all duration-300 hover:shadow-md rounded-xl h-11">
+                          <SelectValue placeholder={language === 'vi' ? 'Tất cả giá' : language === 'ja' ? 'すべての価格' : 'All Prices'} />
+                        </SelectTrigger>
+                        <SelectContent className="bg-white dark:bg-stone-800 border-stone-200/60 dark:border-stone-700/60 rounded-xl shadow-xl backdrop-blur-sm">
+                          <SelectItem value="all" className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg">
+                            {language === 'vi' ? 'Tất cả giá' : language === 'ja' ? 'すべての価格' : 'All Prices'}
+                          </SelectItem>
+                          <SelectItem value="0-200000" className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg">
+                            {language === 'vi' ? 'Dưới 200K' : language === 'ja' ? '200円未満' : 'Under $200'}
+                          </SelectItem>
+                          <SelectItem value="200000-500000" className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg">
+                            {language === 'vi' ? '200K - 500K' : language === 'ja' ? '200円 - 500円' : '$200 - $500'}
+                          </SelectItem>
+                          <SelectItem value="500000-1000000" className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg">
+                            {language === 'vi' ? '500K - 1M' : language === 'ja' ? '500円 - 1,000円' : '$500 - $1000'}
+                          </SelectItem>
+                          <SelectItem value="1000000-" className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg">
+                            {language === 'vi' ? 'Trên 1M' : language === 'ja' ? '1,000円以上' : 'Over $1000'}
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
 
                     <div>
-                      <label className="text-sm font-medium mb-2 block">
+                      <label className="text-sm font-medium mb-2 block text-foreground">
                         {language === 'vi' ? 'Màu sắc' : language === 'ja' ? '色' : 'Color'}
                       </label>
-                      <select
-                        value={selectedColor}
-                        onChange={(e) => setSelectedColor(e.target.value)}
-                        className="w-full px-3 py-2 border border-stone-300 dark:border-stone-600 rounded-md bg-white dark:bg-stone-700 text-stone-800 dark:text-stone-200"
-                      >
-                        <option value="all">
-                          {language === 'vi' ? 'Tất cả màu' : language === 'ja' ? 'すべての色' : 'All Colors'}
-                        </option>
-                        <option value="black">
-                          {language === 'vi' ? 'Đen' : language === 'ja' ? '黒' : 'Black'}
-                        </option>
-                        <option value="white">
-                          {language === 'vi' ? 'Trắng' : language === 'ja' ? '白' : 'White'}
-                        </option>
-                        <option value="blue">
-                          {language === 'vi' ? 'Xanh dương' : language === 'ja' ? '青' : 'Blue'}
-                        </option>
-                        <option value="red">
-                          {language === 'vi' ? 'Đỏ' : language === 'ja' ? '赤' : 'Red'}
-                        </option>
-                        <option value="green">
-                          {language === 'vi' ? 'Xanh lá' : language === 'ja' ? '緑' : 'Green'}
-                        </option>
-                        <option value="gray">
-                          {language === 'vi' ? 'Xám' : language === 'ja' ? 'グレー' : 'Gray'}
-                        </option>
-                        <option value="brown">
-                          {language === 'vi' ? 'Nâu' : language === 'ja' ? '茶色' : 'Brown'}
-                        </option>
-                        <option value="yellow">
-                          {language === 'vi' ? 'Vàng' : language === 'ja' ? '黄色' : 'Yellow'}
-                        </option>
-                        <option value="pink">
-                          {language === 'vi' ? 'Hồng' : language === 'ja' ? 'ピンク' : 'Pink'}
-                        </option>
-                      </select>
+                      <Select value={selectedColor} onValueChange={setSelectedColor}>
+                        <SelectTrigger className="w-full bg-white dark:bg-stone-800 border-stone-200/60 dark:border-stone-700/60 hover:border-primary/50 transition-all duration-300 hover:shadow-md rounded-xl h-11">
+                          <SelectValue placeholder={language === 'vi' ? 'Tất cả màu' : language === 'ja' ? 'すべての色' : 'All Colors'} />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-60 overflow-y-auto bg-white dark:bg-stone-800 border-stone-200/60 dark:border-stone-700/60 rounded-xl shadow-xl backdrop-blur-sm">
+                          <SelectItem value="all" className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg">
+                            {language === 'vi' ? 'Tất cả màu' : language === 'ja' ? 'すべての色' : 'All Colors'}
+                          </SelectItem>
+                          <SelectItem value="black" className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg">
+                            {language === 'vi' ? 'Đen' : language === 'ja' ? '黒' : 'Black'}
+                          </SelectItem>
+                          <SelectItem value="white" className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg">
+                            {language === 'vi' ? 'Trắng' : language === 'ja' ? '白' : 'White'}
+                          </SelectItem>
+                          <SelectItem value="blue" className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg">
+                            {language === 'vi' ? 'Xanh dương' : language === 'ja' ? '青' : 'Blue'}
+                          </SelectItem>
+                          <SelectItem value="red" className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg">
+                            {language === 'vi' ? 'Đỏ' : language === 'ja' ? '赤' : 'Red'}
+                          </SelectItem>
+                          <SelectItem value="green" className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg">
+                            {language === 'vi' ? 'Xanh lá' : language === 'ja' ? '緑' : 'Green'}
+                          </SelectItem>
+                          <SelectItem value="gray" className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg">
+                            {language === 'vi' ? 'Xám' : language === 'ja' ? 'グレー' : 'Gray'}
+                          </SelectItem>
+                          <SelectItem value="brown" className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg">
+                            {language === 'vi' ? 'Nâu' : language === 'ja' ? '茶色' : 'Brown'}
+                          </SelectItem>
+                          <SelectItem value="yellow" className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg">
+                            {language === 'vi' ? 'Vàng' : language === 'ja' ? '黄色' : 'Yellow'}
+                          </SelectItem>
+                          <SelectItem value="pink" className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg">
+                            {language === 'vi' ? 'Hồng' : language === 'ja' ? 'ピンク' : 'Pink'}
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
 
                     <div className="flex items-end">
                       <Button
                         variant="outline"
                         onClick={clearFilters}
-                        className="w-full"
+                        className="w-full rounded-xl h-11 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/50 transition-all duration-300"
                       >
                         {t.clearFilters}
                       </Button>

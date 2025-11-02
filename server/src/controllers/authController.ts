@@ -5,6 +5,8 @@ import crypto from 'crypto';
 import nodemailer from 'nodemailer';
 import { User } from '../models/User';
 import Role, { IRole } from '../models/Role';
+import { asyncHandler, errors } from '../utils/errorHandler';
+import { logger } from '../lib/logger';
 
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
@@ -95,8 +97,11 @@ export const register = async (req: Request, res: Response) => {
       }
     });
   } catch (error) {
-    console.error('Registration error:', error);
-    return res.status(500).json({ message: 'Internal server error' });
+    logger.error('Registration error', error);
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw errors.internalServerError('Failed to register user');
   }
 };
 

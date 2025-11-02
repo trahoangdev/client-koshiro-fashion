@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Loader2, ShoppingCart, Trash2, Plus, Minus, ArrowLeft, CreditCard, Truck } from 'lucide-react';
+import { logger } from '@/lib/logger';
 
 interface CartItem {
   productId: string;
@@ -35,7 +36,7 @@ const CartPage: React.FC = () => {
 
   const handleSearch = (query: string) => {
     // TODO: Implement search functionality
-    console.log('Search query:', query);
+    logger.debug('Search query', { query });
   };
 
   // Load cart from API if authenticated, otherwise show empty
@@ -77,7 +78,7 @@ const CartPage: React.FC = () => {
           setCartItems([]);
         }
       } catch (error) {
-        console.error('Error loading cart:', error);
+        logger.error('Error loading cart', error);
         toast({
           title: language === 'vi' ? "Lỗi tải dữ liệu" : 
                  language === 'ja' ? "データ読み込みエラー" : 
@@ -115,7 +116,7 @@ const CartPage: React.FC = () => {
       
       // Wait a bit to ensure API call is complete, then dispatch event
       setTimeout(() => {
-        console.log('Dispatching cartUpdated event (CartPage update quantity)...');
+        logger.debug('Dispatching cartUpdated event (CartPage update quantity)');
         window.dispatchEvent(new CustomEvent('cartUpdated'));
       }, 100);
       
@@ -134,7 +135,7 @@ const CartPage: React.FC = () => {
                      "Quantity has been updated",
       });
     } catch (error) {
-      console.error('Error updating quantity:', error);
+      logger.error('Error updating quantity', error);
       toast({
         title: language === 'vi' ? "Lỗi" : 
                language === 'ja' ? "エラー" : 
@@ -168,7 +169,7 @@ const CartPage: React.FC = () => {
       
       // Wait a bit to ensure API call is complete, then dispatch event
       setTimeout(() => {
-        console.log('Dispatching cartUpdated event (CartPage remove item)...');
+        logger.debug('Dispatching cartUpdated event (CartPage remove item)');
         window.dispatchEvent(new CustomEvent('cartUpdated'));
       }, 100);
       
@@ -183,7 +184,7 @@ const CartPage: React.FC = () => {
                      "Item has been removed from cart",
       });
     } catch (error) {
-      console.error('Error removing item:', error);
+      logger.error('Error removing item', error);
       toast({
         title: language === 'vi' ? "Lỗi" : 
                language === 'ja' ? "エラー" : 

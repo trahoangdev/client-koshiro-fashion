@@ -52,6 +52,7 @@ import { useNavigate } from "react-router-dom";
 import { formatCurrency } from "@/lib/currency";
 import AdminLayout from "@/components/AdminLayout";
 import { api } from "@/lib/api";
+import { logger } from "@/lib/logger";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts";
 
@@ -171,11 +172,11 @@ export default function AdminDashboard() {
     const loadDashboardData = async () => {
       try {
         setIsLoading(true);
-        console.log('Loading admin dashboard data...');
+        logger.debug('Loading admin dashboard data...');
         
         // Load comprehensive admin stats
         const statsResponse = await api.getAdminStats();
-        console.log('Admin stats loaded:', statsResponse);
+        logger.debug('Admin stats loaded', statsResponse);
         
         // Calculate additional metrics
         const calculatedStats = {
@@ -197,7 +198,7 @@ export default function AdminDashboard() {
         
         // Load recent orders with real-time data
         const ordersResponse = await api.getAdminOrders({ page: 1, limit: 10 });
-        console.log('Recent orders loaded:', ordersResponse);
+        logger.debug('Recent orders loaded', { count: ordersResponse.data?.length || 0 });
         
         // Transform Order data to RecentOrder format
         const transformedOrders: RecentOrder[] = ordersResponse.data.map(order => ({
