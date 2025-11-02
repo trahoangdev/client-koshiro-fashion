@@ -377,13 +377,13 @@ const ProfileAddresses = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4">
+      <div className="flex items-center justify-between mb-4">
         <div>
-          <h2 className="text-2xl font-bold mb-2">{t.title}</h2>
-          <p className="text-muted-foreground">{t.subtitle}</p>
+          <h2 className="text-3xl font-bold mb-2 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">{t.title}</h2>
+          <p className="text-muted-foreground text-lg font-medium">{t.subtitle}</p>
         </div>
-        <Button onClick={handleAdd} disabled={saving}>
+        <Button onClick={handleAdd} disabled={saving} className="rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all">
           <Plus className="h-4 w-4 mr-2" />
           {t.addAddress}
         </Button>
@@ -391,89 +391,99 @@ const ProfileAddresses = () => {
 
       {/* Add/Edit Form */}
       {(isAdding || editingId) && (
-        <Card>
-          <CardHeader>
-            <CardTitle>{editingId ? t.editAddress : t.addAddress}</CardTitle>
+        <Card className="rounded-xl border-2 shadow-lg bg-background/95 backdrop-blur-sm">
+          <CardHeader className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-b-2 border-primary/20">
+            <CardTitle className="text-xl font-bold flex items-center gap-2">
+              <MapPin className="h-5 w-5 text-primary" />
+              {editingId ? t.editAddress : t.addAddress}
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="p-6 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="fullName">{t.name}</Label>
+                <Label htmlFor="fullName" className="font-semibold">{t.name}</Label>
                 <Input
                   id="fullName"
                   value={formData.fullName}
                   onChange={(e) => setFormData({...formData, fullName: e.target.value})}
                   required
+                  className="rounded-lg border-2 focus:border-primary transition-all"
                 />
               </div>
               <div>
-                <Label htmlFor="phone">{t.phone}</Label>
+                <Label htmlFor="phone" className="font-semibold">{t.phone}</Label>
                 <Input
                   id="phone"
                   value={formData.phone}
                   onChange={(e) => setFormData({...formData, phone: e.target.value})}
                   required
+                  className="rounded-lg border-2 focus:border-primary transition-all"
                 />
               </div>
             </div>
             
             <div>
-              <Label htmlFor="address">{t.address}</Label>
+              <Label htmlFor="address" className="font-semibold">{t.address}</Label>
               <Input
                 id="address"
                 value={formData.address}
                 onChange={(e) => setFormData({...formData, address: e.target.value})}
                 required
+                className="rounded-lg border-2 focus:border-primary transition-all"
               />
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <Label htmlFor="city">{t.city}</Label>
+                <Label htmlFor="city" className="font-semibold">{t.city}</Label>
                 <Input
                   id="city"
                   value={formData.city}
                   onChange={(e) => setFormData({...formData, city: e.target.value})}
                   required
+                  className="rounded-lg border-2 focus:border-primary transition-all"
                 />
               </div>
               <div>
-                <Label htmlFor="state">{t.state}</Label>
+                <Label htmlFor="state" className="font-semibold">{t.state}</Label>
                 <Input
                   id="state"
                   value={formData.state}
                   onChange={(e) => setFormData({...formData, state: e.target.value})}
                   required
+                  className="rounded-lg border-2 focus:border-primary transition-all"
                 />
               </div>
               <div>
-                <Label htmlFor="zipCode">{t.zipCode}</Label>
+                <Label htmlFor="zipCode" className="font-semibold">{t.zipCode}</Label>
                 <Input
                   id="zipCode"
                   value={formData.zipCode}
                   onChange={(e) => setFormData({...formData, zipCode: e.target.value})}
                   required
+                  className="rounded-lg border-2 focus:border-primary transition-all"
                 />
               </div>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="country">{t.country}</Label>
+                <Label htmlFor="country" className="font-semibold">{t.country}</Label>
                 <Input
                   id="country"
                   value={formData.country}
                   onChange={(e) => setFormData({...formData, country: e.target.value})}
                   required
+                  className="rounded-lg border-2 focus:border-primary transition-all"
                 />
               </div>
               <div>
-                <Label htmlFor="type">{t.type}</Label>
+                <Label htmlFor="type" className="font-semibold">{t.type}</Label>
                 <select
                   id="type"
                   value={formData.type}
                   onChange={(e) => setFormData({...formData, type: e.target.value as 'shipping' | 'billing'})}
-                  className="w-full p-2 border border-input rounded-md"
+                  className="w-full p-2 border-2 border-input rounded-lg focus:border-primary transition-all"
                 >
                   <option value="shipping">{t.shipping}</option>
                   <option value="billing">{t.billing}</option>
@@ -482,12 +492,12 @@ const ProfileAddresses = () => {
             </div>
             
             <div>
-              <Label htmlFor="displayType">Display Type</Label>
+              <Label htmlFor="displayType" className="font-semibold">Display Type</Label>
               <select
                 id="displayType"
                 value={formData.displayType}
                 onChange={(e) => setFormData({...formData, displayType: e.target.value as 'home' | 'work' | 'other'})}
-                className="w-full p-2 border border-input rounded-md"
+                className="w-full p-2 border-2 border-input rounded-lg focus:border-primary transition-all font-medium"
               >
                 <option value="home">{t.home}</option>
                 <option value="work">{t.work}</option>
@@ -495,11 +505,11 @@ const ProfileAddresses = () => {
               </select>
             </div>
             
-            <div className="flex justify-end space-x-2">
-              <Button variant="outline" onClick={handleCancel} disabled={saving}>
+            <div className="flex justify-end space-x-2 pt-4 border-t">
+              <Button variant="outline" onClick={handleCancel} disabled={saving} className="rounded-xl font-semibold border-2">
                 {t.cancel}
               </Button>
-              <Button onClick={handleSave} disabled={saving}>
+              <Button onClick={handleSave} disabled={saving} className="rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all">
                 {saving ? (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 ) : (
@@ -514,30 +524,34 @@ const ProfileAddresses = () => {
 
       {/* Addresses List */}
       {addresses.length === 0 ? (
-        <div className="text-center py-12">
-          <MapPin className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-xl font-semibold mb-2">{t.noAddresses}</h3>
-          <p className="text-muted-foreground mb-8">{t.noAddressesDesc}</p>
-          <Button onClick={handleAdd}>
-            <Plus className="h-4 w-4 mr-2" />
-            {t.addAddress}
-          </Button>
-        </div>
+        <Card className="rounded-xl border-2 shadow-lg bg-background/95 backdrop-blur-sm">
+          <CardContent className="p-12 text-center">
+            <MapPin className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-xl font-bold mb-2">{t.noAddresses}</h3>
+            <p className="text-muted-foreground mb-8 font-medium text-lg">{t.noAddressesDesc}</p>
+            <Button onClick={handleAdd} className="rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all">
+              <Plus className="h-4 w-4 mr-2" />
+              {t.addAddress}
+            </Button>
+          </CardContent>
+        </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {addresses.map((address) => (
-            <Card key={address._id} className="relative">
+            <Card key={address._id} className="relative rounded-xl border-2 shadow-lg hover:shadow-xl transition-all bg-background/95 backdrop-blur-sm">
               <CardContent className="p-6">
                 <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center space-x-2">
-                    {getTypeIcon(address.displayType)}
-                    <span className="font-semibold">{address.fullName}</span>
+                  <div className="flex items-center space-x-2 flex-wrap gap-2">
+                    <div className="p-2 rounded-lg bg-primary/10 border-2 border-primary/20">
+                      {getTypeIcon(address.displayType)}
+                    </div>
+                    <span className="font-bold text-lg">{address.fullName}</span>
                     {address.isDefault && (
-                      <Badge variant="default" className="text-xs">
+                      <Badge variant="default" className="text-xs rounded-lg border-2 font-semibold">
                         {t.default}
                       </Badge>
                     )}
-                    <Badge variant="secondary" className="text-xs">
+                    <Badge variant="secondary" className="text-xs rounded-lg border-2 font-semibold">
                       {address.type === 'shipping' ? t.shipping : t.billing}
                     </Badge>
                   </div>
@@ -546,6 +560,7 @@ const ProfileAddresses = () => {
                       variant="ghost"
                       size="sm"
                       onClick={() => handleEdit(address)}
+                      className="rounded-lg hover:bg-primary/10 hover:text-primary transition-all"
                     >
                       <Edit2 className="h-4 w-4" />
                     </Button>
@@ -553,7 +568,7 @@ const ProfileAddresses = () => {
                       variant="ghost"
                       size="sm"
                       onClick={() => handleDelete(address._id)}
-                      className="text-destructive hover:text-destructive"
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10 rounded-lg transition-all"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -568,14 +583,14 @@ const ProfileAddresses = () => {
                 </div>
                 
                 {!address.isDefault && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="mt-4"
-                    onClick={() => handleSetDefault(address._id)}
-                  >
-                    {t.setDefault}
-                  </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-4 rounded-lg font-semibold border-2"
+                      onClick={() => handleSetDefault(address._id)}
+                    >
+                      {t.setDefault}
+                    </Button>
                 )}
               </CardContent>
             </Card>

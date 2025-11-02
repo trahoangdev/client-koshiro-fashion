@@ -15,7 +15,8 @@ import {
   Save,
   Trash2,
   AlertTriangle,
-  Check
+  Check,
+  Mail
 } from "lucide-react";
 
 interface AccountSettings {
@@ -196,21 +197,21 @@ const ProfileSettings = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold mb-2">{tl.title}</h2>
-        <p className="text-muted-foreground">{tl.subtitle}</p>
+    <div className="space-y-4">
+      <div className="mb-4">
+        <h2 className="text-3xl font-bold mb-2 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">{tl.title}</h2>
+        <p className="text-muted-foreground text-lg font-medium">{tl.subtitle}</p>
       </div>
 
       {/* Preferences */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Settings className="h-5 w-5 mr-2" />
+      <Card className="rounded-xl border-2 shadow-lg bg-background/95 backdrop-blur-sm">
+        <CardHeader className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-b-2 border-primary/20">
+          <CardTitle className="flex items-center text-xl font-bold">
+            <Settings className="h-5 w-5 mr-2 text-primary" />
             {tl.preferences}
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="p-6 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <Label htmlFor="language">{tl.language}</Label>
@@ -218,7 +219,7 @@ const ProfileSettings = () => {
                 id="language"
                 value={settings.language}
                 onChange={(e) => handleSettingChange('language', e.target.value)}
-                className="w-full p-2 border border-input rounded-md"
+                className="w-full p-2 border-2 border-input rounded-lg focus:border-primary transition-all font-medium"
               >
                 <option value="en">English</option>
                 <option value="vi">Tiếng Việt</option>
@@ -232,7 +233,7 @@ const ProfileSettings = () => {
                 id="currency"
                 value={settings.currency}
                 onChange={(e) => handleSettingChange('currency', e.target.value)}
-                className="w-full p-2 border border-input rounded-md"
+                className="w-full p-2 border-2 border-input rounded-lg focus:border-primary transition-all font-medium"
               >
                 <option value="USD">USD ($)</option>
                 <option value="VND">VND (₫)</option>
@@ -246,7 +247,7 @@ const ProfileSettings = () => {
                 id="timezone"
                 value={settings.timezone}
                 onChange={(e) => handleSettingChange('timezone', e.target.value)}
-                className="w-full p-2 border border-input rounded-md"
+                className="w-full p-2 border-2 border-input rounded-lg focus:border-primary transition-all font-medium"
               >
                 <option value="UTC">UTC</option>
                 <option value="Asia/Ho_Chi_Minh">Asia/Ho Chi Minh</option>
@@ -258,16 +259,16 @@ const ProfileSettings = () => {
       </Card>
 
       {/* Security */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Lock className="h-5 w-5 mr-2" />
+      <Card className="rounded-xl border-2 shadow-lg bg-background/95 backdrop-blur-sm">
+        <CardHeader className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-b-2 border-primary/20">
+          <CardTitle className="flex items-center text-xl font-bold">
+            <Lock className="h-5 w-5 mr-2 text-primary" />
             {tl.security}
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="p-6 space-y-6">
           {/* Two-Factor Authentication */}
-          <div className="flex items-center justify-between p-4 rounded-lg border">
+          <div className="flex items-center justify-between p-4 rounded-lg border-2 bg-muted/30 hover:bg-muted/50 transition-all">
             <div>
               <h3 className="font-medium">{tl.twoFactorAuth}</h3>
               <p className="text-sm text-muted-foreground">{tl.twoFactorAuthDesc}</p>
@@ -293,6 +294,7 @@ const ProfileSettings = () => {
                     type={showPassword ? "text" : "password"}
                     value={passwordData.currentPassword}
                     onChange={(e) => setPasswordData({...passwordData, currentPassword: e.target.value})}
+                    className="rounded-lg border-2 focus:border-primary transition-all"
                   />
                   <Button
                     type="button"
@@ -313,20 +315,22 @@ const ProfileSettings = () => {
                   type="password"
                   value={passwordData.newPassword}
                   onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
+                  className="rounded-lg border-2 focus:border-primary transition-all"
                 />
               </div>
               
               <div>
-                <Label htmlFor="confirmPassword">{tl.confirmPassword}</Label>
+                <Label htmlFor="confirmPassword" className="font-semibold">{tl.confirmPassword}</Label>
                 <Input
                   id="confirmPassword"
                   type="password"
                   value={passwordData.confirmPassword}
                   onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})}
+                  className="rounded-lg border-2 focus:border-primary transition-all"
                 />
               </div>
               
-              <Button onClick={handlePasswordChange}>
+              <Button onClick={handlePasswordChange} className="rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all">
                 <Check className="h-4 w-4 mr-2" />
                 {tl.savePassword}
               </Button>
@@ -336,12 +340,15 @@ const ProfileSettings = () => {
       </Card>
 
       {/* Email Settings */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Email Settings</CardTitle>
+      <Card className="rounded-xl border-2 shadow-lg bg-background/95 backdrop-blur-sm">
+        <CardHeader className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-b-2 border-primary/20">
+          <CardTitle className="text-xl font-bold flex items-center gap-2">
+            <Mail className="h-5 w-5 text-primary" />
+            Email Settings
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-between p-4 rounded-lg border">
+          <div className="flex items-center justify-between p-4 rounded-lg border-2 bg-muted/30 hover:bg-muted/50 transition-all">
             <div>
               <h3 className="font-medium">{tl.emailNotifications}</h3>
               <p className="text-sm text-muted-foreground">Receive important account notifications</p>
@@ -352,7 +359,7 @@ const ProfileSettings = () => {
             />
           </div>
           
-          <div className="flex items-center justify-between p-4 rounded-lg border">
+          <div className="flex items-center justify-between p-4 rounded-lg border-2 bg-muted/30 hover:bg-muted/50 transition-all">
             <div>
               <h3 className="font-medium">{tl.marketingEmails}</h3>
               <p className="text-sm text-muted-foreground">{tl.marketingEmailsDesc}</p>
@@ -367,16 +374,16 @@ const ProfileSettings = () => {
 
       {/* Save Settings */}
       <div className="flex justify-end">
-        <Button onClick={handleSaveSettings}>
+        <Button onClick={handleSaveSettings} className="rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all">
           <Save className="h-4 w-4 mr-2" />
           {tl.saveSettings}
         </Button>
       </div>
 
       {/* Danger Zone */}
-      <Card className="border-red-200">
-        <CardHeader>
-          <CardTitle className="flex items-center text-red-600">
+      <Card className="rounded-xl border-2 border-red-200 shadow-lg bg-background/95 backdrop-blur-sm">
+        <CardHeader className="bg-gradient-to-r from-red-100/50 via-red-50/30 to-transparent border-b-2 border-red-200">
+          <CardTitle className="flex items-center text-red-600 text-xl font-bold">
             <AlertTriangle className="h-5 w-5 mr-2" />
             Danger Zone
           </CardTitle>
@@ -390,7 +397,7 @@ const ProfileSettings = () => {
             <Button 
               variant="destructive" 
               onClick={handleDeleteAccount}
-              className="flex items-center"
+              className="flex items-center rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all"
             >
               <Trash2 className="h-4 w-4 mr-2" />
               {tl.deleteAccount}

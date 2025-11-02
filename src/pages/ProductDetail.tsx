@@ -42,7 +42,8 @@ import {
   ArrowLeft,
   MoreHorizontal,
   Ruler,
-  Package
+  Package,
+  GitCompare
 } from 'lucide-react';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
 
@@ -118,6 +119,7 @@ const ProductDetail: React.FC = () => {
       addToCart: 'Thêm vào giỏ hàng',
       buyNow: 'Mua ngay',
       addToWishlist: 'Thêm vào yêu thích',
+      addToCompare: 'Thêm vào so sánh',
       description: 'Mô tả',
       specifications: 'Thông số kỹ thuật',
       reviews: 'Đánh giá',
@@ -140,6 +142,7 @@ const ProductDetail: React.FC = () => {
       addToCart: 'Add to Cart',
       buyNow: 'Buy Now',
       addToWishlist: 'Add to Wishlist',
+      addToCompare: 'Add to Compare',
       description: 'Description',
       specifications: 'Specifications',
       reviews: 'Reviews',
@@ -162,6 +165,7 @@ const ProductDetail: React.FC = () => {
       addToCart: 'カートに追加',
       buyNow: '今すぐ購入',
       addToWishlist: 'お気に入りに追加',
+      addToCompare: '比較に追加',
       description: '説明',
       specifications: '仕様',
       reviews: 'レビュー',
@@ -570,6 +574,59 @@ const ProductDetail: React.FC = () => {
         variant: "destructive"
       });
     }
+  };
+
+  const handleAddToCompare = () => {
+    if (!product) return;
+    
+    const savedCompareList = localStorage.getItem('koshiro_compare_list');
+    let compareList: Product[] = [];
+    
+    if (savedCompareList) {
+      try {
+        compareList = JSON.parse(savedCompareList);
+      } catch (error) {
+        console.error('Error parsing compare list:', error);
+      }
+    }
+
+    if (compareList.length >= 4) {
+      toast({
+        title: language === 'vi' ? "Giới hạn so sánh" : 
+               language === 'ja' ? "比較制限" : 
+               "Compare Limit",
+        description: language === 'vi' ? "Bạn chỉ có thể so sánh tối đa 4 sản phẩm" :
+                     language === 'ja' ? "最大4つの商品を比較できます" :
+                     "You can compare up to 4 products",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (compareList.find(p => p._id === product._id)) {
+      toast({
+        title: language === 'vi' ? "Sản phẩm đã có" : 
+               language === 'ja' ? "商品は既に追加済み" : 
+               "Product Already Added",
+        description: language === 'vi' ? "Sản phẩm này đã có trong danh sách so sánh" :
+                     language === 'ja' ? "この商品は既に比較リストにあります" :
+                     "This product is already in the compare list",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const newCompareList = [...compareList, product];
+    localStorage.setItem('koshiro_compare_list', JSON.stringify(newCompareList));
+    
+    toast({
+      title: language === 'vi' ? "Đã thêm vào so sánh" : 
+             language === 'ja' ? "比較リストに追加" : 
+             "Added to Compare",
+      description: language === 'vi' ? "Sản phẩm đã được thêm vào danh sách so sánh" :
+                   language === 'ja' ? "商品が比較リストに追加されました" :
+                   "Product has been added to compare list",
+    });
   };
 
   const handleShare = (platform: string) => {
@@ -1103,7 +1160,7 @@ const ProductDetail: React.FC = () => {
                 </Button>
               </div>
               
-              <div className="flex items-center justify-center">
+              <div className="flex items-center justify-center gap-2">
                 <Button 
                   variant="ghost" 
                   size="sm"
@@ -1112,6 +1169,15 @@ const ProductDetail: React.FC = () => {
                 >
                   <Heart className={`h-4 w-4 mr-2 ${isInWishlist ? 'fill-current' : ''}`} />
                   {isInWishlist ? 'Remove from Wishlist' : t.addToWishlist}
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={handleAddToCompare}
+                  className="text-muted-foreground hover:text-primary"
+                >
+                  <GitCompare className="h-4 w-4 mr-2" />
+                  {t.addToCompare}
                 </Button>
               </div>
             </div>

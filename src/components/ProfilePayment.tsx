@@ -38,13 +38,15 @@ const ProfilePayment = () => {
     const loadPaymentMethods = async () => {
       try {
         setIsLoading(true);
-        const paymentMethodsData = await api.getPaymentMethods();
+        const paymentMethodsData = await api.getCustomerPaymentMethods();
         setPaymentMethods(paymentMethodsData);
       } catch (error) {
         console.error('Failed to load payment methods:', error);
         toast({
-          title: "Error",
-          description: "Failed to load payment methods. Please try again.",
+          title: language === 'vi' ? 'Lỗi' : language === 'ja' ? 'エラー' : 'Error',
+          description: language === 'vi' ? 'Không thể tải phương thức thanh toán. Vui lòng thử lại.' : 
+                       language === 'ja' ? '支払い方法を読み込めませんでした。もう一度お試しください。' :
+                       'Failed to load payment methods. Please try again.',
           variant: "destructive"
         });
       } finally {
@@ -53,7 +55,7 @@ const ProfilePayment = () => {
     };
 
     loadPaymentMethods();
-  }, [toast]);
+  }, [toast, language]);
 
   const translations = {
     en: {
@@ -242,7 +244,7 @@ const ProfilePayment = () => {
     try {
       if (editingId) {
         // Update existing payment method
-        const updatedPayment = await api.updatePaymentMethod(editingId, {
+        const updatedPayment = await api.updateCustomerPaymentMethod(editingId, {
           type: formData.type,
           name: formData.name,
           cardNumber: formData.cardNumber,
@@ -262,7 +264,7 @@ const ProfilePayment = () => {
         });
       } else {
         // Add new payment method
-        const newPayment = await api.addPaymentMethod({
+        const newPayment = await api.addCustomerPaymentMethod({
           type: formData.type,
           name: formData.name,
           cardNumber: formData.cardNumber,
@@ -307,7 +309,7 @@ const ProfilePayment = () => {
 
   const handleDelete = async (id: string) => {
     try {
-      await api.deletePaymentMethod(id);
+      await api.deleteCustomerPaymentMethod(id);
       setPaymentMethods(prev => prev.filter(pm => pm._id !== id));
       toast({
         title: "Success",
@@ -347,26 +349,26 @@ const ProfilePayment = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4">
+      <div className="flex items-center justify-between mb-4">
         <div>
-          <h2 className="text-2xl font-bold mb-2">{t.title}</h2>
-          <p className="text-muted-foreground">{t.subtitle}</p>
+          <h2 className="text-3xl font-bold mb-2 text-foreground">{t.title}</h2>
+          <p className="text-muted-foreground text-lg font-medium">{t.subtitle}</p>
         </div>
-        <Button onClick={handleAdd}>
+        <Button onClick={handleAdd} className="rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all">
           <Plus className="h-4 w-4 mr-2" />
           {t.addPayment}
         </Button>
       </div>
 
       {/* Security Notice */}
-      <Card className="border-green-200 bg-green-50">
-        <CardContent className="p-4">
+      <Card className="rounded-xl border-2 border-green-500/30 shadow-lg bg-green-500/10 backdrop-blur-sm dark:border-green-400/30 dark:bg-green-400/10">
+        <CardContent className="p-6">
           <div className="flex items-center space-x-2">
-            <Shield className="h-4 w-4 text-green-600" />
+            <Shield className="h-5 w-5 text-green-600 dark:text-green-400" />
             <div>
-              <p className="text-sm font-medium text-green-800">{t.secure}</p>
-              <p className="text-xs text-green-600">{t.secureDesc}</p>
+              <p className="text-sm font-semibold text-green-700 dark:text-green-300">{t.secure}</p>
+              <p className="text-xs text-green-600 dark:text-green-400 mt-1">{t.secureDesc}</p>
             </div>
           </div>
         </CardContent>
@@ -374,18 +376,21 @@ const ProfilePayment = () => {
 
       {/* Add/Edit Form */}
       {(isAdding || editingId) && (
-        <Card>
-          <CardHeader>
-            <CardTitle>{editingId ? t.editPayment : t.addPayment}</CardTitle>
+        <Card className="rounded-xl border-2 shadow-lg bg-background/95 backdrop-blur-sm">
+          <CardHeader className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-b-2 border-primary/20">
+            <CardTitle className="text-xl font-bold flex items-center gap-2">
+              <CreditCard className="h-5 w-5 text-primary" />
+              {editingId ? t.editPayment : t.addPayment}
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="p-6 space-y-4">
             <div>
-              <Label htmlFor="type">{t.type}</Label>
+              <Label htmlFor="type" className="font-semibold">{t.type}</Label>
               <select
                 id="type"
                 value={formData.type}
                 onChange={(e) => setFormData({...formData, type: e.target.value as 'credit_card' | 'debit_card' | 'paypal'})}
-                className="w-full p-2 border border-input rounded-md"
+                className="w-full p-2 border-2 border-input rounded-lg focus:border-primary transition-all font-medium"
               >
                 <option value="credit_card">{t.creditCard}</option>
                 <option value="debit_card">{t.debitCard}</option>
@@ -395,77 +400,83 @@ const ProfilePayment = () => {
 
             {formData.type === 'paypal' ? (
               <div>
-                <Label htmlFor="paypalEmail">{t.paypalEmail}</Label>
+                <Label htmlFor="paypalEmail" className="font-semibold">{t.paypalEmail}</Label>
                 <Input
                   id="paypalEmail"
                   type="email"
                   value={formData.paypalEmail}
                   onChange={(e) => setFormData({...formData, paypalEmail: e.target.value})}
                   placeholder="your.email@example.com"
+                  className="rounded-lg border-2 focus:border-primary transition-all"
                 />
               </div>
             ) : (
               <>
                 <div>
-                  <Label htmlFor="cardNumber">{t.cardNumber}</Label>
+                  <Label htmlFor="cardNumber" className="font-semibold">{t.cardNumber}</Label>
                   <Input
                     id="cardNumber"
                     value={formData.cardNumber}
                     onChange={(e) => setFormData({...formData, cardNumber: e.target.value})}
                     placeholder="1234 5678 9012 3456"
                     maxLength={19}
+                    className="rounded-lg border-2 focus:border-primary transition-all"
                   />
                 </div>
                 
                 <div>
-                  <Label htmlFor="cardName">{t.cardName}</Label>
+                  <Label htmlFor="cardName" className="font-semibold">{t.cardName}</Label>
                   <Input
                     id="cardName"
                     value={formData.name}
                     onChange={(e) => setFormData({...formData, name: e.target.value})}
+                    className="rounded-lg border-2 focus:border-primary transition-all"
                   />
                 </div>
                 
                 <div className="grid grid-cols-3 gap-4">
                   <div>
-                    <Label htmlFor="expiryMonth">{t.expiryMonth}</Label>
+                    <Label htmlFor="expiryMonth" className="font-semibold">{t.expiryMonth}</Label>
                     <Input
                       id="expiryMonth"
                       value={formData.expiryMonth}
                       onChange={(e) => setFormData({...formData, expiryMonth: e.target.value})}
                       placeholder="MM"
                       maxLength={2}
+                      className="rounded-lg border-2 focus:border-primary transition-all"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="expiryYear">{t.expiryYear}</Label>
+                    <Label htmlFor="expiryYear" className="font-semibold">{t.expiryYear}</Label>
                     <Input
                       id="expiryYear"
                       value={formData.expiryYear}
                       onChange={(e) => setFormData({...formData, expiryYear: e.target.value})}
                       placeholder="YYYY"
                       maxLength={4}
+                      className="rounded-lg border-2 focus:border-primary transition-all"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="cvv">{t.cvv}</Label>
+                    <Label htmlFor="cvv" className="font-semibold">{t.cvv}</Label>
                     <Input
                       id="cvv"
                       value={formData.cvv}
                       onChange={(e) => setFormData({...formData, cvv: e.target.value})}
                       placeholder="123"
                       maxLength={4}
+                      className="rounded-lg border-2 focus:border-primary transition-all"
                     />
                   </div>
                 </div>
               </>
             )}
             
-            <div className="flex justify-end space-x-2">
-              <Button variant="outline" onClick={handleCancel}>
+            <div className="flex justify-end space-x-2 pt-4 border-t">
+              <Button variant="outline" onClick={handleCancel} className="rounded-xl font-semibold border-2">
                 {t.cancel}
               </Button>
-              <Button onClick={handleSave}>
+              <Button onClick={handleSave} className="rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all">
                 <Check className="h-4 w-4 mr-2" />
                 {t.save}
               </Button>
@@ -480,25 +491,27 @@ const ProfilePayment = () => {
           <p>Loading payment methods...</p>
         </div>
       ) : paymentMethods.length === 0 ? (
-        <div className="text-center py-12">
-          <CreditCard className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-xl font-semibold mb-2">{t.noPaymentMethods}</h3>
-          <p className="text-muted-foreground mb-8">{t.noPaymentMethodsDesc}</p>
-          <Button onClick={handleAdd}>
-            <Plus className="h-4 w-4 mr-2" />
-            {t.addPayment}
-          </Button>
-        </div>
+        <Card className="rounded-xl border-2 shadow-lg bg-background/95 backdrop-blur-sm">
+          <CardContent className="p-12 text-center">
+            <CreditCard className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-xl font-bold mb-2">{t.noPaymentMethods}</h3>
+            <p className="text-muted-foreground mb-8 font-medium text-lg">{t.noPaymentMethodsDesc}</p>
+            <Button onClick={handleAdd} className="rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all">
+              <Plus className="h-4 w-4 mr-2" />
+              {t.addPayment}
+            </Button>
+          </CardContent>
+        </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {paymentMethods.map((payment) => (
-            <Card key={payment._id} className="relative">
+            <Card key={payment._id} className="relative rounded-xl border-2 shadow-lg hover:shadow-xl transition-all bg-background/95 backdrop-blur-sm">
               <CardContent className="p-6">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center space-x-2">
                     {getPaymentIcon(payment.type)}
                     {payment.isDefault && (
-                      <Badge variant="default" className="text-xs">
+                      <Badge variant="default" className="text-xs rounded-lg border-2 font-semibold">
                         {t.default}
                       </Badge>
                     )}
@@ -508,6 +521,7 @@ const ProfilePayment = () => {
                       variant="ghost"
                       size="sm"
                       onClick={() => handleEdit(payment)}
+                      className="rounded-lg hover:bg-primary/10 hover:text-primary transition-all"
                     >
                       <Edit2 className="h-4 w-4" />
                     </Button>
@@ -515,7 +529,7 @@ const ProfilePayment = () => {
                       variant="ghost"
                       size="sm"
                       onClick={() => handleDelete(payment._id)}
-                      className="text-destructive hover:text-destructive"
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10 rounded-lg transition-all"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -536,7 +550,7 @@ const ProfilePayment = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="mt-4"
+                    className="mt-4 rounded-lg font-semibold border-2"
                     onClick={() => handleSetDefault(payment._id)}
                   >
                     {t.setDefault}

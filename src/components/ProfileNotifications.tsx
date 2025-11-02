@@ -204,7 +204,7 @@ const ProfileNotifications = () => {
     checked: boolean;
     onToggle: () => void;
   }) => (
-    <div className="flex items-start space-x-3 p-4 rounded-lg border">
+    <div className="flex items-start space-x-3 p-4 rounded-lg border-2 bg-muted/30 hover:bg-muted/50 transition-all">
       <div className="flex-shrink-0 mt-1">
         {icon}
       </div>
@@ -227,31 +227,31 @@ const ProfileNotifications = () => {
   );
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4">
+      <div className="flex items-center justify-between mb-4">
         <div>
-          <h2 className="text-2xl font-bold mb-2">{tl.title}</h2>
-          <p className="text-muted-foreground">{tl.subtitle}</p>
+          <h2 className="text-3xl font-bold mb-2 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">{tl.title}</h2>
+          <p className="text-muted-foreground text-lg font-medium">{tl.subtitle}</p>
         </div>
         <div className="flex space-x-2">
-          <Button variant="outline" size="sm" onClick={handleEnableAll}>
+          <Button variant="outline" size="sm" onClick={handleEnableAll} className="rounded-lg font-semibold border-2">
             {tl.enableAll}
           </Button>
-          <Button variant="outline" size="sm" onClick={handleDisableAll}>
+          <Button variant="outline" size="sm" onClick={handleDisableAll} className="rounded-lg font-semibold border-2">
             {tl.disableAll}
           </Button>
         </div>
       </div>
 
       {/* Email Notifications */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Mail className="h-5 w-5 mr-2" />
+      <Card className="rounded-xl border-2 shadow-lg bg-background/95 backdrop-blur-sm">
+        <CardHeader className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-b-2 border-primary/20">
+          <CardTitle className="flex items-center text-xl font-bold">
+            <Mail className="h-5 w-5 mr-2 text-primary" />
             {tl.email}
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="p-6 space-y-4">
           <NotificationItem
             icon={<ShoppingBag className="h-4 w-4" />}
             title={tl.orderUpdates}
@@ -287,14 +287,14 @@ const ProfileNotifications = () => {
       </Card>
 
       {/* Push Notifications */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Bell className="h-5 w-5 mr-2" />
+      <Card className="rounded-xl border-2 shadow-lg bg-background/95 backdrop-blur-sm">
+        <CardHeader className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-b-2 border-primary/20">
+          <CardTitle className="flex items-center text-xl font-bold">
+            <Bell className="h-5 w-5 mr-2 text-primary" />
             {tl.push}
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="p-6 space-y-4">
           <NotificationItem
             icon={<ShoppingBag className="h-4 w-4" />}
             title={tl.orderUpdates}
@@ -330,14 +330,14 @@ const ProfileNotifications = () => {
       </Card>
 
       {/* SMS Notifications */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Smartphone className="h-5 w-5 mr-2" />
+      <Card className="rounded-xl border-2 shadow-lg bg-background/95 backdrop-blur-sm">
+        <CardHeader className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-b-2 border-primary/20">
+          <CardTitle className="flex items-center text-xl font-bold">
+            <Smartphone className="h-5 w-5 mr-2 text-primary" />
             {tl.sms}
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="p-6 space-y-4">
           <NotificationItem
             icon={<ShoppingBag className="h-4 w-4" />}
             title={tl.orderUpdates}
@@ -358,7 +358,7 @@ const ProfileNotifications = () => {
 
       {/* Save Button */}
       <div className="flex justify-end">
-        <Button onClick={handleSave}>
+        <Button onClick={handleSave} className="rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all">
           <Save className="h-4 w-4 mr-2" />
           {tl.save}
         </Button>

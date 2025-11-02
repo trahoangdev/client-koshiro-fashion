@@ -6,7 +6,7 @@ import mongoose from 'mongoose';
 // Define the auth request interface
 interface AuthRequest extends Request {
   user?: {
-    userId: string;
+    id: string;
     email: string;
     role: string;
   };
@@ -19,7 +19,7 @@ export const getUserAddresses = asyncHandler(async (req: AuthRequest, res: Respo
       return res.status(401).json({ message: 'Authentication required' });
     }
 
-    const user = await User.findById(req.user.userId);
+    const user = await User.findById(req.user.id);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
@@ -57,7 +57,7 @@ export const addAddress = asyncHandler(async (req: AuthRequest, res: Response) =
       return res.status(400).json({ message: 'All address fields are required' });
     }
 
-    const user = await User.findById(req.user.userId);
+    const user = await User.findById(req.user.id);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
@@ -109,7 +109,7 @@ export const updateAddress = asyncHandler(async (req: AuthRequest, res: Response
     const { id } = req.params;
     const { type, fullName, phone, address, city, state, zipCode, country, isDefault } = req.body;
 
-    const user = await User.findById(req.user.userId);
+    const user = await User.findById(req.user.id);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
@@ -161,7 +161,7 @@ export const deleteAddress = asyncHandler(async (req: AuthRequest, res: Response
 
     const { id } = req.params;
 
-    const user = await User.findById(req.user.userId);
+    const user = await User.findById(req.user.id);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
@@ -197,7 +197,7 @@ export const setDefaultAddress = asyncHandler(async (req: AuthRequest, res: Resp
 
     const { id } = req.params;
 
-    const user = await User.findById(req.user.userId);
+    const user = await User.findById(req.user.id);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
