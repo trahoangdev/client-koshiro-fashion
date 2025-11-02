@@ -366,12 +366,22 @@ export default function AdminReportsPage() {
     return "text-gray-600";
   };
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  interface TooltipProps {
+    active?: boolean;
+    payload?: Array<{
+      name?: string;
+      value?: number;
+      color?: string;
+    }>;
+    label?: string | number;
+  }
+
+  const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-background border border-border p-3 rounded-lg shadow-lg">
           <p className="font-medium">{label}</p>
-          {payload.map((entry: any, index: number) => (
+          {payload?.map((entry, index: number) => (
             <p key={index} style={{ color: entry.color }}>
               {entry.name}: {entry.value.toLocaleString()}
             </p>

@@ -93,14 +93,23 @@ export default function CategoryFormSimple({
     cloudinaryBannerImages: initialData?.cloudinaryBannerImages || []
   });
 
+  // Track if slug was manually edited
+  const [isSlugManuallyEdited, setIsSlugManuallyEdited] = useState(false);
+
   const generateSlug = (name: string) => {
+    if (!name || !name.trim()) {
+      return '';
+    }
     return name
       .toLowerCase()
       .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z0-9\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/-+/g, '-')
+      .replace(/[\u0300-\u036f]/g, '') // Remove Vietnamese diacritics
+      .replace(/đ/g, 'd')
+      .replace(/Đ/g, 'd')
+      .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
+      .replace(/\s+/g, '-') // Replace spaces with hyphens
+      .replace(/-+/g, '-') // Replace multiple hyphens with single hyphen
+      .replace(/^-|-$/g, '') // Remove leading/trailing hyphens
       .trim();
   };
 
@@ -212,10 +221,14 @@ export default function CategoryFormSimple({
                   value={formData.name}
                   onChange={(e) => {
                     const name = e.target.value;
+                    // Auto-generate slug only if it wasn't manually edited or if we're creating new
+                    const newSlug = mode === 'create' || !isSlugManuallyEdited 
+                      ? generateSlug(name) 
+                      : formData.slug;
                     setFormData(prev => ({ 
                       ...prev, 
                       name,
-                      slug: generateSlug(name)
+                      slug: newSlug
                     }));
                   }}
                   placeholder="Nhập tên danh mục"
@@ -228,7 +241,10 @@ export default function CategoryFormSimple({
                 <Input
                   id="slug"
                   value={formData.slug}
-                  onChange={(e) => setFormData(prev => ({ ...prev, slug: e.target.value }))}
+                  onChange={(e) => {
+                    setIsSlugManuallyEdited(true);
+                    setFormData(prev => ({ ...prev, slug: e.target.value }));
+                  }}
                   placeholder="ten-danh-muc"
                   required
                 />
@@ -324,33 +340,21 @@ export default function CategoryFormSimple({
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="displayType">Kiểu hiển thị</Label>
-                <Select
-                  value={formData.displayType}
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, displayType: value as 'grid' | 'list' | 'carousel' }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="grid">Lưới</SelectItem>
-                    <SelectItem value="list">Danh sách</SelectItem>
-                    <SelectItem value="carousel">Carousel</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="color">Màu sắc</Label>
-                <Input
-                  id="color"
-                  type="color"
-                  value={formData.color}
-                  onChange={(e) => setFormData(prev => ({ ...prev, color: e.target.value }))}
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="displayType">Kiểu hiển thị</Label>
+              <Select
+                value={formData.displayType}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, displayType: value as 'grid' | 'list' | 'carousel' }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="grid">Lưới</SelectItem>
+                  <SelectItem value="list">Danh sách</SelectItem>
+                  <SelectItem value="carousel">Carousel</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </CardContent>
         </Card>
@@ -376,8 +380,9 @@ export default function CategoryFormSimple({
                 onImagesUploaded={handleCloudinaryImagesUploaded}
                 onImagesRemoved={handleCloudinaryImagesRemoved}
                 existingImages={formData.cloudinaryImages}
-                maxImages={5}
-                folder="categories"
+                maxFiles={5}
+                maxSize={10 * 1024 * 1024} // 10MB
+                acceptedTypes={['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']}
               />
             </div>
 
@@ -395,8 +400,9 @@ export default function CategoryFormSimple({
                 onImagesUploaded={handleCloudinaryBannerImagesUploaded}
                 onImagesRemoved={handleCloudinaryBannerImagesRemoved}
                 existingImages={formData.cloudinaryBannerImages}
-                maxImages={3}
-                folder="categories/banners"
+                maxFiles={3}
+                maxSize={10 * 1024 * 1024} // 10MB
+                acceptedTypes={['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']}
               />
             </div>
           </CardContent>

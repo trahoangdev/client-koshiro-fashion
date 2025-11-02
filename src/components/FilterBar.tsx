@@ -149,69 +149,152 @@ const FilterBar = ({
   const hasActiveFilters = selectedCategory !== 'all' || selectedPriceRange !== 'all' || selectedColor !== 'all';
 
   return (
-    <div className="flex flex-wrap items-center gap-4 p-6 bg-card rounded-lg border shadow-soft">
+    <div className="flex flex-wrap items-center gap-4 p-6 bg-gradient-to-br from-white via-white to-stone-50/50 dark:from-stone-800 dark:via-stone-800 dark:to-stone-900/50 border border-stone-200/60 dark:border-stone-700/60 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
       {/* Category Filter */}
-      <Select value={selectedCategory} onValueChange={onCategoryChange}>
-        <SelectTrigger className="w-48">
-          <SelectValue placeholder={t.allCategories} />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">{t.allCategories}</SelectItem>
-          <SelectItem value="tops">{t.tops}</SelectItem>
-          <SelectItem value="bottoms">{t.bottoms}</SelectItem>
-          <SelectItem value="accessories">{t.accessories}</SelectItem>
-          <SelectItem value="kimono">{t.kimono}</SelectItem>
-          <SelectItem value="yukata">{t.yukata}</SelectItem>
-          <SelectItem value="hakama">{t.hakama}</SelectItem>
-        </SelectContent>
-      </Select>
+      <div className="flex-1 min-w-[200px]">
+        <label className="text-sm font-medium mb-2 block text-foreground">
+          {language === 'vi' ? 'Danh mục' : language === 'ja' ? 'カテゴリー' : 'Category'}
+        </label>
+        <Select value={selectedCategory} onValueChange={onCategoryChange}>
+          <SelectTrigger className="w-full bg-white dark:bg-stone-800 border-stone-200/60 dark:border-stone-700/60 hover:border-primary/50 transition-all duration-300 hover:shadow-md rounded-xl h-11">
+            <SelectValue placeholder={t.allCategories} />
+          </SelectTrigger>
+          <SelectContent className="bg-white dark:bg-stone-800 border-stone-200/60 dark:border-stone-700/60 rounded-xl shadow-xl backdrop-blur-sm">
+            <SelectItem value="all" className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg">
+              {t.allCategories}
+            </SelectItem>
+            <SelectItem value="tops" className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg">
+              {t.tops}
+            </SelectItem>
+            <SelectItem value="bottoms" className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg">
+              {t.bottoms}
+            </SelectItem>
+            <SelectItem value="accessories" className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg">
+              {t.accessories}
+            </SelectItem>
+            <SelectItem value="kimono" className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg">
+              {t.kimono}
+            </SelectItem>
+            <SelectItem value="yukata" className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg">
+              {t.yukata}
+            </SelectItem>
+            <SelectItem value="hakama" className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg">
+              {t.hakama}
+            </SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
       {/* Price Range Filter */}
-      <Select value={selectedPriceRange} onValueChange={onPriceRangeChange}>
-        <SelectTrigger className="w-48">
-          <SelectValue placeholder={t.priceRange} />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">{t.allPrices}</SelectItem>
-          <SelectItem value="under50">{t.under50}</SelectItem>
-          <SelectItem value="50-100">{t.range50to100}</SelectItem>
-          <SelectItem value="over100">{t.over100}</SelectItem>
-        </SelectContent>
-      </Select>
+      <div className="flex-1 min-w-[200px]">
+        <label className="text-sm font-medium mb-2 block text-foreground">
+          {language === 'vi' ? 'Khoảng giá' : language === 'ja' ? '価格帯' : 'Price Range'}
+        </label>
+        <Select value={selectedPriceRange} onValueChange={onPriceRangeChange}>
+          <SelectTrigger className="w-full bg-white dark:bg-stone-800 border-stone-200/60 dark:border-stone-700/60 hover:border-primary/50 transition-all duration-300 hover:shadow-md rounded-xl h-11">
+            <SelectValue placeholder={t.priceRange} />
+          </SelectTrigger>
+          <SelectContent className="bg-white dark:bg-stone-800 border-stone-200/60 dark:border-stone-700/60 rounded-xl shadow-xl backdrop-blur-sm">
+            <SelectItem value="all" className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg">
+              {t.allPrices}
+            </SelectItem>
+            <SelectItem value="under50" className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg">
+              {t.under50}
+            </SelectItem>
+            <SelectItem value="50-100" className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg">
+              {t.range50to100}
+            </SelectItem>
+            <SelectItem value="over100" className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg">
+              {t.over100}
+            </SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
       {/* Color Filter */}
-      <Select value={selectedColor} onValueChange={onColorChange}>
-        <SelectTrigger className="w-48">
-          <SelectValue placeholder={t.color} />
-        </SelectTrigger>
-        <SelectContent className="max-h-60 overflow-y-auto">
-          <SelectItem value="all">{t.allColors}</SelectItem>
-          <SelectItem value="black" className="truncate">{t.black}</SelectItem>
-          <SelectItem value="white" className="truncate">{t.white}</SelectItem>
-          <SelectItem value="beige" className="truncate">{t.beige}</SelectItem>
-          <SelectItem value="brown" className="truncate">{t.brown}</SelectItem>
-          <SelectItem value="navy" className="truncate">{t.navy}</SelectItem>
-          <SelectItem value="natural" className="truncate">{t.natural}</SelectItem>
-          <SelectItem value="olive" className="truncate">{t.olive}</SelectItem>
-          <SelectItem value="khaki" className="truncate">{t.khaki}</SelectItem>
-          <SelectItem value="grey" className="truncate">{t.grey}</SelectItem>
-          <SelectItem value="pink" className="truncate">{t.pink}</SelectItem>
-          <SelectItem value="purple" className="truncate">{t.purple}</SelectItem>
-          <SelectItem value="green" className="truncate">{t.green}</SelectItem>
-          <SelectItem value="blue" className="truncate">{t.blue}</SelectItem>
-          <SelectItem value="burgundy" className="truncate">{t.burgundy}</SelectItem>
-          <SelectItem value="gold" className="truncate">{t.gold}</SelectItem>
-          <SelectItem value="red" className="truncate">{t.red}</SelectItem>
-          <SelectItem value="emerald" className="truncate">{t.emerald}</SelectItem>
-          <SelectItem value="coral" className="truncate">{t.coral}</SelectItem>
-          <SelectItem value="turquoise" className="truncate">{t.turquoise}</SelectItem>
-          <SelectItem value="yellow" className="truncate">{t.yellow}</SelectItem>
-        </SelectContent>
-      </Select>
+      <div className="flex-1 min-w-[200px]">
+        <label className="text-sm font-medium mb-2 block text-foreground">
+          {language === 'vi' ? 'Màu sắc' : language === 'ja' ? '色' : 'Color'}
+        </label>
+        <Select value={selectedColor} onValueChange={onColorChange}>
+          <SelectTrigger className="w-full bg-white dark:bg-stone-800 border-stone-200/60 dark:border-stone-700/60 hover:border-primary/50 transition-all duration-300 hover:shadow-md rounded-xl h-11">
+            <SelectValue placeholder={t.color} />
+          </SelectTrigger>
+          <SelectContent className="max-h-60 overflow-y-auto bg-white dark:bg-stone-800 border-stone-200/60 dark:border-stone-700/60 rounded-xl shadow-xl backdrop-blur-sm">
+            <SelectItem value="all" className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg">
+              {t.allColors}
+            </SelectItem>
+            <SelectItem value="black" className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg truncate">
+              {t.black}
+            </SelectItem>
+            <SelectItem value="white" className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg truncate">
+              {t.white}
+            </SelectItem>
+            <SelectItem value="beige" className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg truncate">
+              {t.beige}
+            </SelectItem>
+            <SelectItem value="brown" className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg truncate">
+              {t.brown}
+            </SelectItem>
+            <SelectItem value="navy" className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg truncate">
+              {t.navy}
+            </SelectItem>
+            <SelectItem value="natural" className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg truncate">
+              {t.natural}
+            </SelectItem>
+            <SelectItem value="olive" className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg truncate">
+              {t.olive}
+            </SelectItem>
+            <SelectItem value="khaki" className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg truncate">
+              {t.khaki}
+            </SelectItem>
+            <SelectItem value="grey" className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg truncate">
+              {t.grey}
+            </SelectItem>
+            <SelectItem value="pink" className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg truncate">
+              {t.pink}
+            </SelectItem>
+            <SelectItem value="purple" className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg truncate">
+              {t.purple}
+            </SelectItem>
+            <SelectItem value="green" className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg truncate">
+              {t.green}
+            </SelectItem>
+            <SelectItem value="blue" className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg truncate">
+              {t.blue}
+            </SelectItem>
+            <SelectItem value="burgundy" className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg truncate">
+              {t.burgundy}
+            </SelectItem>
+            <SelectItem value="gold" className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg truncate">
+              {t.gold}
+            </SelectItem>
+            <SelectItem value="red" className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg truncate">
+              {t.red}
+            </SelectItem>
+            <SelectItem value="emerald" className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg truncate">
+              {t.emerald}
+            </SelectItem>
+            <SelectItem value="coral" className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg truncate">
+              {t.coral}
+            </SelectItem>
+            <SelectItem value="turquoise" className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg truncate">
+              {t.turquoise}
+            </SelectItem>
+            <SelectItem value="yellow" className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg truncate">
+              {t.yellow}
+            </SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
       {/* Clear Filters */}
       {hasActiveFilters && (
-        <Button variant="ghost" onClick={onClearFilters} className="gap-2">
+        <Button 
+          variant="ghost" 
+          onClick={onClearFilters} 
+          className="gap-2 hover:bg-destructive/10 hover:text-destructive transition-all duration-300 rounded-xl h-11 px-4"
+        >
           <X className="h-4 w-4" />
           {t.clearFilters}
         </Button>

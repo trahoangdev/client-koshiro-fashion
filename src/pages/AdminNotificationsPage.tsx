@@ -64,13 +64,13 @@ export default function AdminNotificationsPage() {
   const navigate = useNavigate();
   const { language } = useLanguage();
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  
   const { 
     notifications, 
     unreadCount, 
     isLoading, 
     markAsRead, 
     markAllAsRead, 
-    archiveNotification, 
     deleteNotification, 
     clearAll,
     refreshNotifications,
@@ -571,7 +571,7 @@ export default function AdminNotificationsPage() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="grid gap-2">
                       <Label htmlFor="type">Type</Label>
-                      <Select value={formData.type} onValueChange={(value: any) => setFormData(prev => ({ ...prev, type: value }))}>
+                      <Select value={formData.type} onValueChange={(value: string) => setFormData(prev => ({ ...prev, type: value as 'info' | 'success' | 'warning' | 'error' }))}>
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
@@ -585,7 +585,7 @@ export default function AdminNotificationsPage() {
                     </div>
                     <div className="grid gap-2">
                       <Label htmlFor="category">Category</Label>
-                      <Select value={formData.category} onValueChange={(value: any) => setFormData(prev => ({ ...prev, category: value }))}>
+                      <Select value={formData.category} onValueChange={(value: string) => setFormData(prev => ({ ...prev, category: value }))}>
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
@@ -1011,7 +1011,7 @@ export default function AdminNotificationsPage() {
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="edit-category">Category</Label>
-                  <Select value={formData.category} onValueChange={(value: any) => setFormData(prev => ({ ...prev, category: value }))}>
+                  <Select value={formData.category} onValueChange={(value: string) => setFormData(prev => ({ ...prev, category: value }))}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>

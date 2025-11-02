@@ -147,15 +147,51 @@ export const getCategoryBySlug = asyncHandler(async (req: Request, res: Response
       });
     }
     
-    const category = await Category.findOne({ slug }).lean();
+    // Normalize slug to lowercase to match schema (slug field has lowercase: true)
+    const normalizedSlug = slug.toLowerCase().trim();
+    
+    console.log('Looking for category with slug:', normalizedSlug);
+    
+    // Try to find category by slug (case-insensitive search)
+    // First try exact match with normalized slug
+    let category = await Category.findOne({ 
+      slug: normalizedSlug,
+      isActive: true
+    }).lean();
+    
+    // If not found, try case-insensitive regex search
+    if (!category) {
+      category = await Category.findOne({ 
+        slug: { $regex: new RegExp(`^${normalizedSlug.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') },
+        isActive: true
+      }).lean();
+    }
     
     if (!category) {
+      // Log available categories for debugging
+      const availableCategories = await Category.find({ isActive: true }).select('slug name isActive').lean();
+      console.log('Category not found. Requested slug:', normalizedSlug);
+      console.log('Available categories:', availableCategories.map(c => ({ slug: c.slug, name: c.name, isActive: c.isActive })));
+      
+      // Also check if category exists but is inactive
+      const inactiveCategory = await Category.findOne({ 
+        $or: [
+          { slug: normalizedSlug },
+          { slug: { $regex: new RegExp(`^${normalizedSlug.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') } }
+        ]
+      }).lean();
+      
+      if (inactiveCategory) {
+        console.log('Category found but is inactive:', inactiveCategory.name, inactiveCategory.isActive);
+      }
+      
       return res.status(404).json({ 
         success: false,
         message: 'Category not found' 
       });
     }
 
+    console.log('Category found:', category.name, 'with slug:', category.slug);
     res.json({ 
       success: true,
       category 

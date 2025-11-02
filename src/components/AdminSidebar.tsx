@@ -45,6 +45,7 @@ import { useAuth, getUserRoleName } from "@/contexts";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useNotifications } from "@/contexts/NotificationsContext";
 import { api } from "@/lib/api";
+import { logger } from "@/lib/logger";
 
 interface AdminSidebarProps {
   isOpen: boolean;
@@ -76,7 +77,8 @@ function AdminSidebar({ isOpen, onToggle }: AdminSidebarProps) {
   const { toast } = useToast();
   const { logout, user } = useAuth();
   const { language, setLanguage } = useLanguage();
-  const { unreadCount } = useNotifications();
+  // const { unreadCount } = useNotifications(); // Removed
+  const unreadCount = 0; // Temporary: NotificationsContext removed
   const [ordersCount, setOrdersCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -315,7 +317,7 @@ function AdminSidebar({ isOpen, onToggle }: AdminSidebarProps) {
         const ordersResponse = await api.getAdminOrders({ limit: 1 });
         setOrdersCount(ordersResponse.pagination?.total || 0);
       } catch (error) {
-        console.error('Failed to load orders count:', error);
+        logger.error('Failed to load orders count', error);
         setOrdersCount(0);
       } finally {
         setIsLoading(false);

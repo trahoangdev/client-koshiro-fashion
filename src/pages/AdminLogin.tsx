@@ -82,9 +82,9 @@ export default function AdminLogin() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-zen flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 flex items-center justify-center p-4">
+      <Card className="w-full max-w-md rounded-xl border-2 shadow-xl bg-background/95 backdrop-blur-sm overflow-hidden">
+        <CardHeader className="text-center pb-4">
           {/* Logo */}
           <div className="mb-6 flex justify-center">
             <div className="relative">
@@ -92,97 +92,103 @@ export default function AdminLogin() {
               <img
                 src="/koshino_logo_dark.png"
                 alt="Koshino Fashion Logo"
-                className="h-12 w-auto opacity-90 hover:opacity-100 transition-all duration-300 dark:hidden"
+                className="h-16 w-auto opacity-90 hover:opacity-100 transition-all duration-300 dark:hidden"
                 loading="lazy"
               />
               <img
                 src="/koshino_logo.png"
                 alt="Koshino Fashion Logo"
-                className="h-12 w-auto opacity-90 hover:opacity-100 transition-all duration-300 hidden dark:block"
+                className="h-16 w-auto opacity-90 hover:opacity-100 transition-all duration-300 hidden dark:block"
                 loading="lazy"
               />
             </div>
           </div>
           <div className="flex items-center justify-between mb-2">
-            <CardTitle className="text-2xl font-bold flex-1">{t.title}</CardTitle>
+            <CardTitle className="text-3xl font-bold flex-1 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">{t.title}</CardTitle>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <Globe className="h-4 w-4" />
+                <Button variant="ghost" size="icon" className="rounded-lg hover:bg-primary/10 hover:text-primary transition-all">
+                  <Globe className="h-5 w-5" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem onClick={() => setLanguage('en')}>
+              <DropdownMenuContent className="rounded-lg border-2">
+                <DropdownMenuItem onClick={() => setLanguage('en')} className="rounded-md">
                   English
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setLanguage('vi')}>
+                <DropdownMenuItem onClick={() => setLanguage('vi')} className="rounded-md">
                   Tiếng Việt
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setLanguage('ja')}>
+                <DropdownMenuItem onClick={() => setLanguage('ja')} className="rounded-md">
                   日本語
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-          <p className="text-muted-foreground">{t.subtitle}</p>
+          <p className="text-muted-foreground font-medium text-lg">{t.subtitle}</p>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleLogin} className="space-y-4">
+          <form onSubmit={handleLogin} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="email">{t.email}</Label>
+              <Label htmlFor="email" className="text-sm font-semibold mb-2 block">{t.email}</Label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
                 <Input
                   id="email"
                   type="email"
                   placeholder="admin@koshiro.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 rounded-lg border-2 focus:border-primary transition-all"
                   required
                 />
               </div>
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="password">{t.password}</Label>
+              <Label htmlFor="password" className="text-sm font-semibold mb-2 block">{t.password}</Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10 pr-10"
+                  className="pl-10 pr-10 rounded-lg border-2 focus:border-primary transition-all"
                   required
                 />
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="absolute right-0 top-0 h-full px-3"
+                  className="absolute right-0 top-0 h-full px-3 rounded-lg hover:bg-primary/10 hover:text-primary transition-all"
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
+                    <EyeOff className="h-5 w-5" />
                   ) : (
-                    <Eye className="h-4 w-4" />
+                    <Eye className="h-5 w-5" />
                   )}
                 </Button>
               </div>
             </div>
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button 
+              type="submit" 
+              className="w-full rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105" 
+              disabled={isLoading}
+            >
               {isLoading ? t.loggingIn : t.login}
             </Button>
           </form>
 
-          <div className="mt-6 p-4 bg-muted rounded-md">
-            <p className="text-sm text-muted-foreground mb-2">{t.demoCredentials}</p>
-            <p className="text-sm">Email: admin@koshiro.com</p>
-            <p className="text-sm">Password: admin123</p>
-          </div>
+          <Card className="mt-6 rounded-lg border-2 bg-muted/30 overflow-hidden">
+            <CardContent className="p-4">
+              <p className="text-sm font-semibold text-muted-foreground mb-2">{t.demoCredentials}</p>
+              <p className="text-sm font-medium">Email: admin@koshiro.com</p>
+              <p className="text-sm font-medium">Password: admin123</p>
+            </CardContent>
+          </Card>
         </CardContent>
       </Card>
     </div>

@@ -254,33 +254,36 @@ const SalePage = () => {
       />
 
       <main className="py-8">
-        <div className="container space-y-8">
+        <div className="container mx-auto px-4 space-y-8">
           {/* Enhanced Hero Section */}
-          <section className="text-center">
-            <div className="relative overflow-hidden rounded-xl shadow-2xl">
-              {/* Banner Background */}
+          <section className="text-center mb-12">
+            <div className="relative overflow-hidden rounded-2xl shadow-2xl">
+              {/* Banner Background with Gradient */}
               <div className="absolute inset-0">
                 <img 
                   src="/images/banners/banner-04.png" 
                   alt="Sale Banner"
                   className="w-full h-full object-cover"
                 />
-                <div className="absolute inset-0 bg-black/50"></div>
+                <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/50 to-black/60"></div>
               </div>
               
               {/* Content */}
-              <div className="relative z-10 py-16 text-white">
-                <h1 className="text-4xl md:text-6xl font-bold mb-4 animate-fade-in">
-                  <Percent className="inline-block mr-3 h-12 w-12 md:h-16 md:w-16" />
-                  {t.title}
-                </h1>
-                <p className="text-xl md:text-2xl mb-4 opacity-90">
+              <div className="relative z-10 p-12 md:p-16 text-white">
+                <div className="flex items-center justify-center mb-4">
+                  <Percent className="h-12 w-12 md:h-16 md:w-16 mr-3" />
+                  <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold bg-gradient-to-r from-white via-white to-white/80 bg-clip-text text-transparent">
+                    {t.title}
+                  </h1>
+                </div>
+                <p className="text-xl md:text-2xl mb-4 text-white/90 font-light">
                   {t.subtitle}
                 </p>
-                <p className="text-lg opacity-80 max-w-2xl mx-auto mb-6">
+                <p className="text-lg max-w-2xl mx-auto text-white/80 mb-8 leading-relaxed">
                   {t.description}
                 </p>
-                <Badge variant="secondary" className="bg-white/20 text-white text-lg px-4 py-2">
+                <Badge variant="secondary" className="bg-white/20 backdrop-blur-sm text-white text-lg px-6 py-2 border border-white/30">
+                  <TrendingDown className="h-4 w-4 mr-2" />
                   {filteredProducts.length} {t.productsFound}
                 </Badge>
               </div>
@@ -289,11 +292,11 @@ const SalePage = () => {
 
           {/* Filters and Tabs Section */}
           <section className="space-y-6">
-            <Card>
-              <CardHeader>
+            <Card className="rounded-xl border-2 shadow-lg bg-background/95 backdrop-blur-sm">
+              <CardHeader className="pb-4">
                 <CardTitle className="flex items-center space-x-2">
-                  <TrendingDown className="h-5 w-5" />
-                  <span>{t.filters}</span>
+                  <TrendingDown className="h-5 w-5 text-primary" />
+                  <span className="text-lg font-semibold">{t.filters}</span>
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -303,16 +306,16 @@ const SalePage = () => {
                     placeholder={t.search}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="max-w-md"
+                    className="max-w-md rounded-lg border-2 focus:border-primary transition-all"
                   />
                 </div>
 
                 {/* Filter Controls */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <label className="text-sm font-medium mb-2 block">{t.discount}</label>
+                    <label className="text-sm font-semibold mb-2 block text-foreground">{t.discount}</label>
                     <Select value={discountFilter} onValueChange={setDiscountFilter}>
-                      <SelectTrigger>
+                      <SelectTrigger className="rounded-lg border-2">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -325,9 +328,9 @@ const SalePage = () => {
                   </div>
 
                   <div>
-                    <label className="text-sm font-medium mb-2 block">{t.priceRange}</label>
+                    <label className="text-sm font-semibold mb-2 block text-foreground">{t.priceRange}</label>
                     <Select value={priceRangeFilter} onValueChange={setPriceRangeFilter}>
-                      <SelectTrigger>
+                      <SelectTrigger className="rounded-lg border-2">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -349,7 +352,7 @@ const SalePage = () => {
                         setPriceRangeFilter('all');
                         setActiveTab('all');
                       }}
-                      className="w-full"
+                      className="w-full rounded-lg"
                     >
                       {t.clearFilters}
                     </Button>
@@ -360,24 +363,28 @@ const SalePage = () => {
 
             {/* Sale Categories Tabs */}
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="all" className="flex items-center space-x-2">
-                  <Gift className="h-4 w-4" />
-                  <span>{t.allProducts}</span>
-                </TabsTrigger>
-                <TabsTrigger value="flash" className="flex items-center space-x-2">
-                  <TrendingDown className="h-4 w-4" />
-                  <span>{t.flashSale}</span>
-                </TabsTrigger>
-                <TabsTrigger value="featured" className="flex items-center space-x-2">
-                  <Percent className="h-4 w-4" />
-                  <span>{t.featuredSale}</span>
-                </TabsTrigger>
-                <TabsTrigger value="new" className="flex items-center space-x-2">
-                  <Clock className="h-4 w-4" />
-                  <span>{t.newSale}</span>
-                </TabsTrigger>
-              </TabsList>
+              <Card className="rounded-xl border-2 shadow-lg bg-background/95 backdrop-blur-sm">
+                <CardContent className="p-4">
+                  <TabsList className="grid w-full grid-cols-4 bg-muted/30 rounded-lg p-1">
+                    <TabsTrigger value="all" className="flex items-center space-x-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all">
+                      <Gift className="h-4 w-4" />
+                      <span className="font-medium">{t.allProducts}</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="flash" className="flex items-center space-x-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all">
+                      <TrendingDown className="h-4 w-4" />
+                      <span className="font-medium">{t.flashSale}</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="featured" className="flex items-center space-x-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all">
+                      <Percent className="h-4 w-4" />
+                      <span className="font-medium">{t.featuredSale}</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="new" className="flex items-center space-x-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all">
+                      <Clock className="h-4 w-4" />
+                      <span className="font-medium">{t.newSale}</span>
+                    </TabsTrigger>
+                  </TabsList>
+                </CardContent>
+              </Card>
 
               <TabsContent value={activeTab} className="mt-8">
                 {isLoading ? (

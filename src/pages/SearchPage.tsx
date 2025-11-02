@@ -233,13 +233,13 @@ const SearchPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       <Header 
         cartItemsCount={0} 
         onSearch={(query) => handleSearch({
           query,
           category: 'all',
-          priceRange: [0, 1000000], // Tăng max price để phù hợp với giá VND
+          priceRange: [0, 1000000],
           inStock: false,
           onSale: false,
           featured: false,
@@ -254,20 +254,24 @@ const SearchPage: React.FC = () => {
           <Button
             variant="ghost"
             onClick={() => navigate(-1)}
-            className="mb-4"
+            className="mb-4 rounded-lg hover:bg-primary/10"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
+            {language === 'vi' ? 'Quay lại' : language === 'ja' ? '戻る' : 'Back'}
           </Button>
         </div>
 
         {/* Advanced Search Component */}
         <div className="mb-8">
-          <AdvancedSearch
-            onSearch={handleSearch}
-            initialQuery={initialQuery}
-            showFilters={searchPerformed}
-          />
+          <Card className="rounded-xl border-2 shadow-lg bg-background/95 backdrop-blur-sm">
+            <CardContent className="p-6">
+              <AdvancedSearch
+                onSearch={handleSearch}
+                initialQuery={initialQuery}
+                showFilters={searchPerformed}
+              />
+            </CardContent>
+          </Card>
         </div>
 
         {/* Search Results or Welcome Content */}
@@ -275,24 +279,35 @@ const SearchPage: React.FC = () => {
           <div className="space-y-6">
             {/* Results Header */}
             {currentFilters && (
-              <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold">
-                  {currentFilters.query ? (
-                    <>Search results for "<span className="text-primary">{currentFilters.query}</span>"</>
-                  ) : currentFilters.category && currentFilters.category !== 'all' ? (
-                    <>Products in "<span className="text-primary">{
-                      categories.find(c => c._id === currentFilters.category) 
-                        ? getCategoryName(categories.find(c => c._id === currentFilters.category)!)
-                        : 'Unknown Category'
-                    }</span>"</>
-                  ) : (
-                    'Filtered Products'
-                  )}
-                </h2>
-                <div className="text-sm text-muted-foreground">
-                  {products.length} products found
-                </div>
-              </div>
+              <Card className="rounded-xl border-2 shadow-lg bg-background/95 backdrop-blur-sm">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between flex-wrap gap-4">
+                    <h2 className="text-2xl md:text-3xl font-bold">
+                      {currentFilters.query ? (
+                        <>
+                          {language === 'vi' ? 'Kết quả tìm kiếm cho ' : language === 'ja' ? '検索結果: ' : 'Search results for '}
+                          "<span className="text-primary">{currentFilters.query}</span>"
+                        </>
+                      ) : currentFilters.category && currentFilters.category !== 'all' ? (
+                        <>
+                          {language === 'vi' ? 'Sản phẩm trong ' : language === 'ja' ? '商品: ' : 'Products in '}
+                          "<span className="text-primary">{
+                            categories.find(c => c._id === currentFilters.category) 
+                              ? getCategoryName(categories.find(c => c._id === currentFilters.category)!)
+                              : 'Unknown Category'
+                          }</span>"
+                        </>
+                      ) : (
+                        language === 'vi' ? 'Sản phẩm đã lọc' : language === 'ja' ? 'フィルター済み商品' : 'Filtered Products'
+                      )}
+                    </h2>
+                    <Badge variant="secondary" className="text-lg px-4 py-2 font-semibold">
+                      <SearchIcon className="h-4 w-4 mr-2" />
+                      {products.length} {language === 'vi' ? 'sản phẩm' : language === 'ja' ? '商品' : 'products'}
+                    </Badge>
+                  </div>
+                </CardContent>
+              </Card>
             )}
 
             {/* Products Grid */}
@@ -306,36 +321,46 @@ const SearchPage: React.FC = () => {
           </div>
         ) : (
           /* Welcome Content - No Search Performed Yet */
-          <div className="space-y-12">
+          <div className="space-y-8">
             {/* Hero Section */}
-            <section className="relative overflow-hidden rounded-2xl">
-              {/* Banner Background */}
-              <div className="absolute inset-0">
-                <img 
-                  src="/images/banners/banner-04.png" 
-                  alt="Search Banner"
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-black/50"></div>
-              </div>
-              
-              {/* Content */}
-              <div className="relative z-10 py-12 text-center text-white">
-                <SearchIcon className="h-16 w-16 mx-auto text-white mb-6" />
-                <h1 className="text-4xl font-bold mb-4">
-                  Find Your Perfect Style
-                </h1>
-                <p className="text-xl text-white/90 max-w-2xl mx-auto">
-                  Discover thousands of products from top brands. Search by name, category, or browse our curated collections.
-                </p>
+            <section className="text-center mb-12">
+              <div className="relative overflow-hidden rounded-2xl shadow-2xl">
+                {/* Banner Background */}
+                <div className="absolute inset-0">
+                  <img 
+                    src="/images/banners/banner-04.png" 
+                    alt="Search Banner"
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/50 to-black/60"></div>
+                </div>
+                
+                {/* Content */}
+                <div className="relative z-10 py-12 md:py-16 text-white">
+                  <div className="flex justify-center mb-4">
+                    <div className="p-4 rounded-full bg-white/10 backdrop-blur-sm">
+                      <SearchIcon className="h-12 w-12 md:h-16 md:w-16 text-white" />
+                    </div>
+                  </div>
+                  <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-4 bg-gradient-to-r from-white via-white to-white/80 bg-clip-text text-transparent">
+                    {language === 'vi' ? 'Tìm Phong Cách Hoàn Hảo' :
+                     language === 'ja' ? '完璧なスタイルを見つける' :
+                     'Find Your Perfect Style'}
+                  </h1>
+                  <p className="text-xl md:text-2xl text-white/90 max-w-2xl mx-auto leading-relaxed">
+                    {language === 'vi' ? 'Khám phá hàng ngàn sản phẩm từ các thương hiệu hàng đầu. Tìm kiếm theo tên, danh mục hoặc duyệt qua các bộ sưu tập được tuyển chọn của chúng tôi.' :
+                     language === 'ja' ? 'トップブランドから何千もの商品を発見。名前、カテゴリで検索するか、キュレーションされたコレクションを閲覧してください。' :
+                     'Discover thousands of products from top brands. Search by name, category, or browse our curated collections.'}
+                  </p>
+                </div>
               </div>
             </section>
 
             {/* Popular Categories */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <TrendingUp className="h-5 w-5 mr-2" />
+            <Card className="rounded-xl border-2 shadow-lg bg-background/95 backdrop-blur-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center text-xl font-bold">
+                  <TrendingUp className="h-5 w-5 mr-2 text-primary" />
                   {language === 'vi' ? 'Danh Mục Phổ Biến' : 
                    language === 'ja' ? '人気カテゴリ' : 'Popular Categories'}
                 </CardTitle>
@@ -355,11 +380,11 @@ const SearchPage: React.FC = () => {
                       <Button
                         key={category._id}
                         variant="outline"
-                        className="h-auto p-4 flex flex-col items-center space-y-2"
+                        className="h-auto p-4 flex flex-col items-center space-y-2 rounded-lg hover:bg-primary hover:text-primary-foreground transition-all"
                         onClick={() => handleCategoryClick(category)}
                       >
-                        <span className="font-medium">{getCategoryName(category)}</span>
-                        <Badge variant="secondary" className="text-xs">
+                        <span className="font-semibold">{getCategoryName(category)}</span>
+                        <Badge variant="secondary" className="text-xs font-medium">
                           {category.productCount || 0} {language === 'vi' ? 'sản phẩm' : 
                                                          language === 'ja' ? '商品' : 'products'}
                         </Badge>
@@ -380,12 +405,19 @@ const SearchPage: React.FC = () => {
             {/* Trending Products */}
             {trendingProducts.length > 0 && (
               <div className="space-y-6">
-                <div className="text-center">
-                  <h2 className="text-3xl font-bold mb-4">Trending Now</h2>
-                  <p className="text-muted-foreground">
-                    Check out what's popular among our customers
-                  </p>
-                </div>
+                <Card className="rounded-xl border-2 shadow-lg bg-background/95 backdrop-blur-sm">
+                  <CardContent className="p-6 text-center">
+                    <h2 className="text-3xl md:text-4xl font-bold mb-4">
+                      {language === 'vi' ? 'Đang Thịnh Hành' :
+                       language === 'ja' ? '今トレンド' : 'Trending Now'}
+                    </h2>
+                    <p className="text-lg text-muted-foreground">
+                      {language === 'vi' ? 'Xem những gì đang phổ biến trong khách hàng của chúng tôi' :
+                       language === 'ja' ? 'お客様に人気の商品をチェック' :
+                       'Check out what\'s popular among our customers'}
+                    </p>
+                  </CardContent>
+                </Card>
 
                 <EnhancedProductGrid
                   products={trendingProducts}
@@ -398,21 +430,21 @@ const SearchPage: React.FC = () => {
             )}
 
             {/* Search Tips */}
-            <Card>
-              <CardHeader>
-                <CardTitle>
+            <Card className="rounded-xl border-2 shadow-lg bg-background/95 backdrop-blur-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-xl font-bold">
                   {language === 'vi' ? 'Mẹo Tìm Kiếm' : 
                    language === 'ja' ? '検索のコツ' : 'Search Tips'}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <h4 className="font-semibold mb-2">
+                  <div className="p-4 rounded-lg bg-muted/30 border-l-4 border-primary">
+                    <h4 className="font-bold mb-3 text-lg">
                       {language === 'vi' ? 'Tìm Kiếm Nhanh' : 
                        language === 'ja' ? 'クイック検索' : 'Quick Search'}
                     </h4>
-                    <ul className="space-y-1 text-sm text-muted-foreground">
+                    <ul className="space-y-2 text-sm text-muted-foreground">
                       {language === 'vi' ? (
                         <>
                           <li>• Thử tìm kiếm theo danh mục: "kimono", "hakama", "yukata"</li>
@@ -434,12 +466,12 @@ const SearchPage: React.FC = () => {
                       )}
                     </ul>
                   </div>
-                  <div>
-                    <h4 className="font-semibold mb-2">
+                  <div className="p-4 rounded-lg bg-muted/30 border-l-4 border-primary">
+                    <h4 className="font-bold mb-3 text-lg">
                       {language === 'vi' ? 'Bộ Lọc Nâng Cao' : 
                        language === 'ja' ? '高度なフィルター' : 'Advanced Filters'}
                     </h4>
-                    <ul className="space-y-1 text-sm text-muted-foreground">
+                    <ul className="space-y-2 text-sm text-muted-foreground">
                       {language === 'vi' ? (
                         <>
                           <li>• Sử dụng bộ lọc giá để tìm sản phẩm phù hợp với ngân sách</li>

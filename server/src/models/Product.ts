@@ -51,6 +51,11 @@ export interface IProduct extends Document {
   };
   materials?: string[];
   careInstructions?: string;
+  careInstructionsEn?: string;
+  careInstructionsJa?: string;
+  origin?: string; // Country/region of origin (e.g., "Japan", "Việt Nam")
+  originEn?: string;
+  originJa?: string;
   // Video support
   videos?: {
     publicId: string;
@@ -59,6 +64,8 @@ export interface IProduct extends Document {
     format: string;
     bytes: number;
   }[];
+  // Analytics
+  views: number; // Total product views
   createdAt: Date;
   updatedAt: Date;
 }
@@ -207,7 +214,7 @@ const productSchema = new Schema({
   slug: {
     type: String,
     trim: true,
-    unique: true,
+    unique: false, // Remove unique from schema, use index instead
     sparse: true
   },
   metaTitle: {
@@ -245,6 +252,26 @@ const productSchema = new Schema({
     type: String,
     trim: true
   },
+  careInstructionsEn: {
+    type: String,
+    trim: true
+  },
+  careInstructionsJa: {
+    type: String,
+    trim: true
+  },
+  origin: {
+    type: String,
+    trim: true
+  },
+  originEn: {
+    type: String,
+    trim: true
+  },
+  originJa: {
+    type: String,
+    trim: true
+  },
   // Video support
   videos: [{
     publicId: {
@@ -270,7 +297,13 @@ const productSchema = new Schema({
       type: Number,
       required: true
     }
-  }]
+  }],
+  // Analytics
+  views: {
+    type: Number,
+    default: 0,
+    min: 0
+  }
 }, {
   timestamps: true,
   suppressReservedKeysWarning: true
@@ -285,7 +318,7 @@ productSchema.index({ isLimitedEdition: 1 });
 productSchema.index({ isBestSeller: 1 });
 productSchema.index({ price: 1 });
 productSchema.index({ tags: 1 });
-productSchema.index({ slug: 1 });
+productSchema.index({ slug: 1 }, { unique: true, sparse: true });
 productSchema.index({ weight: 1 });
 productSchema.index({ materials: 1 });
 
@@ -304,5 +337,11 @@ productSchema.index({ categoryId: 1, isActive: 1 });
 productSchema.index({ isFeatured: 1, isActive: 1 });
 productSchema.index({ price: 1, isActive: 1 });
 productSchema.index({ tags: 1, isActive: 1 });
+productSchema.index({ onSale: 1, isActive: 1 });
+productSchema.index({ isNew: 1, isActive: 1 });
+productSchema.index({ isBestSeller: 1, isActive: 1 });
+productSchema.index({ views: -1, isActive: 1 }); // For popular products
+productSchema.index({ createdAt: -1, isActive: 1 }); // For newest products
+productSchema.index({ price: 1, salePrice: 1, isActive: 1 }); // For price range queries
 
 export const Product = mongoose.model<IProduct>('Product', productSchema); 

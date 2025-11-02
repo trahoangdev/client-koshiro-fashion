@@ -95,7 +95,8 @@ const categorySchema = new Schema<ICategory>({
     type: String,
     required: true,
     lowercase: true,
-    trim: true
+    trim: true,
+    unique: false // Remove unique from schema, use index instead
   },
   // Legacy image fields
   image: {
@@ -190,5 +191,14 @@ const categorySchema = new Schema<ICategory>({
 categorySchema.index({ slug: 1 }, { unique: true });
 categorySchema.index({ isActive: 1 });
 categorySchema.index({ parentId: 1 });
+categorySchema.index({ isFeatured: 1 });
+categorySchema.index({ isVisible: 1 });
+categorySchema.index({ status: 1 });
+categorySchema.index({ sortOrder: 1 });
+// Compound indexes for common queries
+categorySchema.index({ isActive: 1, parentId: 1 });
+categorySchema.index({ isVisible: 1, isActive: 1 });
+categorySchema.index({ status: 1, isActive: 1 });
+categorySchema.index({ isFeatured: 1, isActive: 1 });
 
 export const Category = mongoose.model<ICategory>('Category', categorySchema); 

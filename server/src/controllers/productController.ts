@@ -2,6 +2,8 @@ import { Request, Response } from 'express';
 import { Product } from '../models/Product';
 import { Category } from '../models/Category';
 import CloudinaryService from '../services/cloudinaryService';
+import { asyncHandler, errors } from '../utils/errorHandler';
+import { logger } from '../lib/logger';
 
 // Helper function to update badge statuses based on creation date and tags
 const updateBadgeStatuses = async () => {
@@ -80,15 +82,14 @@ const updateBadgeStatuses = async () => {
       { isBestSeller: false }
     );
   } catch (error) {
-    console.error('Error updating badge statuses:', error);
+    logger.error('Error updating badge statuses', error);
   }
 };
 
 // Get all products with pagination and filters
-export const getProducts = async (req: Request, res: Response) => {
-  try {
-    // Update badge statuses before fetching products
-    await updateBadgeStatuses();
+export const getProducts = asyncHandler(async (req: Request, res: Response) => {
+  // Update badge statuses before fetching products
+  await updateBadgeStatuses();
     const {
       page = 1,
       limit = 10,
@@ -178,34 +179,30 @@ export const getProducts = async (req: Request, res: Response) => {
         pages: Math.ceil(total / limitNum)
       }
     });
-  } catch (error) {
-    console.error('Get products error:', error);
-    return res.status(500).json({ message: 'Internal server error' });
-  }
-};
+});
 
 // Get single product by ID
-export const getProduct = async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    
-    const product = await Product.findById(id)
-      .populate('categoryId', 'name nameEn nameJa slug');
-    
-    if (!product) {
-      return res.status(404).json({ message: 'Product not found' });
-    }
-
-    res.json({ product });
-  } catch (error) {
-    console.error('Get product error:', error);
-    return res.status(500).json({ message: 'Internal server error' });
+export const getProduct = asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { trackView } = req.query; // Optional query param to track view
+  
+  const product = await Product.findById(id)
+    .populate('categoryId', 'name nameEn nameJa slug');
+  
+  if (!product) {
+    throw errors.notFound('Product not found');
   }
-};
+
+  // Track view if requested
+  if (trackView === 'true') {
+    await Product.findByIdAndUpdate(id, { $inc: { views: 1 } });
+  }
+
+  res.json({ product });
+});
 
 // Create new product
-export const createProduct = async (req: Request, res: Response) => {
-  try {
+export const createProduct = asyncHandler(async (req: Request, res: Response) => {
     const {
       name,
       nameEn,
@@ -232,6 +229,11 @@ export const createProduct = async (req: Request, res: Response) => {
       dimensions,
       materials,
       careInstructions,
+      careInstructionsEn,
+      careInstructionsJa,
+      origin,
+      originEn,
+      originJa,
       // Badge fields
       isNew,
       isLimitedEdition,
@@ -244,7 +246,7 @@ export const createProduct = async (req: Request, res: Response) => {
     // Validate category exists
     const category = await Category.findById(categoryId);
     if (!category) {
-      return res.status(400).json({ message: 'Category not found' });
+      throw errors.badRequest('Category not found');
     }
 
     // Handle Cloudinary images
@@ -274,10 +276,7 @@ export const createProduct = async (req: Request, res: Response) => {
       if (uploadResult.success && uploadResult.data) {
         cloudinaryImages = [...cloudinaryImages, ...uploadResult.data];
       } else {
-        return res.status(400).json({
-          message: 'Failed to upload images',
-          errors: uploadResult.errors
-        });
+        throw errors.badRequest(uploadResult.errors?.join(', ') || 'Failed to upload images');
       }
     }
 
@@ -324,6 +323,11 @@ export const createProduct = async (req: Request, res: Response) => {
       dimensions,
       materials: materials || [],
       careInstructions,
+      careInstructionsEn,
+      careInstructionsJa,
+      origin,
+      originEn,
+      originJa,
       sku,
       barcode
     });
@@ -339,184 +343,134 @@ export const createProduct = async (req: Request, res: Response) => {
       message: 'Product created successfully',
       product
     });
-  } catch (error) {
-    console.error('Create product error:', error);
-    return res.status(500).json({ message: 'Internal server error' });
-  }
-};
+});
 
 // Upload product images
-export const uploadProductImages = async (req: Request, res: Response) => {
-  try {
-    if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'No files uploaded'
-      });
-    }
-
-    const uploadResult = await CloudinaryService.uploadProductImages(req.files as Express.Multer.File[]);
-    
-    if (uploadResult.success && uploadResult.data) {
-      res.status(200).json({
-        success: true,
-        message: 'Images uploaded successfully',
-        data: uploadResult.data
-      });
-    } else {
-      res.status(400).json({
-        success: false,
-        message: 'Failed to upload images',
-        errors: uploadResult.errors
-      });
-    }
-  } catch (error) {
-    console.error('Upload product images error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error'
-    });
+export const uploadProductImages = asyncHandler(async (req: Request, res: Response) => {
+  if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
+    throw errors.badRequest('No files uploaded');
   }
-};
+
+  const uploadResult = await CloudinaryService.uploadProductImages(req.files as Express.Multer.File[]);
+  
+  if (uploadResult.success && uploadResult.data) {
+    res.status(200).json({
+      success: true,
+      message: 'Images uploaded successfully',
+      data: uploadResult.data
+    });
+  } else {
+    throw errors.badRequest(uploadResult.errors?.join(', ') || 'Failed to upload images');
+  }
+});
 
 // Delete product images
-export const deleteProductImages = async (req: Request, res: Response) => {
-  try {
-    const { publicIds } = req.body;
-    
-    if (!publicIds || !Array.isArray(publicIds) || publicIds.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'No public IDs provided'
-      });
-    }
-
-    const deleteResult = await CloudinaryService.deleteMultipleFiles(publicIds);
-    
-    res.status(200).json({
-      success: deleteResult.success,
-      message: deleteResult.success ? 'Images deleted successfully' : 'Some images could not be deleted',
-      deleted: deleteResult.deleted,
-      errors: deleteResult.errors
-    });
-  } catch (error) {
-    console.error('Delete product images error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error'
-    });
+export const deleteProductImages = asyncHandler(async (req: Request, res: Response) => {
+  const { publicIds } = req.body;
+  
+  if (!publicIds || !Array.isArray(publicIds) || publicIds.length === 0) {
+    throw errors.badRequest('No public IDs provided');
   }
-};
+
+  const deleteResult = await CloudinaryService.deleteMultipleFiles(publicIds);
+  
+  res.status(200).json({
+    success: deleteResult.success,
+    message: deleteResult.success ? 'Images deleted successfully' : 'Some images could not be deleted',
+    deleted: deleteResult.deleted,
+    errors: deleteResult.errors
+  });
+});
 
 // Update product
-export const updateProduct = async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const updateData = req.body;
+export const updateProduct = asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const updateData = req.body;
 
-    // If category is being updated, validate it exists
-    if (updateData.categoryId) {
-      const category = await Category.findById(updateData.categoryId);
-      if (!category) {
-        return res.status(400).json({ message: 'Category not found' });
-      }
+  // If category is being updated, validate it exists
+  if (updateData.categoryId) {
+    const category = await Category.findById(updateData.categoryId);
+    if (!category) {
+      throw errors.badRequest('Category not found');
     }
-
-    // Auto-detect badge statuses from tags if tags are being updated
-    if (updateData.tags) {
-      const productTags = updateData.tags;
-      updateData.isLimitedEdition = productTags.some((tag: string) => 
-        /limited|giới hạn|限定|limited edition|phiên bản giới hạn|限定版/i.test(tag)
-      );
-      updateData.isBestSeller = productTags.some((tag: string) => 
-        /bestseller|bán chạy|ベストセラー|best seller|top seller|bán nhiều|人気/i.test(tag)
-      );
-    }
-
-    const product = await Product.findByIdAndUpdate(
-      id,
-      updateData,
-      { new: true, runValidators: true }
-    ).populate('categoryId', 'name nameEn nameJa slug');
-
-    if (!product) {
-      return res.status(404).json({ message: 'Product not found' });
-    }
-
-    res.json({
-      message: 'Product updated successfully',
-      product
-    });
-  } catch (error) {
-    console.error('Update product error:', error);
-    return res.status(500).json({ message: 'Internal server error' });
   }
-};
+
+  // Auto-detect badge statuses from tags if tags are being updated
+  if (updateData.tags) {
+    const productTags = updateData.tags;
+    updateData.isLimitedEdition = productTags.some((tag: string) => 
+      /limited|giới hạn|限定|limited edition|phiên bản giới hạn|限定版/i.test(tag)
+    );
+    updateData.isBestSeller = productTags.some((tag: string) => 
+      /bestseller|bán chạy|ベストセラー|best seller|top seller|bán nhiều|人気/i.test(tag)
+    );
+  }
+
+  const product = await Product.findByIdAndUpdate(
+    id,
+    updateData,
+    { new: true, runValidators: true }
+  ).populate('categoryId', 'name nameEn nameJa slug');
+
+  if (!product) {
+    throw errors.notFound('Product not found');
+  }
+
+  res.json({
+    message: 'Product updated successfully',
+    product
+  });
+});
 
 // Delete product
-export const deleteProduct = async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    
-    const product = await Product.findByIdAndDelete(id);
-    
-    if (!product) {
-      return res.status(404).json({ message: 'Product not found' });
-    }
-
-    // Update category product count
-    await Category.findByIdAndUpdate(product.categoryId, {
-      $inc: { productCount: -1 }
-    });
-
-    res.json({ message: 'Product deleted successfully' });
-  } catch (error) {
-    console.error('Delete product error:', error);
-    return res.status(500).json({ message: 'Internal server error' });
+export const deleteProduct = asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  
+  const product = await Product.findByIdAndDelete(id);
+  
+  if (!product) {
+    throw errors.notFound('Product not found');
   }
-};
+
+  // Update category product count
+  await Category.findByIdAndUpdate(product.categoryId, {
+    $inc: { productCount: -1 }
+  });
+
+  res.json({ message: 'Product deleted successfully' });
+});
 
 // Get featured products
-export const getFeaturedProducts = async (req: Request, res: Response) => {
-  try {
-    const { limit = 6 } = req.query;
-    const limitNum = parseInt(limit as string);
+export const getFeaturedProducts = asyncHandler(async (req: Request, res: Response) => {
+  const { limit = 6 } = req.query;
+  const limitNum = parseInt(limit as string);
 
-    const products = await Product.find({ 
-      isFeatured: true, 
-      isActive: true 
-    })
-      .populate('categoryId', 'name nameEn nameJa slug')
-      .limit(limitNum)
-      .sort({ createdAt: -1 });
+  const products = await Product.find({ 
+    isFeatured: true, 
+    isActive: true 
+  })
+    .populate('categoryId', 'name nameEn nameJa slug')
+    .limit(limitNum)
+    .sort({ createdAt: -1 });
 
-    res.json({ products });
-  } catch (error) {
-    console.error('Get featured products error:', error);
-    return res.status(500).json({ message: 'Internal server error' });
-  }
-};
+  res.json({ products });
+});
 
 // Search products
-export const searchProducts = async (req: Request, res: Response) => {
-  try {
-    const { q, limit = 10 } = req.query;
-    
-    if (!q) {
-      return res.status(400).json({ message: 'Search query required' });
-    }
-
-    const products = await Product.find({
-      $text: { $search: q as string },
-      isActive: true
-    })
-      .populate('categoryId', 'name nameEn nameJa slug')
-      .limit(parseInt(limit as string))
-      .sort({ score: { $meta: 'textScore' } });
-
-    res.json({ products });
-  } catch (error) {
-    console.error('Search products error:', error);
-    return res.status(500).json({ message: 'Internal server error' });
+export const searchProducts = asyncHandler(async (req: Request, res: Response) => {
+  const { q, limit = 10 } = req.query;
+  
+  if (!q) {
+    throw errors.badRequest('Search query required');
   }
-}; 
+
+  const products = await Product.find({
+    $text: { $search: q as string },
+    isActive: true
+  })
+    .populate('categoryId', 'name nameEn nameJa slug')
+    .limit(parseInt(limit as string))
+    .sort({ score: { $meta: 'textScore' } });
+
+  res.json({ products });
+}); 

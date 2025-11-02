@@ -64,6 +64,13 @@ interface ProductFormData {
   };
   sku: string;
   barcode: string;
+  materials: string[];
+  careInstructions: string;
+  careInstructionsEn: string;
+  careInstructionsJa: string;
+  origin: string;
+  originEn: string;
+  originJa: string;
 }
 
 export default function ProductFormPage() {
@@ -245,7 +252,14 @@ export default function ProductFormPage() {
               weight: product.weight || 0,
               dimensions: product.dimensions || { length: 0, width: 0, height: 0 },
               sku: product.sku || '',
-              barcode: product.barcode || ''
+              barcode: product.barcode || '',
+              materials: product.materials || [],
+              careInstructions: product.careInstructions || '',
+              careInstructionsEn: product.careInstructionsEn || '',
+              careInstructionsJa: product.careInstructionsJa || '',
+              origin: product.origin || '',
+              originEn: product.originEn || '',
+              originJa: product.originJa || ''
             };
             
             setFormData(transformedData);
@@ -287,7 +301,14 @@ export default function ProductFormPage() {
             weight: 0,
             dimensions: { length: 0, width: 0, height: 0 },
             sku: '',
-            barcode: ''
+            barcode: '',
+            materials: [],
+            careInstructions: '',
+            careInstructionsEn: '',
+            careInstructionsJa: '',
+            origin: '',
+            originEn: '',
+            originJa: ''
           };
           setFormData(defaultData);
         }
@@ -342,11 +363,11 @@ export default function ProductFormPage() {
     try {
       setIsSubmitting(true);
       
-      // Transform colors to string array for API
+      // Transform colors to string array for API (save color name, not hex value)
       const transformedData = {
         ...data,
         colors: data.colors.map(color => 
-          typeof color === 'string' ? color : color.value
+          typeof color === 'string' ? color : color.name
         )
       };
       

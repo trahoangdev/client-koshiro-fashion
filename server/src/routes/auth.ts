@@ -2,15 +2,16 @@ import express from 'express';
 import { register, login, adminLogin, getProfile, updateProfile, forgotPassword, resetPassword } from '../controllers/authController';
 import { getUserAddresses, addAddress, updateAddress, deleteAddress, setDefaultAddress } from '../controllers/addressController';
 import { authenticateToken } from '../middleware/auth';
+import { authLimiter, passwordResetLimiter } from '../middleware/rateLimit';
 
 const router = express.Router();
 
-// Public routes
-router.post('/register', register);
-router.post('/login', login);
-router.post('/admin/login', adminLogin);
-router.post('/forgot-password', forgotPassword);
-router.post('/reset-password', resetPassword);
+// Public routes with rate limiting
+router.post('/register', authLimiter, register);
+router.post('/login', authLimiter, login);
+router.post('/admin/login', authLimiter, adminLogin);
+router.post('/forgot-password', passwordResetLimiter, forgotPassword);
+router.post('/reset-password', passwordResetLimiter, resetPassword);
 
 // Protected routes
 router.get('/profile', authenticateToken, getProfile);

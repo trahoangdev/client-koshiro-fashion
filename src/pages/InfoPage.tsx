@@ -566,14 +566,20 @@ const InfoPage = () => {
   const config = pageConfigs[pageType as keyof typeof pageConfigs];
   if (!config) {
     return (
-      <div className="min-h-screen bg-gradient-zen">
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
         <Header cartItemsCount={0} onSearch={() => {}} />
-        <main className="py-16">
-          <div className="container text-center">
-            <h1 className="text-4xl font-bold mb-4">Page Not Found</h1>
-            <Link to="/">
-              <Button>Go Home</Button>
-            </Link>
+        <main className="py-8">
+          <div className="container mx-auto px-4">
+            <Card className="rounded-xl border-2 shadow-xl bg-background/95 backdrop-blur-sm">
+              <CardContent className="p-12 text-center">
+                <h1 className="text-4xl font-bold mb-4">Page Not Found</h1>
+                <Link to="/">
+                  <Button className="rounded-xl font-semibold px-8 py-3">
+                    Go Home
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
           </div>
         </main>
         <Footer />
@@ -585,43 +591,49 @@ const InfoPage = () => {
   const t = config.content[language as keyof typeof config.content] || config.content.en;
 
   return (
-    <div className="min-h-screen bg-gradient-zen">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       <Header
         cartItemsCount={0}
         onSearch={() => {}}
       />
 
-      <main className="py-16">
-        <div className="container space-y-12">
+      <main className="py-8">
+        <div className="container mx-auto px-4 space-y-8">
           {/* Header */}
-          <section className="text-center">
-            <div className="flex items-center justify-center mb-4">
-              <Icon className="h-12 w-12 text-primary mr-4" />
-              <h1 className="text-4xl md:text-6xl font-bold">
-                {config.title[language as keyof typeof config.title] || config.title.en}
-              </h1>
-            </div>
-            <p className="text-xl md:text-2xl mb-4 text-muted-foreground">
-              {t.subtitle}
-            </p>
-            <p className="text-lg max-w-3xl mx-auto text-muted-foreground">
-              {t.description}
-            </p>
+          <section className="text-center mb-12">
+            <Card className="rounded-2xl border-2 shadow-xl bg-background/95 backdrop-blur-sm overflow-hidden">
+              <CardContent className="p-12">
+                <div className="flex items-center justify-center mb-6">
+                  <div className="p-4 rounded-full bg-primary/10">
+                    <Icon className="h-12 w-12 text-primary" />
+                  </div>
+                </div>
+                <h1 className="text-4xl md:text-6xl font-bold mb-4 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                  {config.title[language as keyof typeof config.title] || config.title.en}
+                </h1>
+                <p className="text-xl md:text-2xl mb-4 text-muted-foreground font-medium">
+                  {t.subtitle}
+                </p>
+                <p className="text-lg max-w-3xl mx-auto text-muted-foreground leading-relaxed">
+                  {t.description}
+                </p>
+              </CardContent>
+            </Card>
           </section>
 
           {/* Content */}
-          <section className="max-w-4xl mx-auto space-y-8">
+          <section className="max-w-4xl mx-auto space-y-6">
             {t.sections.map((section, index) => (
-              <Card key={index}>
-                <CardHeader>
-                  <CardTitle className="text-2xl">{section.title}</CardTitle>
+              <Card key={index} className="rounded-xl border-2 shadow-lg hover:shadow-xl transition-all overflow-hidden">
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-2xl font-bold">{section.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-3">
                     {section.content.map((item, itemIndex) => (
-                      <li key={itemIndex} className="flex items-start">
+                      <li key={itemIndex} className="flex items-start p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-all">
                         <div className="w-2 h-2 bg-primary rounded-full mt-2 mr-3 flex-shrink-0"></div>
-                        <span className="text-muted-foreground">{item}</span>
+                        <span className="text-muted-foreground font-medium leading-relaxed">{item}</span>
                       </li>
                     ))}
                   </ul>
@@ -633,9 +645,9 @@ const InfoPage = () => {
           {/* Back to Home */}
           <section className="text-center">
             <Link to="/">
-              <Button variant="outline" size="lg">
+              <Button variant="outline" size="lg" className="rounded-xl font-semibold px-8 py-3 border-2 shadow-lg hover:shadow-xl transition-all">
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Home
+                {language === 'vi' ? 'Về Trang Chủ' : language === 'ja' ? 'ホームに戻る' : 'Back to Home'}
               </Button>
             </Link>
           </section>
