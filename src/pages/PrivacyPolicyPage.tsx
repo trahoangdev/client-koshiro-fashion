@@ -267,33 +267,37 @@ const PrivacyPolicyPage = () => {
   const t = translations[language] || translations.en;
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       <Header cartItemsCount={0} onSearch={() => {}} />
       
-      <main className="flex-1">
-        {/* Hero Section */}
-        <section className="relative overflow-hidden">
-          {/* Banner Background */}
-          <div className="absolute inset-0">
-            <img 
-              src="/images/banners/banner-04.png" 
-              alt="Privacy Policy Banner"
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-black/60"></div>
-          </div>
-          
-          {/* Content */}
-          <div className="relative z-10 py-16">
-            <div className="container mx-auto px-6">
-              <div className="max-w-4xl mx-auto text-center text-white">
-                <div className="flex items-center justify-center mb-6">
-                  <div className="p-3 bg-white/20 rounded-full">
-                    <Shield className="h-8 w-8 text-white" />
+      <main className="py-8">
+        <div className="container mx-auto px-4 space-y-12">
+          {/* Hero Section */}
+          <section className="text-center mb-12">
+            <div className="relative overflow-hidden rounded-2xl shadow-2xl">
+              {/* Banner Background */}
+              <div className="absolute inset-0">
+                <img 
+                  src="/images/banners/banner-04.png" 
+                  alt="Privacy Policy Banner"
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/50 to-black/60"></div>
+              </div>
+              
+              {/* Content */}
+              <div className="relative z-10 p-12 md:p-16 text-white">
+                <div className="flex justify-center mb-6">
+                  <div className="p-4 rounded-full bg-white/10 backdrop-blur-sm">
+                    <Shield className="h-12 w-12 md:h-16 md:w-16 text-white" />
                   </div>
                 </div>
-                <h1 className="text-4xl md:text-5xl font-bold mb-4">{t.title}</h1>
-                <p className="text-xl text-white/90 mb-6">{t.subtitle}</p>
+                <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-4 bg-gradient-to-r from-white via-white to-white/80 bg-clip-text text-transparent">
+                  {t.title}
+                </h1>
+                <p className="text-xl md:text-2xl text-white/90 mb-6 font-light leading-relaxed">
+                  {t.subtitle}
+                </p>
                 
                 <div className="flex items-center justify-center space-x-2 text-sm text-white/80">
                   <Clock className="h-4 w-4" />
@@ -301,68 +305,66 @@ const PrivacyPolicyPage = () => {
                 </div>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
 
-        {/* Content */}
-        <section className="py-16">
-          <div className="container mx-auto px-6">
-            <div className="max-w-4xl mx-auto space-y-8">
+          {/* Content */}
+          <section>
+            <div className="max-w-4xl mx-auto space-y-6">
               
               {/* Overview */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Eye className="h-5 w-5 text-blue-600" />
+              <Card className="rounded-xl border-2 shadow-lg hover:shadow-xl transition-all overflow-hidden">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center text-lg font-bold">
+                    <Eye className="h-5 w-5 mr-2 text-primary" />
                     <span>{t.overview.title}</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-muted-foreground leading-relaxed">
+                  <p className="text-muted-foreground leading-relaxed font-medium">
                     {t.overview.content}
                   </p>
                 </CardContent>
               </Card>
 
               {/* Information We Collect */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Database className="h-5 w-5 text-green-600" />
+              <Card className="rounded-xl border-2 shadow-lg hover:shadow-xl transition-all overflow-hidden">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center text-lg font-bold">
+                    <Database className="h-5 w-5 mr-2 text-primary" />
                     <span>{t.sections.informationWeCollect.title}</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <div>
-                    <h3 className="font-semibold mb-2 flex items-center space-x-2">
-                      <Users className="h-4 w-4" />
+                  <div className="p-4 rounded-lg bg-muted/30 border-l-4 border-primary">
+                    <h3 className="font-bold mb-2 flex items-center">
+                      <Users className="h-4 w-4 mr-2 text-primary" />
                       <span>{t.sections.informationWeCollect.personalInfo.title}</span>
                     </h3>
-                    <p className="text-muted-foreground">
+                    <p className="text-muted-foreground leading-relaxed font-medium">
                       {t.sections.informationWeCollect.personalInfo.content}
                     </p>
                   </div>
                   
                   <Separator />
                   
-                  <div>
-                    <h3 className="font-semibold mb-2 flex items-center space-x-2">
-                      <Globe className="h-4 w-4" />
+                  <div className="p-4 rounded-lg bg-muted/30 border-l-4 border-primary">
+                    <h3 className="font-bold mb-2 flex items-center">
+                      <Globe className="h-4 w-4 mr-2 text-primary" />
                       <span>{t.sections.informationWeCollect.automaticInfo.title}</span>
                     </h3>
-                    <p className="text-muted-foreground">
+                    <p className="text-muted-foreground leading-relaxed font-medium">
                       {t.sections.informationWeCollect.automaticInfo.content}
                     </p>
                   </div>
                   
                   <Separator />
                   
-                  <div>
-                    <h3 className="font-semibold mb-2 flex items-center space-x-2">
-                      <Eye className="h-4 w-4" />
+                  <div className="p-4 rounded-lg bg-muted/30 border-l-4 border-primary">
+                    <h3 className="font-bold mb-2 flex items-center">
+                      <Eye className="h-4 w-4 mr-2 text-primary" />
                       <span>{t.sections.informationWeCollect.cookies.title}</span>
                     </h3>
-                    <p className="text-muted-foreground">
+                    <p className="text-muted-foreground leading-relaxed font-medium">
                       {t.sections.informationWeCollect.cookies.content}
                     </p>
                   </div>
@@ -370,19 +372,19 @@ const PrivacyPolicyPage = () => {
               </Card>
 
               {/* How We Use Information */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <CheckCircle className="h-5 w-5 text-blue-600" />
+              <Card className="rounded-xl border-2 shadow-lg hover:shadow-xl transition-all overflow-hidden">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center text-lg font-bold">
+                    <CheckCircle className="h-5 w-5 mr-2 text-primary" />
                     <span>{t.sections.howWeUseInfo.title}</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-3">
                     {t.sections.howWeUseInfo.purposes.map((purpose, index) => (
-                      <li key={index} className="flex items-start space-x-3">
-                        <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-                        <span className="text-muted-foreground">{purpose}</span>
+                      <li key={index} className="flex items-start p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-all">
+                        <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0 mr-3" />
+                        <span className="text-muted-foreground font-medium leading-relaxed">{purpose}</span>
                       </li>
                     ))}
                   </ul>
@@ -390,33 +392,33 @@ const PrivacyPolicyPage = () => {
               </Card>
 
               {/* Information Sharing */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Users className="h-5 w-5 text-purple-600" />
+              <Card className="rounded-xl border-2 shadow-lg hover:shadow-xl transition-all overflow-hidden">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center text-lg font-bold">
+                    <Users className="h-5 w-5 mr-2 text-primary" />
                     <span>{t.sections.informationSharing.title}</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-muted-foreground leading-relaxed">
+                  <p className="text-muted-foreground leading-relaxed font-medium">
                     {t.sections.informationSharing.content}
                   </p>
                 </CardContent>
               </Card>
 
               {/* Security */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Lock className="h-5 w-5 text-red-600" />
+              <Card className="rounded-xl border-2 shadow-lg hover:shadow-xl transition-all overflow-hidden">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center text-lg font-bold">
+                    <Lock className="h-5 w-5 mr-2 text-primary" />
                     <span>{t.sections.security.title}</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="p-4 bg-red-50 dark:bg-red-950/20 rounded-lg border border-red-200 dark:border-red-800">
+                  <div className="p-4 rounded-lg bg-muted/30 border-l-4 border-primary">
                     <div className="flex items-start space-x-3">
-                      <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5" />
-                      <p className="text-muted-foreground leading-relaxed">
+                      <AlertTriangle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                      <p className="text-muted-foreground leading-relaxed font-medium">
                         {t.sections.security.content}
                       </p>
                     </div>
@@ -425,19 +427,19 @@ const PrivacyPolicyPage = () => {
               </Card>
 
               {/* Your Rights */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Shield className="h-5 w-5 text-green-600" />
+              <Card className="rounded-xl border-2 shadow-lg hover:shadow-xl transition-all overflow-hidden">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center text-lg font-bold">
+                    <Shield className="h-5 w-5 mr-2 text-primary" />
                     <span>{t.sections.yourRights.title}</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {t.sections.yourRights.rights.map((right, index) => (
-                      <div key={index} className="flex items-center space-x-3 p-3 bg-green-50 dark:bg-green-950/20 rounded-lg">
-                        <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
-                        <span className="text-sm">{right}</span>
+                      <div key={index} className="flex items-center space-x-3 p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-all border-l-4 border-primary">
+                        <CheckCircle className="h-5 w-5 text-primary flex-shrink-0" />
+                        <span className="text-sm font-medium leading-relaxed">{right}</span>
                       </div>
                     ))}
                   </div>
@@ -445,46 +447,46 @@ const PrivacyPolicyPage = () => {
               </Card>
 
               {/* Data Retention */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Clock className="h-5 w-5 text-orange-600" />
+              <Card className="rounded-xl border-2 shadow-lg hover:shadow-xl transition-all overflow-hidden">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center text-lg font-bold">
+                    <Clock className="h-5 w-5 mr-2 text-primary" />
                     <span>{t.sections.dataRetention.title}</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-muted-foreground leading-relaxed">
+                  <p className="text-muted-foreground leading-relaxed font-medium">
                     {t.sections.dataRetention.content}
                   </p>
                 </CardContent>
               </Card>
 
               {/* International Transfers */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Globe className="h-5 w-5 text-blue-600" />
+              <Card className="rounded-xl border-2 shadow-lg hover:shadow-xl transition-all overflow-hidden">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center text-lg font-bold">
+                    <Globe className="h-5 w-5 mr-2 text-primary" />
                     <span>{t.sections.internationalTransfers.title}</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-muted-foreground leading-relaxed">
+                  <p className="text-muted-foreground leading-relaxed font-medium">
                     {t.sections.internationalTransfers.content}
                   </p>
                 </CardContent>
               </Card>
 
               {/* Children's Privacy */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Shield className="h-5 w-5 text-purple-600" />
+              <Card className="rounded-xl border-2 shadow-lg hover:shadow-xl transition-all overflow-hidden">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center text-lg font-bold">
+                    <Shield className="h-5 w-5 mr-2 text-primary" />
                     <span>{t.sections.minors.title}</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="p-4 bg-purple-50 dark:bg-purple-950/20 rounded-lg border border-purple-200 dark:border-purple-800">
-                    <p className="text-muted-foreground leading-relaxed">
+                  <div className="p-4 rounded-lg bg-muted/30 border-l-4 border-primary">
+                    <p className="text-muted-foreground leading-relaxed font-medium">
                       {t.sections.minors.content}
                     </p>
                   </div>
@@ -492,51 +494,51 @@ const PrivacyPolicyPage = () => {
               </Card>
 
               {/* Policy Updates */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <AlertTriangle className="h-5 w-5 text-yellow-600" />
+              <Card className="rounded-xl border-2 shadow-lg hover:shadow-xl transition-all overflow-hidden">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center text-lg font-bold">
+                    <AlertTriangle className="h-5 w-5 mr-2 text-primary" />
                     <span>{t.sections.updates.title}</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-muted-foreground leading-relaxed">
+                  <p className="text-muted-foreground leading-relaxed font-medium">
                     {t.sections.updates.content}
                   </p>
                 </CardContent>
               </Card>
 
               {/* Contact Information */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Mail className="h-5 w-5 text-blue-600" />
+              <Card className="rounded-xl border-2 shadow-lg hover:shadow-xl transition-all overflow-hidden">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center text-lg font-bold">
+                    <Mail className="h-5 w-5 mr-2 text-primary" />
                     <span>{t.sections.contact.title}</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-muted-foreground mb-4">{t.sections.contact.content}</p>
+                  <p className="text-muted-foreground mb-4 font-medium leading-relaxed">{t.sections.contact.content}</p>
                   
                   <div className="space-y-3">
-                    <div className="flex items-center space-x-3">
-                      <Mail className="h-4 w-4 text-blue-600" />
-                      <span>{t.sections.contact.email}</span>
+                    <div className="flex items-center space-x-3 p-3 rounded-lg bg-muted/30">
+                      <Mail className="h-4 w-4 text-primary flex-shrink-0" />
+                      <span className="font-medium">{t.sections.contact.email}</span>
                     </div>
-                    <div className="flex items-center space-x-3">
-                      <Globe className="h-4 w-4 text-green-600" />
-                      <span>{t.sections.contact.address}</span>
+                    <div className="flex items-center space-x-3 p-3 rounded-lg bg-muted/30">
+                      <Globe className="h-4 w-4 text-primary flex-shrink-0" />
+                      <span className="font-medium">{t.sections.contact.address}</span>
                     </div>
-                    <div className="flex items-center space-x-3">
-                      <Users className="h-4 w-4 text-purple-600" />
-                      <span>{t.sections.contact.phone}</span>
+                    <div className="flex items-center space-x-3 p-3 rounded-lg bg-muted/30">
+                      <Users className="h-4 w-4 text-primary flex-shrink-0" />
+                      <span className="font-medium">{t.sections.contact.phone}</span>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
             </div>
-          </div>
-        </section>
+          </section>
+        </div>
       </main>
       
       <Footer />

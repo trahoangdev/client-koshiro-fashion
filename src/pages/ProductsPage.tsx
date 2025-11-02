@@ -318,8 +318,8 @@ const ProductsPage = () => {
       <main className="py-8">
         <div className="container space-y-8">
           {/* Hero Section with Banner Background */}
-          <section className="text-center">
-            <div className="relative overflow-hidden rounded-xl shadow-2xl">
+          <section className="text-center mb-12">
+            <div className="relative overflow-hidden rounded-2xl shadow-2xl">
               {/* Banner Background */}
               <div className="absolute inset-0">
                 <img 
@@ -327,20 +327,20 @@ const ProductsPage = () => {
                   alt="Products Banner"
                   className="w-full h-full object-cover"
                 />
-                <div className="absolute inset-0 bg-black/50"></div>
+                <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/50 to-black/60"></div>
               </div>
               
               {/* Content */}
-              <div className="relative z-10 py-16 text-white">
-                <h1 className="text-4xl md:text-6xl font-bold mb-4 animate-fade-in">
+              <div className="relative z-10 p-12 md:p-16 text-white">
+                <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-4 bg-gradient-to-r from-white via-white to-white/80 bg-clip-text text-transparent">
                   {t.title}
                 </h1>
-                <p className="text-xl md:text-2xl mb-4 opacity-90">
+                <p className="text-xl md:text-2xl mb-4 text-white/90 font-light">
                   {t.subtitle}
                 </p>
                 
                 {/* Results count */}
-                <Badge variant="secondary" className="bg-white/20 text-white text-lg px-4 py-2">
+                <Badge variant="secondary" className="bg-white/20 backdrop-blur-sm text-white text-lg px-6 py-2 border border-white/30 font-semibold">
                   {filteredProducts.length} {t.results}
                 </Badge>
               </div>
@@ -350,10 +350,10 @@ const ProductsPage = () => {
           {/* Filters and Controls */}
           <section className="space-y-6">
               {/* Filters Card */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Filter className="h-5 w-5" />
+              <Card className="rounded-xl border-2 shadow-lg bg-background/95 backdrop-blur-sm">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center text-lg font-bold">
+                    <Filter className="h-5 w-5 mr-2 text-primary" />
                     <span>{t.filters}</span>
                   </CardTitle>
                 </CardHeader>
@@ -366,26 +366,26 @@ const ProductsPage = () => {
                                    'Search products...'}
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="max-w-md bg-white dark:bg-stone-800 border-stone-200/60 dark:border-stone-700/60 rounded-xl hover:border-primary/50 focus:border-primary transition-all duration-300"
+                      className="max-w-md rounded-lg border-2 focus:border-primary transition-all pl-10"
                     />
                   </div>
 
                   {/* Filter Controls */}
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div>
-                      <label className="text-sm font-medium mb-2 block text-foreground">
+                      <label className="text-sm font-semibold mb-2 block text-foreground">
                         {language === 'vi' ? 'Danh mục' : language === 'ja' ? 'カテゴリー' : 'Category'}
                       </label>
                       <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                        <SelectTrigger className="w-full bg-white dark:bg-stone-800 border-stone-200/60 dark:border-stone-700/60 hover:border-primary/50 transition-all duration-300 hover:shadow-md rounded-xl h-11">
+                        <SelectTrigger className="w-full rounded-lg border-2 focus:border-primary transition-all h-11">
                           <SelectValue placeholder={language === 'vi' ? 'Tất cả danh mục' : language === 'ja' ? 'すべてのカテゴリー' : 'All Categories'} />
                         </SelectTrigger>
-                        <SelectContent className="bg-white dark:bg-stone-800 border-stone-200/60 dark:border-stone-700/60 rounded-xl shadow-xl backdrop-blur-sm">
-                          <SelectItem value="all" className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg">
+                        <SelectContent className="rounded-lg border-2">
+                          <SelectItem value="all" className="rounded-md">
                             {language === 'vi' ? 'Tất cả danh mục' : language === 'ja' ? 'すべてのカテゴリー' : 'All Categories'}
                           </SelectItem>
                           {categories.map((category) => (
-                            <SelectItem key={category._id} value={category._id} className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg">
+                            <SelectItem key={category._id} value={category._id} className="rounded-md">
                               {category.name}
                             </SelectItem>
                           ))}
@@ -394,27 +394,27 @@ const ProductsPage = () => {
                     </div>
 
                     <div>
-                      <label className="text-sm font-medium mb-2 block text-foreground">
+                      <label className="text-sm font-semibold mb-2 block text-foreground">
                         {language === 'vi' ? 'Khoảng giá' : language === 'ja' ? '価格帯' : 'Price Range'}
                       </label>
                       <Select value={selectedPriceRange} onValueChange={setSelectedPriceRange}>
-                        <SelectTrigger className="w-full bg-white dark:bg-stone-800 border-stone-200/60 dark:border-stone-700/60 hover:border-primary/50 transition-all duration-300 hover:shadow-md rounded-xl h-11">
+                        <SelectTrigger className="w-full rounded-lg border-2 focus:border-primary transition-all h-11">
                           <SelectValue placeholder={language === 'vi' ? 'Tất cả giá' : language === 'ja' ? 'すべての価格' : 'All Prices'} />
                         </SelectTrigger>
-                        <SelectContent className="bg-white dark:bg-stone-800 border-stone-200/60 dark:border-stone-700/60 rounded-xl shadow-xl backdrop-blur-sm">
-                          <SelectItem value="all" className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg">
+                        <SelectContent className="rounded-lg border-2">
+                          <SelectItem value="all" className="rounded-md">
                             {language === 'vi' ? 'Tất cả giá' : language === 'ja' ? 'すべての価格' : 'All Prices'}
                           </SelectItem>
-                          <SelectItem value="0-200000" className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg">
+                          <SelectItem value="0-200000" className="rounded-md">
                             {language === 'vi' ? 'Dưới 200K' : language === 'ja' ? '200円未満' : 'Under $200'}
                           </SelectItem>
-                          <SelectItem value="200000-500000" className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg">
+                          <SelectItem value="200000-500000" className="rounded-md">
                             {language === 'vi' ? '200K - 500K' : language === 'ja' ? '200円 - 500円' : '$200 - $500'}
                           </SelectItem>
-                          <SelectItem value="500000-1000000" className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg">
+                          <SelectItem value="500000-1000000" className="rounded-md">
                             {language === 'vi' ? '500K - 1M' : language === 'ja' ? '500円 - 1,000円' : '$500 - $1000'}
                           </SelectItem>
-                          <SelectItem value="1000000-" className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg">
+                          <SelectItem value="1000000-" className="rounded-md">
                             {language === 'vi' ? 'Trên 1M' : language === 'ja' ? '1,000円以上' : 'Over $1000'}
                           </SelectItem>
                         </SelectContent>
@@ -422,42 +422,42 @@ const ProductsPage = () => {
                     </div>
 
                     <div>
-                      <label className="text-sm font-medium mb-2 block text-foreground">
+                      <label className="text-sm font-semibold mb-2 block text-foreground">
                         {language === 'vi' ? 'Màu sắc' : language === 'ja' ? '色' : 'Color'}
                       </label>
                       <Select value={selectedColor} onValueChange={setSelectedColor}>
-                        <SelectTrigger className="w-full bg-white dark:bg-stone-800 border-stone-200/60 dark:border-stone-700/60 hover:border-primary/50 transition-all duration-300 hover:shadow-md rounded-xl h-11">
+                        <SelectTrigger className="w-full rounded-lg border-2 focus:border-primary transition-all h-11">
                           <SelectValue placeholder={language === 'vi' ? 'Tất cả màu' : language === 'ja' ? 'すべての色' : 'All Colors'} />
                         </SelectTrigger>
-                        <SelectContent className="max-h-60 overflow-y-auto bg-white dark:bg-stone-800 border-stone-200/60 dark:border-stone-700/60 rounded-xl shadow-xl backdrop-blur-sm">
-                          <SelectItem value="all" className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg">
+                        <SelectContent className="max-h-60 overflow-y-auto rounded-lg border-2">
+                          <SelectItem value="all" className="rounded-md">
                             {language === 'vi' ? 'Tất cả màu' : language === 'ja' ? 'すべての色' : 'All Colors'}
                           </SelectItem>
-                          <SelectItem value="black" className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg">
+                          <SelectItem value="black" className="rounded-md">
                             {language === 'vi' ? 'Đen' : language === 'ja' ? '黒' : 'Black'}
                           </SelectItem>
-                          <SelectItem value="white" className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg">
+                          <SelectItem value="white" className="rounded-md">
                             {language === 'vi' ? 'Trắng' : language === 'ja' ? '白' : 'White'}
                           </SelectItem>
-                          <SelectItem value="blue" className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg">
+                          <SelectItem value="blue" className="rounded-md">
                             {language === 'vi' ? 'Xanh dương' : language === 'ja' ? '青' : 'Blue'}
                           </SelectItem>
-                          <SelectItem value="red" className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg">
+                          <SelectItem value="red" className="rounded-md">
                             {language === 'vi' ? 'Đỏ' : language === 'ja' ? '赤' : 'Red'}
                           </SelectItem>
-                          <SelectItem value="green" className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg">
+                          <SelectItem value="green" className="rounded-md">
                             {language === 'vi' ? 'Xanh lá' : language === 'ja' ? '緑' : 'Green'}
                           </SelectItem>
-                          <SelectItem value="gray" className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg">
+                          <SelectItem value="gray" className="rounded-md">
                             {language === 'vi' ? 'Xám' : language === 'ja' ? 'グレー' : 'Gray'}
                           </SelectItem>
-                          <SelectItem value="brown" className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg">
+                          <SelectItem value="brown" className="rounded-md">
                             {language === 'vi' ? 'Nâu' : language === 'ja' ? '茶色' : 'Brown'}
                           </SelectItem>
-                          <SelectItem value="yellow" className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg">
+                          <SelectItem value="yellow" className="rounded-md">
                             {language === 'vi' ? 'Vàng' : language === 'ja' ? '黄色' : 'Yellow'}
                           </SelectItem>
-                          <SelectItem value="pink" className="hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary focus:bg-primary/10 dark:focus:bg-primary/20 rounded-lg">
+                          <SelectItem value="pink" className="rounded-md">
                             {language === 'vi' ? 'Hồng' : language === 'ja' ? 'ピンク' : 'Pink'}
                           </SelectItem>
                         </SelectContent>
@@ -468,9 +468,54 @@ const ProductsPage = () => {
                       <Button
                         variant="outline"
                         onClick={clearFilters}
-                        className="w-full rounded-xl h-11 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/50 transition-all duration-300"
+                        className="w-full rounded-lg border-2 h-11 hover:bg-destructive/10 hover:text-destructive hover:border-destructive transition-all font-semibold"
                       >
                         {t.clearFilters}
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Sort and View Controls */}
+              <Card className="rounded-xl border-2 shadow-lg bg-background/95 backdrop-blur-sm">
+                <CardContent className="p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                      <label className="text-sm font-semibold text-foreground whitespace-nowrap">
+                        {t.sortBy}:
+                      </label>
+                      <Select value={sortBy} onValueChange={setSortBy}>
+                        <SelectTrigger className="w-48 rounded-lg border-2 focus:border-primary transition-all">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="rounded-lg border-2">
+                          <SelectItem value="newest" className="rounded-md">{t.newest}</SelectItem>
+                          <SelectItem value="oldest" className="rounded-md">{t.oldest}</SelectItem>
+                          <SelectItem value="price-low" className="rounded-md">{t.priceLow}</SelectItem>
+                          <SelectItem value="price-high" className="rounded-md">{t.priceHigh}</SelectItem>
+                          <SelectItem value="name" className="rounded-md">{t.name}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant={viewMode === 'grid' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setViewMode('grid')}
+                        className="rounded-lg border-2"
+                      >
+                        <Grid3X3 className="h-4 w-4 mr-2" />
+                        {t.grid}
+                      </Button>
+                      <Button
+                        variant={viewMode === 'list' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setViewMode('list')}
+                        className="rounded-lg border-2"
+                      >
+                        <List className="h-4 w-4 mr-2" />
+                        {t.list}
                       </Button>
                     </div>
                   </div>
@@ -481,25 +526,29 @@ const ProductsPage = () => {
           {/* Products Grid */}
           <section>
             {isLoading ? (
-              <div className="text-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-                <p className="text-muted-foreground">
-                  {t.loading}
-                </p>
-              </div>
+              <Card className="rounded-xl border-2 shadow-lg bg-background/95 backdrop-blur-sm">
+                <CardContent className="p-12 text-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                  <p className="text-muted-foreground text-lg font-medium">
+                    {t.loading}
+                  </p>
+                </CardContent>
+              </Card>
             ) : filteredProducts.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-muted-foreground text-lg">
-                  {t.noProducts}
-                </p>
-                <Button
-                  variant="outline"
-                  onClick={clearFilters}
-                  className="mt-4"
-                >
-                  {t.clearFilters}
-                </Button>
-              </div>
+              <Card className="rounded-xl border-2 shadow-lg bg-background/95 backdrop-blur-sm">
+                <CardContent className="p-12 text-center">
+                  <p className="text-muted-foreground text-lg font-medium mb-4">
+                    {t.noProducts}
+                  </p>
+                  <Button
+                    variant="outline"
+                    onClick={clearFilters}
+                    className="rounded-xl font-semibold border-2"
+                  >
+                    {t.clearFilters}
+                  </Button>
+                </CardContent>
+              </Card>
             ) : (
               <EnhancedProductGrid
                 products={filteredProducts}

@@ -39,6 +39,10 @@ const ForgotPasswordPage = lazy(() => import("./pages/ForgotPasswordPage"));
 const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"));
 const SizeGuidePage = lazy(() => import("./pages/SizeGuidePage"));
 const PrivacyPolicyPage = lazy(() => import("./pages/PrivacyPolicyPage"));
+const FAQPage = lazy(() => import("./pages/FAQPage"));
+const TermsOfServicePage = lazy(() => import("./pages/TermsOfServicePage"));
+const ShippingInfoPage = lazy(() => import("./pages/ShippingInfoPage"));
+const ReturnsPage = lazy(() => import("./pages/ReturnsPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Admin Pages - Lazy loaded
@@ -219,6 +223,26 @@ function App() {
                       <Route path="/privacy-policy" element={
                         <Suspense fallback={<PageLoader />}>
                           <PrivacyPolicyPage />
+                        </Suspense>
+                      } />
+                      <Route path="/faq" element={
+                        <Suspense fallback={<PageLoader />}>
+                          <FAQPage />
+                        </Suspense>
+                      } />
+                      <Route path="/terms-of-service" element={
+                        <Suspense fallback={<PageLoader />}>
+                          <TermsOfServicePage />
+                        </Suspense>
+                      } />
+                      <Route path="/shipping-info" element={
+                        <Suspense fallback={<PageLoader />}>
+                          <ShippingInfoPage />
+                        </Suspense>
+                      } />
+                      <Route path="/returns" element={
+                        <Suspense fallback={<PageLoader />}>
+                          <ReturnsPage />
                         </Suspense>
                       } />
 

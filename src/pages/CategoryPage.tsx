@@ -210,6 +210,46 @@ const CategoryPage: React.FC = () => {
 
   const t = translations[language as keyof typeof translations] || translations.vi;
 
+  // Helper function to get hex color from color name
+  const getColorHex = (colorName: string): string => {
+    // Check if it's already a hex color
+    if (colorName.startsWith('#')) {
+      return colorName.toUpperCase();
+    }
+    
+    const colorMap: { [key: string]: string } = {
+      // Vietnamese colors
+      'Đỏ': '#ef4444', 'Red': '#ef4444',
+      'Xanh dương': '#3b82f6', 'Blue': '#3b82f6',
+      'Xanh nhạt': '#93c5fd', 'Light Blue': '#93c5fd',
+      'Xanh lá': '#22c55e', 'Green': '#22c55e',
+      'Vàng': '#eab308', 'Yellow': '#eab308',
+      'Hồng': '#ec4899', 'Pink': '#ec4899',
+      'Tím': '#a855f7', 'Purple': '#a855f7',
+      'Cam': '#f97316', 'Orange': '#f97316',
+      'Nâu': '#a16207', 'Brown': '#a16207',
+      'Đen': '#000000', 'Black': '#000000',
+      'Trắng': '#ffffff', 'White': '#ffffff',
+      'Xám': '#6b7280', 'Gray': '#6b7280', 'Grey': '#6b7280',
+      'Bạc': '#c0c0c0', 'Silver': '#c0c0c0',
+      'Vàng kim': '#ffd700', 'Gold': '#ffd700',
+      'lightcoral': '#f08080',
+      'darkviolet': '#9400d3',
+      'cornflowerblue': '#6495ed',
+    };
+    
+    // Try exact match first (case-insensitive)
+    const normalizedColor = colorName.toLowerCase();
+    for (const [key, hex] of Object.entries(colorMap)) {
+      if (key.toLowerCase() === normalizedColor) {
+        return hex;
+      }
+    }
+    
+    // Return default gray if not found
+    return '#6b7280';
+  };
+
   // Helper function for color translation
   const getColorName = (color: string) => {
     const colorTranslations = {
@@ -232,7 +272,10 @@ const CategoryPage: React.FC = () => {
       emerald: { vi: "Ngọc lục bảo", en: "Emerald", ja: "エメラルド" },
       coral: { vi: "Cam san hô", en: "Coral", ja: "コーラル" },
       turquoise: { vi: "Xanh ngọc", en: "Turquoise", ja: "ターコイズ" },
-      yellow: { vi: "Vàng", en: "Yellow", ja: "イエロー" }
+      yellow: { vi: "Vàng", en: "Yellow", ja: "イエロー" },
+      lightcoral: { vi: "Hồng san hô", en: "Light Coral", ja: "ライトコーラル" },
+      darkviolet: { vi: "Tím đậm", en: "Dark Violet", ja: "ダークバイオレット" },
+      cornflowerblue: { vi: "Xanh ngô", en: "Cornflower Blue", ja: "コーンフラワーブルー" },
     };
     
     const colorKey = color.toLowerCase() as keyof typeof colorTranslations;
@@ -352,7 +395,7 @@ const CategoryPage: React.FC = () => {
       
       try {
         setLoading(true);
-        logger.debug('Loading category data for slug', { slug });
+        console.log('Loading category data for slug', slug);
         
         // Normalize slug to lowercase (backend stores slugs in lowercase)
         const normalizedSlug = slug.toLowerCase().trim();
@@ -361,9 +404,9 @@ const CategoryPage: React.FC = () => {
         let categoryResponse;
         try {
           categoryResponse = await api.getCategoryBySlug(normalizedSlug);
-          logger.debug('Category response received', { slug: normalizedSlug });
+          console.log('Category response received', { slug: normalizedSlug, response: categoryResponse });
         } catch (apiError: unknown) {
-          logger.error('API Error loading category', apiError);
+          console.error('API Error loading category', apiError);
           if (!isMounted) return;
           setLoading(false);
           setCategory(null);
@@ -418,7 +461,7 @@ const CategoryPage: React.FC = () => {
             
             if (!isMounted) return;
             
-            logger.debug('Products response received', { categoryId: categoryData._id, page: currentPage });
+            console.log('Products response received', { categoryId: categoryData._id, page: currentPage, response: productsResponse });
           
           // Handle different response formats
           let products = [];
@@ -439,7 +482,7 @@ const CategoryPage: React.FC = () => {
             }
           }
           
-            logger.debug('Products loaded', { count: products.length, pagination });
+            console.log('Products loaded', { count: products.length, pagination });
           
           setProducts(products);
           setTotalPages(pagination.pages || 1);
@@ -470,7 +513,7 @@ const CategoryPage: React.FC = () => {
           setAvailableColors(Array.from(allColors));
           setPriceRange([0, Math.ceil(maxPrice / 100000) * 100000]);
           } catch (productsError: unknown) {
-            logger.error('Error loading products', productsError);
+            console.error('Error loading products', productsError);
           if (!isMounted) return;
           setProducts([]);
           setTotalPages(1);
@@ -478,7 +521,7 @@ const CategoryPage: React.FC = () => {
           setAvailableColors([]);
         }
         } catch (error: unknown) {
-          logger.error('Error loading category data', error);
+          console.error('Error loading category data', error);
         if (!isMounted) return;
         toast({
           title: language === 'vi' ? 'Lỗi tải dữ liệu' : language === 'ja' ? 'データ読み込みエラー' : 'Error Loading Data',
@@ -594,7 +637,7 @@ const CategoryPage: React.FC = () => {
               </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
-            <BreadcrumbPage>{getCategoryName()}</BreadcrumbPage>
+            <BreadcrumbPage>{getCategoryName}</BreadcrumbPage>
           </BreadcrumbList>
         </Breadcrumb>
 
@@ -622,11 +665,11 @@ const CategoryPage: React.FC = () => {
                   
                   <div>
                     <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-                      {getCategoryName()}
+                      {getCategoryName}
                     </h1>
-                    {getCategoryDescription() && (
+                    {getCategoryDescription && (
                       <p className="text-muted-foreground text-lg max-w-2xl">
-                        {getCategoryDescription()}
+                        {getCategoryDescription}
                       </p>
                     )}
                   </div>
@@ -641,15 +684,20 @@ const CategoryPage: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Enhanced Filters Sidebar */}
           <div className="lg:col-span-1">
-            <Card className="sticky top-4">
-              <CardHeader>
+            <Card className="sticky top-4 rounded-xl border-2 shadow-lg bg-background/95 backdrop-blur-sm">
+              <CardHeader className="pb-4">
                 <CardTitle className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
-                    <SlidersHorizontal className="h-5 w-5" />
-                    <span>{t.filter}</span>
+                    <SlidersHorizontal className="h-5 w-5 text-primary" />
+                    <span className="text-lg font-semibold">{t.filter}</span>
                   </div>
                   {hasActiveFilters && (
-                    <Button variant="ghost" size="sm" onClick={clearAllFilters}>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={clearAllFilters}
+                      className="h-8 px-2 hover:bg-destructive/10 hover:text-destructive rounded-lg transition-all"
+                    >
                       <X className="h-4 w-4 mr-1" />
                       {t.clearFilters}
                     </Button>
@@ -659,21 +707,21 @@ const CategoryPage: React.FC = () => {
               <CardContent className="space-y-6">
                 {/* Search */}
                 <div>
-                  <label className="text-sm font-medium mb-2 block">{t.search}</label>
+                  <label className="text-sm font-semibold mb-2 block text-foreground">{t.search}</label>
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                       placeholder={t.search}
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-10"
+                      className="pl-10 rounded-lg border-2 focus:border-primary transition-all"
                     />
                   </div>
                 </div>
 
                 {/* Price Range */}
                 <div>
-                  <label className="text-sm font-medium mb-4 block">{t.priceRange}</label>
+                  <label className="text-sm font-semibold mb-4 block text-foreground">{t.priceRange}</label>
                   <div className="space-y-3">
                     <Slider
                       value={priceRange}
@@ -682,9 +730,9 @@ const CategoryPage: React.FC = () => {
                       step={50000}
                       className="w-full"
                     />
-                    <div className="flex items-center justify-between text-sm text-muted-foreground">
-                      <span>{formatCurrency(priceRange[0], language)}</span>
-                      <span>{formatCurrency(priceRange[1], language)}</span>
+                    <div className="flex items-center justify-between text-sm font-medium">
+                      <span className="text-primary">{formatCurrency(priceRange[0], language)}</span>
+                      <span className="text-primary">{formatCurrency(priceRange[1], language)}</span>
                     </div>
                   </div>
                 </div>
@@ -692,15 +740,19 @@ const CategoryPage: React.FC = () => {
                 {/* Sizes */}
                 {availableSizes.length > 0 && (
                   <div>
-                    <label className="text-sm font-medium mb-3 block">{t.size}</label>
-                    <div className="grid grid-cols-3 gap-2">
+                    <label className="text-sm font-semibold mb-3 block text-foreground">{t.size}</label>
+                    <div className="flex flex-wrap gap-2">
                       {availableSizes.map((size) => (
                         <Button
                           key={size}
                           variant={selectedSizes.includes(size) ? "default" : "outline"}
                           size="sm"
                           onClick={() => handleSizeToggle(size)}
-                          className="h-8"
+                          className={`h-9 px-4 rounded-lg font-medium transition-all ${
+                            selectedSizes.includes(size) 
+                              ? 'shadow-md ring-2 ring-primary ring-offset-2' 
+                              : 'hover:border-primary hover:shadow-sm'
+                          }`}
                         >
                           {size}
                         </Button>
@@ -712,43 +764,85 @@ const CategoryPage: React.FC = () => {
                 {/* Colors */}
                 {availableColors.length > 0 && (
                   <div>
-                    <label className="text-sm font-medium mb-3 block">{t.color}</label>
-                    <div className="grid grid-cols-4 gap-2">
-                      {availableColors.map((color) => (
-                        <Button
-                          key={color}
-                          variant={selectedColors.includes(color) ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => handleColorToggle(color)}
-                          className="h-8 text-xs truncate"
-                        >
-                          {getColorName(color)}
-                        </Button>
-                      ))}
+                    <label className="text-sm font-semibold mb-3 block text-foreground">{t.color}</label>
+                    <div className="flex flex-wrap gap-2">
+                      {availableColors.map((color) => {
+                        const colorHex = getColorHex(color);
+                        const isSelected = selectedColors.includes(color);
+                        const isLightColor = colorHex === '#FFFFFF' || colorHex === '#FFFF00' || colorHex === '#FFD700';
+                        
+                        return (
+                          <button
+                            key={color}
+                            onClick={() => handleColorToggle(color)}
+                            className={`
+                              relative w-10 h-10 rounded-full border-2 transition-all duration-300
+                              ${isSelected 
+                                ? 'ring-2 ring-offset-2 ring-primary shadow-lg scale-110' 
+                                : 'hover:scale-105 hover:shadow-md'
+                              }
+                              ${isLightColor ? 'border-stone-300 dark:border-stone-600' : 'border-white dark:border-stone-800'}
+                            `}
+                            style={{ 
+                              backgroundColor: colorHex,
+                            }}
+                            title={getColorName(color)}
+                          >
+                            {isSelected && (
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <div className={`w-3 h-3 rounded-full ${isLightColor ? 'bg-stone-800' : 'bg-white'} shadow-sm`} />
+                              </div>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {/* Color names below swatches */}
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {availableColors.map((color) => {
+                        const isSelected = selectedColors.includes(color);
+                        return (
+                          <button
+                            key={color}
+                            onClick={() => handleColorToggle(color)}
+                            className={`
+                              text-xs px-2 py-1 rounded-md transition-all
+                              ${isSelected 
+                                ? 'bg-primary text-primary-foreground font-medium' 
+                                : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                              }
+                            `}
+                          >
+                            {getColorName(color)}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
 
                 {/* Checkboxes */}
-                <div className="space-y-3">
-                  <div className="flex items-center space-x-2">
+                <div className="space-y-3 p-3 rounded-lg bg-muted/30">
+                  <div className="flex items-center space-x-3">
                     <Checkbox
                       id="inStock"
                       checked={inStock}
                       onCheckedChange={(checked) => setInStock(checked === true)}
+                      className="border-2 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                     />
-                    <label htmlFor="inStock" className="text-sm cursor-pointer">
+                    <label htmlFor="inStock" className="text-sm font-medium cursor-pointer flex-1">
                       {t.inStock}
                     </label>
                   </div>
                   
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-3">
                     <Checkbox
                       id="onSale"
                       checked={onSale}
                       onCheckedChange={(checked) => setOnSale(checked === true)}
+                      className="border-2 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                     />
-                    <label htmlFor="onSale" className="text-sm cursor-pointer">
+                    <label htmlFor="onSale" className="text-sm font-medium cursor-pointer flex-1">
                       {t.onSale}
                     </label>
                   </div>
@@ -756,21 +850,30 @@ const CategoryPage: React.FC = () => {
 
                 {/* Rating Filter */}
                 <div>
-                  <label className="text-sm font-medium mb-3 block">{t.rating}</label>
+                  <label className="text-sm font-semibold mb-3 block text-foreground">{t.rating}</label>
                   <div className="space-y-2">
                     {[4, 3, 2, 1].map((rating) => (
                       <Button
                         key={rating}
-                        variant={minRating === rating ? "default" : "ghost"}
+                        variant={minRating === rating ? "default" : "outline"}
                         size="sm"
                         onClick={() => setMinRating(minRating === rating ? 0 : rating)}
-                        className="w-full justify-start"
+                        className={`w-full justify-start rounded-lg transition-all ${
+                          minRating === rating 
+                            ? 'shadow-md ring-2 ring-primary ring-offset-2' 
+                            : 'hover:border-primary hover:shadow-sm'
+                        }`}
                       >
                         <div className="flex items-center space-x-2">
-                          {Array.from({ length: rating }, (_, i) => (
-                            <Star key={i} className="h-3 w-3 fill-current" />
-                          ))}
-                          <span className="text-xs">{rating} {t.starsAndUp}</span>
+                          <div className="flex items-center">
+                            {Array.from({ length: rating }, (_, i) => (
+                              <Star key={i} className={`h-3.5 w-3.5 ${minRating === rating ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground'}`} />
+                            ))}
+                            {Array.from({ length: 5 - rating }, (_, i) => (
+                              <Star key={i} className={`h-3.5 w-3.5 text-muted-foreground/30`} />
+                            ))}
+                          </div>
+                          <span className="text-xs font-medium ml-1">{rating} {t.starsAndUp}</span>
                         </div>
                       </Button>
                     ))}

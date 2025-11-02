@@ -140,34 +140,34 @@ export default function ForgotPasswordPage() {
 
   if (isSubmitted) {
     return (
-      <div className="min-h-screen bg-gradient-zen">
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
         <Header cartItemsCount={0} onSearch={() => {}} />
         
-        <main className="py-16">
+        <main className="py-8">
           <div className="container mx-auto px-4">
             <div className="flex justify-center">
-              <Card className="w-full max-w-md">
-                <CardHeader className="text-center">
-                  <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
-                    <Mail className="h-6 w-6 text-green-600" />
+              <Card className="w-full max-w-md rounded-xl border-2 shadow-xl bg-background/95 backdrop-blur-sm">
+                <CardHeader className="text-center pb-6">
+                  <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/20">
+                    <Mail className="h-8 w-8 text-green-600 dark:text-green-400" />
                   </div>
-                  <CardTitle className="text-2xl font-bold">{t.checkEmail}</CardTitle>
-                  <p className="text-muted-foreground">{t.emailSent}</p>
-                  <p className="font-medium text-primary">{email}</p>
+                  <CardTitle className="text-3xl font-bold mb-2">{t.checkEmail}</CardTitle>
+                  <p className="text-muted-foreground text-lg mb-2">{t.emailSent}</p>
+                  <p className="font-bold text-primary text-lg">{email}</p>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <p className="text-sm text-muted-foreground text-center">
+                  <p className="text-sm text-muted-foreground text-center mb-4">
                     {t.didntReceive}
                   </p>
                   <Button
                     onClick={handleResend}
                     disabled={isLoading}
-                    className="w-full"
+                    className="w-full rounded-xl font-semibold h-11 shadow-lg hover:shadow-xl transition-all"
                   >
-                    {isLoading ? "Sending..." : t.resend}
+                    {isLoading ? (language === 'vi' ? "Đang gửi..." : language === 'ja' ? "送信中..." : "Sending...") : t.resend}
                   </Button>
                   <Link to="/login">
-                    <Button variant="outline" className="w-full">
+                    <Button variant="outline" className="w-full rounded-xl font-semibold border-2">
                       <ArrowLeft className="mr-2 h-4 w-4" />
                       {t.backToLogin}
                     </Button>
@@ -184,30 +184,30 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-zen">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       <Header cartItemsCount={0} onSearch={() => {}} />
       
-      <main className="py-16">
+      <main className="py-8">
         <div className="container mx-auto px-4">
           <div className="flex justify-center">
-            <Card className="w-full max-w-md">
-              <CardHeader className="text-center">
-                <CardTitle className="text-2xl font-bold">{t.title}</CardTitle>
-                <p className="text-muted-foreground">{t.subtitle}</p>
+            <Card className="w-full max-w-md rounded-xl border-2 shadow-xl bg-background/95 backdrop-blur-sm">
+              <CardHeader className="text-center pb-6">
+                <CardTitle className="text-3xl font-bold mb-2">{t.title}</CardTitle>
+                <p className="text-muted-foreground text-lg">{t.subtitle}</p>
               </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-4">
+              <CardContent className="space-y-6">
+                <form onSubmit={handleSubmit} className="space-y-5">
                   <div className="space-y-2">
-                    <Label htmlFor="email">{t.email}</Label>
+                    <Label htmlFor="email" className="text-sm font-semibold">{t.email}</Label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       <Input
                         id="email"
                         type="email"
-                        placeholder="Enter your email address"
+                        placeholder={language === 'vi' ? 'Nhập email của bạn' : language === 'ja' ? 'メールを入力' : 'Enter your email address'}
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="pl-10"
+                        className="pl-10 rounded-lg border-2 focus:border-primary transition-all"
                         disabled={isLoading}
                       />
                     </div>
@@ -215,17 +215,17 @@ export default function ForgotPasswordPage() {
 
                   <Button
                     type="submit"
-                    className="w-full"
+                    className="w-full rounded-xl font-semibold h-11 shadow-lg hover:shadow-xl transition-all"
                     disabled={isLoading}
                   >
-                    {isLoading ? "Sending..." : t.resetPassword}
+                    {isLoading ? (language === 'vi' ? "Đang gửi..." : language === 'ja' ? "送信中..." : "Sending...") : t.resetPassword}
                   </Button>
                 </form>
 
-                <div className="mt-6 text-center">
+                <div className="mt-6 text-center pt-4 border-t">
                   <Link
                     to="/login"
-                    className="inline-flex items-center text-sm text-primary hover:underline"
+                    className="inline-flex items-center text-sm text-primary hover:underline font-semibold"
                   >
                     <ArrowLeft className="mr-2 h-4 w-4" />
                     {t.backToLogin}

@@ -298,41 +298,43 @@ const WishlistPage = () => {
   const t = translations[language as keyof typeof translations] || translations.en;
 
   return (
-    <div className="min-h-screen bg-gradient-zen">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       <Header
         cartItemsCount={cartItemsCount}
         onSearch={() => {}}
         refreshWishlistTrigger={refreshWishlistTrigger}
       />
 
-      <main className="py-16">
-        <div className="container space-y-12">
+      <main className="py-8">
+        <div className="container mx-auto px-4 space-y-8">
           {/* Header */}
-          <section className="relative overflow-hidden rounded-2xl">
-            {/* Banner Background */}
-            <div className="absolute inset-0">
-              <img 
-                src="/images/banners/banner-04.png" 
-                alt="Wishlist Banner"
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-black/50"></div>
-            </div>
-            
-            {/* Content */}
-            <div className="relative z-10 p-12 text-center text-white">
-              <div className="flex items-center justify-center mb-4">
-                <Heart className="h-12 w-12 text-white mr-4" />
-                <h1 className="text-4xl md:text-6xl font-bold">
-                  {t.title}
-                </h1>
+          <section className="text-center mb-12">
+            <div className="relative overflow-hidden rounded-2xl shadow-2xl">
+              {/* Banner Background */}
+              <div className="absolute inset-0">
+                <img 
+                  src="/images/banners/banner-04.png" 
+                  alt="Wishlist Banner"
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/50 to-black/60"></div>
               </div>
-              <p className="text-xl md:text-2xl mb-4 text-white/90">
-                {t.subtitle}
-              </p>
-              <p className="text-lg max-w-2xl mx-auto text-white/80">
-                {t.description}
-              </p>
+              
+              {/* Content */}
+              <div className="relative z-10 p-12 md:p-16 text-white">
+                <div className="flex items-center justify-center mb-4">
+                  <Heart className="h-12 w-12 md:h-16 md:w-16 mr-3 fill-white" />
+                  <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold bg-gradient-to-r from-white via-white to-white/80 bg-clip-text text-transparent">
+                    {t.title}
+                  </h1>
+                </div>
+                <p className="text-xl md:text-2xl mb-4 text-white/90 font-light">
+                  {t.subtitle}
+                </p>
+                <p className="text-lg max-w-2xl mx-auto text-white/80 mb-8 leading-relaxed">
+                  {t.description}
+                </p>
+              </div>
             </div>
           </section>
 
@@ -390,50 +392,53 @@ const WishlistPage = () => {
             ) : (
               <div className="space-y-8">
                 {/* Wishlist Header */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    <Badge variant="secondary" className="text-lg px-4 py-2">
-                      {wishlistItems.length} {t.items}
-                    </Badge>
-                  </div>
-                  <Button 
-                    variant="outline" 
-                    onClick={clearWishlist}
-                    className="text-destructive hover:text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    {t.clearAll}
-                  </Button>
-                </div>
+                <Card className="rounded-xl border-2 shadow-lg bg-background/95 backdrop-blur-sm">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <Badge variant="secondary" className="text-lg px-6 py-2 font-semibold">
+                        <Heart className="h-4 w-4 mr-2" />
+                        {wishlistItems.length} {t.items}
+                      </Badge>
+                      <Button 
+                        variant="outline" 
+                        onClick={clearWishlist}
+                        className="rounded-lg text-destructive hover:bg-destructive/10 hover:text-destructive transition-all"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        {t.clearAll}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
 
                 {/* Wishlist Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {wishlistItems.map((product) => (
-                    <Card key={product._id} className="group hover:shadow-lg transition-all duration-300">
+                    <Card key={product._id} className="group hover:shadow-xl transition-all duration-300 rounded-xl border-2 overflow-hidden hover:scale-[1.02] hover:border-primary">
                       <CardContent className="p-6">
-                        <div className="relative mb-4">
+                        <div className="relative mb-4 rounded-xl overflow-hidden bg-muted">
                           <img
                             src={product.images[0] || "/src/assets/placeholder.svg"}
                             alt={getProductName(product)}
-                            className="w-full h-48 object-cover rounded-lg"
+                            className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
                           />
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="absolute top-2 right-2 bg-white/80 hover:bg-white"
+                            className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm hover:bg-white rounded-lg shadow-md"
                             onClick={() => removeFromWishlist(product._id)}
                           >
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
                         </div>
                         
-                        <h3 className="font-semibold mb-2 line-clamp-2">
+                        <h3 className="font-bold mb-3 line-clamp-2 group-hover:text-primary transition-colors">
                           {getProductName(product)}
                         </h3>
                         
-                        <div className="flex items-center justify-between mb-4">
-                          <div className="flex items-center space-x-2">
-                            <span className="text-lg font-bold text-primary">
+                        <div className="flex items-center justify-between mb-4 pb-4 border-b">
+                          <div className="flex items-center space-x-2 flex-wrap">
+                            <span className="text-xl font-bold text-primary">
                               {product.salePrice && product.salePrice < product.price ? formatCurrency(product.salePrice, language) : formatCurrency(product.price, language)}
                             </span>
                             {product.salePrice && product.salePrice < product.price && (
@@ -441,9 +446,8 @@ const WishlistPage = () => {
                                 <span className="text-sm text-muted-foreground line-through">
                                   {formatCurrency(product.price, language)}
                                 </span>
-                                <Badge variant="destructive" className="text-xs">
-                                  -{Math.round(((product.price - product.salePrice) / product.price) * 100)}% 
-                                  {language === 'vi' ? 'GIẢM' : language === 'ja' ? 'セール' : 'OFF'}
+                                <Badge variant="destructive" className="text-xs font-semibold">
+                                  -{Math.round(((product.price - product.salePrice) / product.price) * 100)}%
                                 </Badge>
                               </>
                             )}
@@ -452,24 +456,21 @@ const WishlistPage = () => {
                                 <span className="text-sm text-muted-foreground line-through">
                                   {formatCurrency(product.originalPrice, language)}
                                 </span>
-                                <Badge variant="destructive" className="text-xs">
-                                  -{Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% 
-                                  {language === 'vi' ? 'GIẢM' : language === 'ja' ? 'セール' : 'OFF'}
+                                <Badge variant="destructive" className="text-xs font-semibold">
+                                  -{Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}%
                                 </Badge>
                               </>
                             )}
                           </div>
                         </div>
                         
-                        <div className="flex items-center space-x-2">
-                          <Button 
-                            className="flex-1"
-                            onClick={() => addToCart(product)}
-                          >
-                            <ShoppingCart className="h-4 w-4 mr-2" />
-                            {t.addToCart}
-                          </Button>
-                        </div>
+                        <Button 
+                          className="w-full rounded-lg font-semibold shadow-md hover:shadow-lg transition-all"
+                          onClick={() => addToCart(product)}
+                        >
+                          <ShoppingCart className="h-4 w-4 mr-2" />
+                          {t.addToCart}
+                        </Button>
                       </CardContent>
                     </Card>
                   ))}

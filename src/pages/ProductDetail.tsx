@@ -664,15 +664,17 @@ const ProductDetail: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
         <Header cartItemsCount={0} onSearch={handleSearch} refreshWishlistTrigger={refreshWishlistTrigger} />
         <div className="container mx-auto px-4 py-8">
-          <div className="flex items-center justify-center h-64">
-            <div className="flex items-center space-x-2">
-              <Loader2 className="h-6 w-6 animate-spin" />
-              <span>{t.loading}</span>
-            </div>
-          </div>
+          <Card className="rounded-xl border-2 shadow-lg bg-background/95 backdrop-blur-sm">
+            <CardContent className="p-12 text-center">
+              <div className="flex items-center justify-center space-x-2">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <span className="text-muted-foreground font-medium text-lg">{t.loading}</span>
+              </div>
+            </CardContent>
+          </Card>
         </div>
         <Footer />
       </div>
@@ -681,15 +683,20 @@ const ProductDetail: React.FC = () => {
 
   if (!product) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
         <Header cartItemsCount={0} onSearch={handleSearch} refreshWishlistTrigger={refreshWishlistTrigger} />
         <div className="container mx-auto px-4 py-8">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold mb-4">Product not found</h1>
-            <Button onClick={() => navigate('/')}>
-              {t.continueShopping}
-            </Button>
-          </div>
+          <Card className="rounded-xl border-2 shadow-lg bg-background/95 backdrop-blur-sm">
+            <CardContent className="p-12 text-center">
+              <h1 className="text-2xl font-bold mb-4">Product not found</h1>
+              <Button 
+                onClick={() => navigate('/')}
+                className="rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all"
+              >
+                {t.continueShopping}
+              </Button>
+            </CardContent>
+          </Card>
         </div>
         <Footer />
       </div>

@@ -528,8 +528,8 @@ const CheckoutPage = () => {
       <main className="py-8">
         <div className="container space-y-8">
           {/* Hero Banner */}
-          <section className="text-center">
-            <div className="relative overflow-hidden rounded-xl shadow-2xl">
+          <section className="text-center mb-12">
+            <div className="relative overflow-hidden rounded-2xl shadow-2xl">
               {/* Banner Background */}
               <div className="absolute inset-0">
                 <img 
@@ -537,19 +537,24 @@ const CheckoutPage = () => {
                   alt="Checkout Banner"
                   className="w-full h-full object-cover"
                 />
-                <div className="absolute inset-0 bg-black/50"></div>
+                <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/50 to-black/60"></div>
               </div>
               
               {/* Content */}
-              <div className="relative z-10 py-12 text-white">
-                <h1 className="text-4xl md:text-5xl font-bold mb-4 animate-fade-in">
+              <div className="relative z-10 p-12 md:p-16 text-white">
+                <div className="flex justify-center mb-6">
+                  <div className="p-4 rounded-full bg-white/10 backdrop-blur-sm">
+                    <CreditCard className="h-12 w-12 md:h-16 md:w-16 text-white" />
+                  </div>
+                </div>
+                <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-4 bg-gradient-to-r from-white via-white to-white/80 bg-clip-text text-transparent">
                   {t.title}
                 </h1>
-                <p className="text-xl md:text-2xl mb-4 opacity-90">
+                <p className="text-xl md:text-2xl mb-6 text-white/90 font-light leading-relaxed">
                   {t.subtitle}
                 </p>
                 <Link to="/cart">
-                  <Button variant="outline" className="bg-white/10 hover:bg-white/20 text-white border-white/30">
+                  <Button variant="outline" className="bg-white/20 backdrop-blur-sm text-white border-white/30 hover:bg-white/30 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all">
                     <ArrowLeft className="h-4 w-4 mr-2" />
                     {t.backToCart}
                   </Button>
@@ -564,98 +569,106 @@ const CheckoutPage = () => {
             <div className="lg:col-span-2 space-y-6">
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Shipping Information */}
-                <Card className="bg-gradient-to-br from-white via-white to-stone-50/50 dark:from-stone-800 dark:via-stone-800 dark:to-stone-900/50 border-stone-200/60 dark:border-stone-700/60 shadow-lg hover:shadow-xl transition-shadow duration-300 rounded-xl overflow-hidden">
-                  <CardHeader className="bg-gradient-to-r from-stone-50 to-stone-100/50 dark:from-stone-800 dark:to-stone-900/50 border-b border-stone-200/50 dark:border-stone-700/50">
-                    <CardTitle className="flex items-center text-lg">
+                <Card className="rounded-xl border-2 shadow-lg hover:shadow-xl transition-all overflow-hidden bg-background/95 backdrop-blur-sm">
+                  <CardHeader className="pb-4">
+                    <CardTitle className="flex items-center text-lg font-bold">
                       <div className="p-2 rounded-lg bg-primary/10 mr-3">
                         <Truck className="h-5 w-5 text-primary" />
                       </div>
                       {t.shippingInfo}
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-4 pt-6">
+                  <CardContent className="space-y-5 pt-6">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="text-sm font-medium mb-2 block">{t.firstName}</label>
+                        <label className="text-sm font-semibold mb-2 block">{t.firstName}</label>
                         <Input
                           value={formData.firstName}
                           onChange={(e) => handleInputChange('firstName', e.target.value)}
                           required
+                          className="rounded-lg border-2 focus:border-primary transition-all"
                         />
                       </div>
                       <div>
-                        <label className="text-sm font-medium mb-2 block">{t.lastName}</label>
+                        <label className="text-sm font-semibold mb-2 block">{t.lastName}</label>
                         <Input
                           value={formData.lastName}
                           onChange={(e) => handleInputChange('lastName', e.target.value)}
                           required
+                          className="rounded-lg border-2 focus:border-primary transition-all"
                         />
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="text-sm font-medium mb-2 block">{t.email}</label>
+                        <label className="text-sm font-semibold mb-2 block">{t.email}</label>
                         <Input
                           type="email"
                           value={formData.email}
                           onChange={(e) => handleInputChange('email', e.target.value)}
                           required
+                          className="rounded-lg border-2 focus:border-primary transition-all"
                         />
                       </div>
                       <div>
-                        <label className="text-sm font-medium mb-2 block">{t.phone}</label>
+                        <label className="text-sm font-semibold mb-2 block">{t.phone}</label>
                         <Input
                           value={formData.phone}
                           onChange={(e) => handleInputChange('phone', e.target.value)}
                           required
+                          className="rounded-lg border-2 focus:border-primary transition-all"
                         />
                       </div>
                     </div>
                     <div>
-                      <label className="text-sm font-medium mb-2 block">{t.address}</label>
+                      <label className="text-sm font-semibold mb-2 block">{t.address}</label>
                       <Input
                         value={formData.address}
                         onChange={(e) => handleInputChange('address', e.target.value)}
                         required
+                        className="rounded-lg border-2 focus:border-primary transition-all"
                       />
                     </div>
                     <div className="grid grid-cols-3 gap-4">
                       <div>
-                        <label className="text-sm font-medium mb-2 block">{t.city}</label>
+                        <label className="text-sm font-semibold mb-2 block">{t.city}</label>
                         <Input
                           value={formData.city}
                           onChange={(e) => handleInputChange('city', e.target.value)}
                           required
+                          className="rounded-lg border-2 focus:border-primary transition-all"
                         />
                       </div>
                       <div>
-                        <label className="text-sm font-medium mb-2 block">{t.state}</label>
+                        <label className="text-sm font-semibold mb-2 block">{t.state}</label>
                         <Input
                           value={formData.state}
                           onChange={(e) => handleInputChange('state', e.target.value)}
                           required
+                          className="rounded-lg border-2 focus:border-primary transition-all"
                         />
                       </div>
                       <div>
-                        <label className="text-sm font-medium mb-2 block">{t.zipCode}</label>
+                        <label className="text-sm font-semibold mb-2 block">{t.zipCode}</label>
                         <Input
                           value={formData.zipCode}
                           onChange={(e) => handleInputChange('zipCode', e.target.value)}
                           required
+                          className="rounded-lg border-2 focus:border-primary transition-all"
                         />
                       </div>
                     </div>
                     <div>
-                      <label className="text-sm font-medium mb-2 block">{t.country}</label>
+                      <label className="text-sm font-semibold mb-2 block">{t.country}</label>
                       <Select value={formData.country} onValueChange={(value) => handleInputChange('country', value)}>
-                        <SelectTrigger>
+                        <SelectTrigger className="rounded-lg border-2 focus:border-primary transition-all">
                           <SelectValue placeholder="Select country" />
                         </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="japan">Japan</SelectItem>
-                          <SelectItem value="vietnam">Vietnam</SelectItem>
-                          <SelectItem value="usa">United States</SelectItem>
-                          <SelectItem value="uk">United Kingdom</SelectItem>
+                        <SelectContent className="rounded-lg border-2">
+                          <SelectItem value="japan" className="rounded-md">Japan</SelectItem>
+                          <SelectItem value="vietnam" className="rounded-md">Vietnam</SelectItem>
+                          <SelectItem value="usa" className="rounded-md">United States</SelectItem>
+                          <SelectItem value="uk" className="rounded-md">United Kingdom</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -663,9 +676,9 @@ const CheckoutPage = () => {
                 </Card>
 
                 {/* Payment Information */}
-                <Card className="bg-gradient-to-br from-white via-white to-stone-50/50 dark:from-stone-800 dark:via-stone-800 dark:to-stone-900/50 border-stone-200/60 dark:border-stone-700/60 shadow-lg hover:shadow-xl transition-shadow duration-300 rounded-xl overflow-hidden">
-                  <CardHeader className="bg-gradient-to-r from-stone-50 to-stone-100/50 dark:from-stone-800 dark:to-stone-900/50 border-b border-stone-200/50 dark:border-stone-700/50">
-                    <CardTitle className="flex items-center text-lg">
+                <Card className="rounded-xl border-2 shadow-lg hover:shadow-xl transition-all overflow-hidden bg-background/95 backdrop-blur-sm">
+                  <CardHeader className="pb-4">
+                    <CardTitle className="flex items-center text-lg font-bold">
                       <div className="p-2 rounded-lg bg-primary/10 mr-3">
                         <CreditCard className="h-5 w-5 text-primary" />
                       </div>
@@ -675,28 +688,28 @@ const CheckoutPage = () => {
                   <CardContent className="space-y-6 pt-6">
                     {/* Payment Method Selection */}
                     <div>
-                      <label className="text-sm font-medium mb-6 block">{t.paymentMethod}</label>
+                      <label className="text-lg font-semibold mb-6 block">{t.paymentMethod}</label>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* COD Option */}
                         <div
                           className={`p-6 border-2 rounded-xl cursor-pointer transition-all duration-300 hover:shadow-lg ${
                             paymentMethod === 'cod'
-                              ? 'border-primary bg-gradient-to-br from-primary/10 to-primary/5 shadow-md scale-[1.02]'
-                              : 'border-stone-200/60 dark:border-stone-700/60 hover:border-primary/50 bg-white dark:bg-stone-800/50'
+                              ? 'border-primary bg-primary/10 shadow-md scale-[1.02]'
+                              : 'border-muted hover:border-primary/50 bg-muted/30 hover:bg-muted/50'
                           }`}
                           onClick={() => setPaymentMethod('cod')}
                         >
                           <div className="flex items-start space-x-4">
                             <div className={`p-3 rounded-full ${
-                              paymentMethod === 'cod' ? 'bg-primary text-primary-foreground' : 'bg-muted'
+                              paymentMethod === 'cod' ? 'bg-primary text-primary-foreground' : 'bg-background'
                             }`}>
                               <Banknote className="h-5 w-5" />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <h3 className="font-semibold text-lg mb-2">{t.cod}</h3>
-                              <p className="text-sm text-muted-foreground mb-3 leading-relaxed">{t.codDescription}</p>
+                              <h3 className="font-bold text-lg mb-2">{t.cod}</h3>
+                              <p className="text-sm text-muted-foreground mb-3 leading-relaxed font-medium">{t.codDescription}</p>
                               <div className="flex items-center space-x-2">
-                                <Badge variant="secondary" className="text-xs px-2 py-1">
+                                <Badge variant="secondary" className="text-xs px-2 py-1 rounded-lg border-2 font-semibold">
                                   <DollarSign className="h-3 w-3 mr-1" />
                                   Cash
                                 </Badge>
@@ -709,30 +722,30 @@ const CheckoutPage = () => {
                         <div
                           className={`p-6 border-2 rounded-xl cursor-pointer transition-all duration-300 hover:shadow-lg ${
                             paymentMethod === 'online'
-                              ? 'border-primary bg-gradient-to-br from-primary/10 to-primary/5 shadow-md scale-[1.02]'
-                              : 'border-stone-200/60 dark:border-stone-700/60 hover:border-primary/50 bg-white dark:bg-stone-800/50'
+                              ? 'border-primary bg-primary/10 shadow-md scale-[1.02]'
+                              : 'border-muted hover:border-primary/50 bg-muted/30 hover:bg-muted/50'
                           }`}
                           onClick={() => setPaymentMethod('online')}
                         >
                           <div className="flex items-start space-x-4">
                             <div className={`p-3 rounded-full ${
-                              paymentMethod === 'online' ? 'bg-primary text-primary-foreground' : 'bg-muted'
+                              paymentMethod === 'online' ? 'bg-primary text-primary-foreground' : 'bg-background'
                             }`}>
                               <CreditCard className="h-5 w-5" />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <h3 className="font-semibold text-lg mb-2">{t.online}</h3>
-                              <p className="text-sm text-muted-foreground mb-3 leading-relaxed">{t.onlineDescription}</p>
+                              <h3 className="font-bold text-lg mb-2">{t.online}</h3>
+                              <p className="text-sm text-muted-foreground mb-3 leading-relaxed font-medium">{t.onlineDescription}</p>
                               <div className="flex items-center space-x-2 flex-wrap">
-                                <Badge variant="secondary" className="text-xs px-2 py-1 mb-1">
+                                <Badge variant="secondary" className="text-xs px-2 py-1 mb-1 rounded-lg border-2 font-semibold">
                                   <CreditCard className="h-3 w-3 mr-1" />
                                   Card
                                 </Badge>
-                                <Badge variant="secondary" className="text-xs px-2 py-1 mb-1">
+                                <Badge variant="secondary" className="text-xs px-2 py-1 mb-1 rounded-lg border-2 font-semibold">
                                   <Smartphone className="h-3 w-3 mr-1" />
                                   E-Wallet
                                 </Badge>
-                                <Badge variant="secondary" className="text-xs px-2 py-1 mb-1">
+                                <Badge variant="secondary" className="text-xs px-2 py-1 mb-1 rounded-lg border-2 font-semibold">
                                   <QrCode className="h-3 w-3 mr-1" />
                                   QR
                                 </Badge>
@@ -745,44 +758,46 @@ const CheckoutPage = () => {
 
                     {/* Online Payment Details */}
                     {paymentMethod === 'online' && (
-                      <div className="space-y-6 p-6 bg-gradient-to-br from-muted/30 via-muted/20 to-transparent rounded-xl border border-stone-200/50 dark:border-stone-700/50 shadow-sm">
-                        <div className="flex items-center space-x-3 mb-5 pb-4 border-b border-stone-200/50 dark:border-stone-700/50">
+                      <div className="space-y-6 p-6 rounded-xl border-2 border-primary/20 bg-muted/30">
+                        <div className="flex items-center space-x-3 mb-5 pb-4 border-b-2 border-primary/20">
                           <div className="p-2 rounded-full bg-green-100 dark:bg-green-900/50">
-                            <Lock className="h-4 w-4 text-green-600 dark:text-green-400" />
+                            <Lock className="h-5 w-5 text-green-600 dark:text-green-400" />
                           </div>
-                          <span className="text-sm font-semibold text-green-700 dark:text-green-300">Secure Payment</span>
+                          <span className="text-sm font-bold text-green-700 dark:text-green-300">Secure Payment</span>
                         </div>
                         
                         {/* Card Details */}
                         <div className="space-y-4">
                           <div>
-                            <label className="text-sm font-medium mb-2 block">{t.cardNumber}</label>
+                            <label className="text-sm font-semibold mb-2 block">{t.cardNumber}</label>
                             <Input
                               value={formData.cardNumber}
                               onChange={(e) => handleInputChange('cardNumber', e.target.value)}
                               placeholder="1234 5678 9012 3456"
                               required={paymentMethod === 'online'}
+                              className="rounded-lg border-2 focus:border-primary transition-all"
                             />
                           </div>
                           <div>
-                            <label className="text-sm font-medium mb-2 block">{t.cardName}</label>
+                            <label className="text-sm font-semibold mb-2 block">{t.cardName}</label>
                             <Input
                               value={formData.cardName}
                               onChange={(e) => handleInputChange('cardName', e.target.value)}
                               placeholder="John Doe"
                               required={paymentMethod === 'online'}
+                              className="rounded-lg border-2 focus:border-primary transition-all"
                             />
                           </div>
                           <div className="grid grid-cols-3 gap-4">
                             <div>
-                              <label className="text-sm font-medium mb-2 block">{t.expiryMonth}</label>
+                              <label className="text-sm font-semibold mb-2 block">{t.expiryMonth}</label>
                               <Select value={formData.expiryMonth} onValueChange={(value) => handleInputChange('expiryMonth', value)}>
-                                <SelectTrigger>
+                                <SelectTrigger className="rounded-lg border-2 focus:border-primary transition-all">
                                   <SelectValue placeholder="MM" />
                                 </SelectTrigger>
-                                <SelectContent>
+                                <SelectContent className="rounded-lg border-2">
                                   {Array.from({length: 12}, (_, i) => i + 1).map(month => (
-                                    <SelectItem key={month} value={month.toString().padStart(2, '0')}>
+                                    <SelectItem key={month} value={month.toString().padStart(2, '0')} className="rounded-md">
                                       {month.toString().padStart(2, '0')}
                                     </SelectItem>
                                   ))}
@@ -790,14 +805,14 @@ const CheckoutPage = () => {
                               </Select>
                             </div>
                             <div>
-                              <label className="text-sm font-medium mb-2 block">{t.expiryYear}</label>
+                              <label className="text-sm font-semibold mb-2 block">{t.expiryYear}</label>
                               <Select value={formData.expiryYear} onValueChange={(value) => handleInputChange('expiryYear', value)}>
-                                <SelectTrigger>
+                                <SelectTrigger className="rounded-lg border-2 focus:border-primary transition-all">
                                   <SelectValue placeholder="YYYY" />
                                 </SelectTrigger>
-                                <SelectContent>
+                                <SelectContent className="rounded-lg border-2">
                                   {Array.from({length: 10}, (_, i) => new Date().getFullYear() + i).map(year => (
-                                    <SelectItem key={year} value={year.toString()}>
+                                    <SelectItem key={year} value={year.toString()} className="rounded-md">
                                       {year}
                                     </SelectItem>
                                   ))}
@@ -805,13 +820,14 @@ const CheckoutPage = () => {
                               </Select>
                             </div>
                             <div>
-                              <label className="text-sm font-medium mb-2 block">{t.cvv}</label>
+                              <label className="text-sm font-semibold mb-2 block">{t.cvv}</label>
                               <Input
                                 value={formData.cvv}
                                 onChange={(e) => handleInputChange('cvv', e.target.value)}
                                 placeholder="123"
                                 maxLength={4}
                                 required={paymentMethod === 'online'}
+                                className="rounded-lg border-2 focus:border-primary transition-all"
                               />
                             </div>
                           </div>
@@ -883,15 +899,15 @@ const CheckoutPage = () => {
                 </Card>
 
                 {/* Order Notes */}
-                <Card className="bg-gradient-to-br from-white via-white to-stone-50/50 dark:from-stone-800 dark:via-stone-800 dark:to-stone-900/50 border-stone-200/60 dark:border-stone-700/60 shadow-lg hover:shadow-xl transition-shadow duration-300 rounded-xl">
+                <Card className="rounded-xl border-2 shadow-lg hover:shadow-xl transition-all overflow-hidden bg-background/95 backdrop-blur-sm">
                   <CardContent className="pt-6">
-                    <label className="text-sm font-medium mb-2 block">{t.notes}</label>
+                    <label className="text-sm font-semibold mb-2 block">{t.notes}</label>
                     <Textarea
                       value={formData.notes}
                       onChange={(e) => handleInputChange('notes', e.target.value)}
                       rows={3}
                       placeholder="Any special instructions or notes..."
-                      className="resize-none"
+                      className="resize-none rounded-lg border-2 focus:border-primary transition-all"
                     />
                   </CardContent>
                 </Card>
@@ -900,28 +916,32 @@ const CheckoutPage = () => {
 
             {/* Order Summary */}
             <div className="space-y-6">
-              <Card className="bg-gradient-to-br from-white via-white to-stone-50/50 dark:from-stone-800 dark:via-stone-800 dark:to-stone-900/50 border-stone-200/60 dark:border-stone-700/60 shadow-xl rounded-xl overflow-hidden sticky top-8">
-                <CardHeader className="bg-gradient-to-r from-stone-50 to-stone-100/50 dark:from-stone-800 dark:to-stone-900/50 border-b border-stone-200/50 dark:border-stone-700/50">
-                  <CardTitle className="text-lg font-semibold">{t.orderSummary}</CardTitle>
+              <Card className="rounded-xl border-2 shadow-xl hover:shadow-2xl transition-all overflow-hidden bg-background/95 backdrop-blur-sm sticky top-8">
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-lg font-bold">{t.orderSummary}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4 pt-6">
                   {/* Cart Items */}
                   <div className="space-y-3 max-h-64 overflow-y-auto">
                     {cartItems.map((item, index) => (
-                      <div key={`${item.productId}-${item.selectedSize}-${item.selectedColor}-${index}`} className="flex items-center space-x-3 p-2 rounded-lg hover:bg-stone-50 dark:hover:bg-stone-800/50 transition-colors">
-                        <img
-                          src={item.product.images?.[0] || '/placeholder.svg'}
-                          alt={item.product.name}
-                          className="w-14 h-14 object-cover rounded-lg border border-stone-200 dark:border-stone-700"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-sm truncate">{item.product.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {item.selectedSize} • {item.selectedColor} • Qty: {item.quantity}
-                          </p>
-                        </div>
-                        <p className="font-semibold text-sm flex-shrink-0">{formatCurrency(item.product.price * item.quantity, language)}</p>
-                      </div>
+                      <Card key={`${item.productId}-${item.selectedSize}-${item.selectedColor}-${index}`} className="rounded-lg border-2 hover:shadow-md transition-all overflow-hidden bg-muted/30">
+                        <CardContent className="p-3">
+                          <div className="flex items-center space-x-3">
+                            <img
+                              src={item.product.images?.[0] || '/placeholder.svg'}
+                              alt={item.product.name}
+                              className="w-16 h-16 object-cover rounded-lg border-2"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <p className="font-bold text-sm truncate">{item.product.name}</p>
+                              <p className="text-xs text-muted-foreground font-medium">
+                                {item.selectedSize} • {item.selectedColor} • Qty: {item.quantity}
+                              </p>
+                            </div>
+                            <p className="font-bold text-sm flex-shrink-0 text-primary">{formatCurrency(item.product.price * item.quantity, language)}</p>
+                          </div>
+                        </CardContent>
+                      </Card>
                     ))}
                   </div>
 
@@ -929,41 +949,45 @@ const CheckoutPage = () => {
 
                   {/* Totals */}
                   <div className="space-y-3">
-                    <div className="flex justify-between text-sm">
+                    <div className="flex justify-between text-sm font-medium">
                       <span className="text-muted-foreground">{t.subtotal}</span>
-                      <span className="font-medium">{formatCurrency(subtotal, language)}</span>
+                      <span className="font-bold">{formatCurrency(subtotal, language)}</span>
                     </div>
-                    <div className="flex justify-between text-sm">
+                    <div className="flex justify-between text-sm font-medium">
                       <span className="text-muted-foreground">{t.shipping}</span>
-                      <span className="font-medium">{formatCurrency(shipping, language)}</span>
+                      <span className="font-bold">{formatCurrency(shipping, language)}</span>
                     </div>
-                    <div className="flex justify-between text-sm">
+                    <div className="flex justify-between text-sm font-medium">
                       <span className="text-muted-foreground">{t.tax}</span>
-                      <span className="font-medium">{formatCurrency(tax, language)}</span>
+                      <span className="font-bold">{formatCurrency(tax, language)}</span>
                     </div>
                     <Separator className="my-3" />
-                    <div className="flex justify-between font-bold text-lg pt-2">
+                    <div className="flex justify-between font-bold text-lg pt-2 p-3 rounded-lg bg-primary/10 border-l-4 border-primary">
                       <span>{t.total}</span>
-                      <span className="bg-gradient-to-r from-red-600 to-red-500 bg-clip-text text-transparent">
+                      <span className="text-primary">
                         {formatCurrency(total, language)}
                       </span>
                     </div>
                   </div>
 
                   {/* Security Notice */}
-                  <div className="flex items-start space-x-3 p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-lg border border-green-200/50 dark:border-green-800/50">
-                    <div className="p-1.5 rounded-full bg-green-100 dark:bg-green-900/50 flex-shrink-0">
-                      <Shield className="h-4 w-4 text-green-600 dark:text-green-400" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-green-800 dark:text-green-300">{t.secure}</p>
-                      <p className="text-xs text-green-700 dark:text-green-400 mt-1">{t.secureDescription}</p>
-                    </div>
-                  </div>
+                  <Card className="rounded-lg border-2 bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800/50">
+                    <CardContent className="p-4">
+                      <div className="flex items-start space-x-3">
+                        <div className="p-2 rounded-full bg-green-100 dark:bg-green-900/50 flex-shrink-0">
+                          <Shield className="h-5 w-5 text-green-600 dark:text-green-400" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-green-800 dark:text-green-300">{t.secure}</p>
+                          <p className="text-xs text-green-700 dark:text-green-400 mt-1 font-medium">{t.secureDescription}</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
 
                   {/* Place Order Button */}
                   <Button 
-                    className="w-full bg-gradient-to-r from-stone-700 to-stone-800 dark:from-stone-600 dark:to-stone-700 hover:from-stone-800 hover:to-stone-900 dark:hover:from-stone-500 dark:hover:to-stone-600 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 font-semibold hover:scale-[1.02]" 
+                    className="w-full rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105" 
                     size="lg"
                     onClick={handleSubmit}
                     disabled={isProcessing}

@@ -153,23 +153,23 @@ export default function ResetPasswordPage() {
 
   if (isSuccess) {
     return (
-      <div className="min-h-screen bg-gradient-zen">
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
         <Header cartItemsCount={0} onSearch={() => {}} />
         
-        <main className="py-16">
+        <main className="py-8">
           <div className="container mx-auto px-4">
             <div className="flex justify-center">
-              <Card className="w-full max-w-md">
-                <CardHeader className="text-center">
-                  <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
-                    <CheckCircle className="h-6 w-6 text-green-600" />
+              <Card className="w-full max-w-md rounded-xl border-2 shadow-xl bg-background/95 backdrop-blur-sm">
+                <CardHeader className="text-center pb-6">
+                  <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/20">
+                    <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-400" />
                   </div>
-                  <CardTitle className="text-2xl font-bold">{t.successTitle}</CardTitle>
-                  <p className="text-muted-foreground">{t.successMessage}</p>
+                  <CardTitle className="text-3xl font-bold mb-2">{t.successTitle}</CardTitle>
+                  <p className="text-muted-foreground text-lg">{t.successMessage}</p>
                 </CardHeader>
                 <CardContent>
                   <Link to="/login">
-                    <Button className="w-full">
+                    <Button className="w-full rounded-xl font-semibold h-11 shadow-lg hover:shadow-xl transition-all">
                       <ArrowLeft className="mr-2 h-4 w-4" />
                       {t.backToLogin}
                     </Button>
@@ -186,38 +186,38 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-zen">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       <Header cartItemsCount={0} onSearch={() => {}} />
       
-      <main className="py-16">
+      <main className="py-8">
         <div className="container mx-auto px-4">
           <div className="flex justify-center">
-            <Card className="w-full max-w-md">
-              <CardHeader className="text-center">
-                <CardTitle className="text-2xl font-bold">{t.title}</CardTitle>
-                <p className="text-muted-foreground">{t.subtitle}</p>
+            <Card className="w-full max-w-md rounded-xl border-2 shadow-xl bg-background/95 backdrop-blur-sm">
+              <CardHeader className="text-center pb-6">
+                <CardTitle className="text-3xl font-bold mb-2">{t.title}</CardTitle>
+                <p className="text-muted-foreground text-lg">{t.subtitle}</p>
               </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-4">
+              <CardContent className="space-y-6">
+                <form onSubmit={handleSubmit} className="space-y-5">
                   <div className="space-y-2">
-                    <Label htmlFor="password">{t.password}</Label>
+                    <Label htmlFor="password" className="text-sm font-semibold">{t.password}</Label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       <Input
                         id="password"
                         name="password"
                         type={showPassword ? "text" : "password"}
-                        placeholder="Enter new password"
+                        placeholder={language === 'vi' ? 'Nhập mật khẩu mới' : language === 'ja' ? '新しいパスワードを入力' : 'Enter new password'}
                         value={formData.password}
                         onChange={(e) => setFormData({...formData, password: e.target.value})}
-                        className="pl-10 pr-10"
+                        className="pl-10 pr-10 rounded-lg border-2 focus:border-primary transition-all"
                         disabled={isLoading}
                       />
                       <Button
                         type="button"
                         variant="ghost"
                         size="sm"
-                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent rounded-lg"
                         onClick={() => setShowPassword(!showPassword)}
                         disabled={isLoading}
                       >
@@ -231,24 +231,24 @@ export default function ResetPasswordPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="confirmPassword">{t.confirmPassword}</Label>
+                    <Label htmlFor="confirmPassword" className="text-sm font-semibold">{t.confirmPassword}</Label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       <Input
                         id="confirmPassword"
                         name="confirmPassword"
                         type={showConfirmPassword ? "text" : "password"}
-                        placeholder="Confirm new password"
+                        placeholder={language === 'vi' ? 'Xác nhận mật khẩu mới' : language === 'ja' ? '新しいパスワードを確認' : 'Confirm new password'}
                         value={formData.confirmPassword}
                         onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
-                        className="pl-10 pr-10"
+                        className="pl-10 pr-10 rounded-lg border-2 focus:border-primary transition-all"
                         disabled={isLoading}
                       />
                       <Button
                         type="button"
                         variant="ghost"
                         size="sm"
-                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent rounded-lg"
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                         disabled={isLoading}
                       >
@@ -263,21 +263,21 @@ export default function ResetPasswordPage() {
 
                   <Button
                     type="submit"
-                    className="w-full"
+                    className="w-full rounded-xl font-semibold h-11 shadow-lg hover:shadow-xl transition-all"
                     disabled={isLoading}
                   >
-                    {isLoading ? "Resetting..." : t.resetPassword}
+                    {isLoading ? (language === 'vi' ? "Đang đặt lại..." : language === 'ja' ? "リセット中..." : "Resetting...") : t.resetPassword}
                   </Button>
-
-                  <div className="text-center">
-                    <Link
-                      to="/login"
-                      className="text-sm text-primary hover:underline"
-                    >
-                      {t.backToLogin}
-                    </Link>
-                  </div>
                 </form>
+
+                <div className="text-center pt-4 border-t">
+                  <Link
+                    to="/login"
+                    className="text-sm text-primary hover:underline font-semibold"
+                  >
+                    {t.backToLogin}
+                  </Link>
+                </div>
               </CardContent>
             </Card>
           </div>
