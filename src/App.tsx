@@ -105,12 +105,12 @@ function App() {
         enableSystem
         disableTransitionOnChange
       >
-            <LanguageProvider>
+        <LanguageProvider>
           <AuthProvider>
             <NotificationsProvider>
               <TooltipProvider>
                 <ErrorBoundary>
-                  <Router>
+                <Router>
                   <ScrollToTop />
                   <Routes>
                       {/* Public Routes */}
@@ -257,7 +257,7 @@ function App() {
                         element={
                           <ProtectedAdminRoute>
                             <Suspense fallback={<PageLoader />}>
-                              <AdminDashboard />
+                            <AdminDashboard />
                             </Suspense>
                           </ProtectedAdminRoute>
                         }
@@ -267,7 +267,7 @@ function App() {
                         element={
                           <ProtectedAdminRoute>
                             <Suspense fallback={<PageLoader />}>
-                              <AdminAnalyticsPage />
+                            <AdminAnalyticsPage />
                             </Suspense>
                           </ProtectedAdminRoute>
                         }
@@ -277,7 +277,7 @@ function App() {
                         element={
                           <ProtectedAdminRoute>
                             <Suspense fallback={<PageLoader />}>
-                              <AdminReportsPage />
+                            <AdminReportsPage />
                             </Suspense>
                           </ProtectedAdminRoute>
                         }
@@ -287,7 +287,7 @@ function App() {
                         element={
                           <ProtectedAdminRoute>
                             <Suspense fallback={<PageLoader />}>
-                              <AdminNotificationsPage />
+                            <AdminNotificationsPage />
                             </Suspense>
                           </ProtectedAdminRoute>
                         }
@@ -297,7 +297,7 @@ function App() {
                         element={
                           <ProtectedAdminRoute>
                             <Suspense fallback={<PageLoader />}>
-                              <AdminProducts />
+                            <AdminProducts />
                             </Suspense>
                           </ProtectedAdminRoute>
                         }
@@ -307,7 +307,7 @@ function App() {
                         element={
                           <ProtectedAdminRoute>
                             <Suspense fallback={<PageLoader />}>
-                              <ProductFormPage />
+                            <ProductFormPage />
                             </Suspense>
                           </ProtectedAdminRoute>
                         }
@@ -317,7 +317,7 @@ function App() {
                         element={
                           <ProtectedAdminRoute>
                             <Suspense fallback={<PageLoader />}>
-                              <ProductFormPage />
+                            <ProductFormPage />
                             </Suspense>
                           </ProtectedAdminRoute>
                         }
@@ -327,7 +327,7 @@ function App() {
                         element={
                           <ProtectedAdminRoute>
                             <Suspense fallback={<PageLoader />}>
-                              <AdminCategories />
+                            <AdminCategories />
                             </Suspense>
                           </ProtectedAdminRoute>
                         }
@@ -337,7 +337,7 @@ function App() {
                         element={
                           <ProtectedAdminRoute>
                             <Suspense fallback={<PageLoader />}>
-                              <AdminOrders />
+                            <AdminOrders />
                             </Suspense>
                           </ProtectedAdminRoute>
                         }
@@ -347,7 +347,7 @@ function App() {
                         element={
                           <ProtectedAdminRoute>
                             <Suspense fallback={<PageLoader />}>
-                              <AdminUsers />
+                            <AdminUsers />
                             </Suspense>
                           </ProtectedAdminRoute>
                         }
@@ -357,7 +357,7 @@ function App() {
                         element={
                           <ProtectedAdminRoute>
                             <Suspense fallback={<PageLoader />}>
-                              <AdminActivity />
+                            <AdminActivity />
                             </Suspense>
                           </ProtectedAdminRoute>
                         }
@@ -367,7 +367,7 @@ function App() {
                         element={
                           <ProtectedAdminRoute>
                             <Suspense fallback={<PageLoader />}>
-                              <AdminReviews />
+                            <AdminReviews />
                             </Suspense>
                           </ProtectedAdminRoute>
                         }
@@ -377,7 +377,7 @@ function App() {
                         element={
                           <ProtectedAdminRoute>
                             <Suspense fallback={<PageLoader />}>
-                              <AdminSettings />
+                            <AdminSettings />
                             </Suspense>
                           </ProtectedAdminRoute>
                         }
@@ -387,7 +387,7 @@ function App() {
                         element={
                           <ProtectedAdminRoute>
                             <Suspense fallback={<PageLoader />}>
-                              <AdminPromotionsPage />
+                            <AdminPromotionsPage />
                             </Suspense>
                           </ProtectedAdminRoute>
                         }
@@ -397,7 +397,7 @@ function App() {
                         element={
                           <ProtectedAdminRoute>
                             <Suspense fallback={<PageLoader />}>
-                              <AdminInventoryPage />
+                            <AdminInventoryPage />
                             </Suspense>
                           </ProtectedAdminRoute>
                         }
@@ -407,7 +407,7 @@ function App() {
                         element={
                           <ProtectedAdminRoute>
                             <Suspense fallback={<PageLoader />}>
-                              <AdminShippingPage />
+                            <AdminShippingPage />
                             </Suspense>
                           </ProtectedAdminRoute>
                         }
@@ -417,7 +417,7 @@ function App() {
                         element={
                           <ProtectedAdminRoute>
                             <Suspense fallback={<PageLoader />}>
-                              <AdminPaymentsPage />
+                            <AdminPaymentsPage />
                             </Suspense>
                           </ProtectedAdminRoute>
                         }
@@ -427,7 +427,7 @@ function App() {
                         element={
                           <ProtectedAdminRoute>
                             <Suspense fallback={<PageLoader />}>
-                              <AdminRolesPage />
+                            <AdminRolesPage />
                             </Suspense>
                           </ProtectedAdminRoute>
                         }
@@ -437,7 +437,7 @@ function App() {
                         element={
                           <ProtectedAdminRoute>
                             <Suspense fallback={<PageLoader />}>
-                              <RoleDetailPage />
+                            <RoleDetailPage />
                             </Suspense>
                           </ProtectedAdminRoute>
                         }
@@ -447,7 +447,7 @@ function App() {
                         element={
                           <ProtectedAdminRoute>
                             <Suspense fallback={<PageLoader />}>
-                              <RoleDetailPage />
+                            <RoleDetailPage />
                             </Suspense>
                           </ProtectedAdminRoute>
                         }
@@ -457,7 +457,7 @@ function App() {
                         element={
                           <ProtectedAdminRoute>
                             <Suspense fallback={<PageLoader />}>
-                              <PermissionDetailPage />
+                            <PermissionDetailPage />
                             </Suspense>
                           </ProtectedAdminRoute>
                         }
@@ -467,7 +467,7 @@ function App() {
                         element={
                           <ProtectedAdminRoute>
                             <Suspense fallback={<PageLoader />}>
-                              <PermissionDetailPage />
+                            <PermissionDetailPage />
                             </Suspense>
                           </ProtectedAdminRoute>
                         }
@@ -477,7 +477,7 @@ function App() {
                         element={
                           <ProtectedAdminRoute>
                             <Suspense fallback={<PageLoader />}>
-                              <AdminApiPage />
+                            <AdminApiPage />
                             </Suspense>
                           </ProtectedAdminRoute>
                         }
@@ -490,7 +490,7 @@ function App() {
                         </Suspense>
                       } />
                   </Routes>
-                  </Router>
+                </Router>
                 </ErrorBoundary>
               </TooltipProvider>
             </NotificationsProvider>
