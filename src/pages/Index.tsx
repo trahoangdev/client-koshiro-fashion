@@ -555,11 +555,11 @@ const Index = () => {
             
             {/* Japanese-inspired Typography with Modern Touch */}
             <div className="mb-8">
-              <h1 className="text-5xl md:text-7xl lg:text-8xl font-light tracking-tight text-white mb-6">
-                <span className="block font-extralight">
+              <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight mb-6">
+                <span className="block bg-gradient-to-r from-white via-white to-white/90 bg-clip-text text-transparent drop-shadow-2xl">
                   {language === 'vi' ? 'KOSHIRO' : language === 'ja' ? 'コシロ' : 'KOSHIRO'}
                 </span>
-                <span className="block text-2xl md:text-3xl lg:text-4xl font-light text-stone-200 mt-4 tracking-widest">
+                <span className="block text-2xl md:text-3xl lg:text-4xl font-semibold text-white/95 mt-4 tracking-widest drop-shadow-lg">
                   {language === 'vi' ? 'THỜI TRANG NHẬT BẢN' : 
                    language === 'ja' ? '日本ファッション' : 
                    'JAPANESE FASHION'}
@@ -568,7 +568,7 @@ const Index = () => {
             </div>
             
             {/* Minimalist Description */}
-            <p className="text-lg md:text-xl text-stone-200 max-w-2xl mx-auto mb-12 leading-relaxed font-light">
+            <p className="text-xl md:text-2xl lg:text-3xl text-white/90 max-w-3xl mx-auto mb-12 leading-relaxed font-medium drop-shadow-md">
               {language === 'vi' ? 'Tìm kiếm sự cân bằng hoàn hảo giữa truyền thống và hiện đại' :
                language === 'ja' ? '伝統と現代の完璧なバランスを探す' :
                'Finding the perfect balance between tradition and modernity'}
@@ -578,7 +578,7 @@ const Index = () => {
             <Button 
               variant="outline" 
               size="lg" 
-              className="border-2 border-white/30 text-white hover:bg-white hover:text-stone-900 px-8 py-3 rounded-xl font-semibold tracking-wide transition-all duration-300 backdrop-blur-sm bg-white/10 shadow-lg hover:shadow-xl"
+              className="border-2 border-white/40 text-white hover:bg-white hover:text-stone-900 px-10 py-6 rounded-xl font-bold text-lg tracking-wide transition-all duration-300 backdrop-blur-sm bg-white/15 shadow-2xl hover:shadow-white/20 hover:scale-105"
               onClick={() => {
                 const collectionSection = document.querySelector('[data-section="collection"]');
                 if (collectionSection) {
@@ -592,20 +592,22 @@ const Index = () => {
         </div>
         
         {/* Custom Scroll Wheel Indicator */}
-        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2">
-          <div className="relative">
+        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 z-20">
+          <div className="relative flex flex-col items-center justify-center">
             {/* Mouse Body */}
-            <div className="w-6 h-10 border-2 border-white/40 rounded-full bg-white/10 backdrop-blur-sm animate-scroll-wheel">
+            <div className="relative w-8 h-12 border-[3px] border-white/60 rounded-full bg-white/20 backdrop-blur-md animate-scroll-wheel shadow-lg shadow-white/20">
               {/* Scroll Wheel */}
-              <div className="absolute top-1 left-1/2 transform -translate-x-1/2 w-1 h-2 bg-white/80 rounded-full"></div>
+              <div className="absolute top-2 left-1/2 transform -translate-x-1/2 w-1.5 h-3 bg-white rounded-full shadow-sm"></div>
               {/* Scroll Wheel Lines */}
-              <div className="absolute top-1.5 left-1/2 transform -translate-x-1/2 w-0.5 h-1 bg-white/60 rounded-full"></div>
-              <div className="absolute top-2 left-1/2 transform -translate-x-1/2 w-0.5 h-0.5 bg-white/40 rounded-full"></div>
+              <div className="absolute top-3 left-1/2 transform -translate-x-1/2 w-0.5 h-1.5 bg-white/80 rounded-full"></div>
+              <div className="absolute top-3.5 left-1/2 transform -translate-x-1/2 w-0.5 h-1 bg-white/60 rounded-full"></div>
             </div>
-            {/* Scroll Animation Lines */}
-            <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-0.5 h-4 bg-white/30 animate-scroll-indicator"></div>
-            <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 w-0.5 h-3 bg-white/20 animate-scroll-indicator" style={{animationDelay: '0.3s'}}></div>
-            <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 w-0.5 h-2 bg-white/10 animate-scroll-indicator" style={{animationDelay: '0.6s'}}></div>
+            {/* Scroll Animation Lines - Centered below mouse */}
+            <div className="relative mt-2 flex flex-col items-center">
+              <div className="w-1 h-6 bg-gradient-to-b from-white/70 via-white/40 to-white/10 animate-scroll-indicator rounded-full"></div>
+              <div className="w-1 h-5 bg-gradient-to-b from-white/50 via-white/30 to-white/5 animate-scroll-indicator rounded-full mt-1" style={{animationDelay: '0.3s'}}></div>
+              <div className="w-1 h-4 bg-gradient-to-b from-white/40 via-white/20 to-white/5 animate-scroll-indicator rounded-full mt-1" style={{animationDelay: '0.6s'}}></div>
+            </div>
           </div>
         </div>
       </section>
