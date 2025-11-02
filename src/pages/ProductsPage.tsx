@@ -231,25 +231,55 @@ const ProductsPage = () => {
   };
 
   // Add to compare function
-  const addToCompare = async (product: Product) => {
-    try {
-      // For now, just show a toast since compare functionality might not be implemented yet
-      toast({
-        title: language === 'vi' ? 'Thành công' : language === 'ja' ? '成功' : 'Success',
-        description: language === 'vi' ? 'Đã thêm sản phẩm vào danh sách so sánh' : 
-                     language === 'ja' ? '商品を比較リストに追加しました' : 
-                     'Product added to compare list',
-      });
-    } catch (error) {
-      logger.error('Error adding to compare', error);
-      toast({
-        title: language === 'vi' ? 'Lỗi' : language === 'ja' ? 'エラー' : 'Error',
-        description: language === 'vi' ? 'Không thể thêm sản phẩm vào danh sách so sánh' : 
-                     language === 'ja' ? '商品を比較リストに追加できません' : 
-                     'Unable to add product to compare list',
-        variant: 'destructive',
-      });
+  const addToCompare = (product: Product) => {
+    const savedCompareList = localStorage.getItem('koshiro_compare_list');
+    let compareList: Product[] = [];
+    
+    if (savedCompareList) {
+      try {
+        compareList = JSON.parse(savedCompareList);
+      } catch (error) {
+        logger.error('Error parsing compare list', error);
+      }
     }
+
+    if (compareList.length >= 4) {
+      toast({
+        title: language === 'vi' ? "Giới hạn so sánh" : 
+               language === 'ja' ? "比較制限" : 
+               "Compare Limit",
+        description: language === 'vi' ? "Bạn chỉ có thể so sánh tối đa 4 sản phẩm" :
+                     language === 'ja' ? "最大4つの商品を比較できます" :
+                     "You can compare up to 4 products",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (compareList.find(p => p._id === product._id)) {
+      toast({
+        title: language === 'vi' ? "Sản phẩm đã có" : 
+               language === 'ja' ? "商品は既に追加済み" : 
+               "Product Already Added",
+        description: language === 'vi' ? "Sản phẩm này đã có trong danh sách so sánh" :
+                     language === 'ja' ? "この商品は既に比較リストにあります" :
+                     "This product is already in the compare list",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const newCompareList = [...compareList, product];
+    localStorage.setItem('koshiro_compare_list', JSON.stringify(newCompareList));
+    
+    toast({
+      title: language === 'vi' ? "Đã thêm vào so sánh" : 
+             language === 'ja' ? "比較リストに追加" : 
+             "Added to Compare",
+      description: language === 'vi' ? "Sản phẩm đã được thêm vào danh sách so sánh" :
+                   language === 'ja' ? "商品が比較リストに追加されました" :
+                   "Product has been added to compare list",
+    });
   };
 
   const translations = {

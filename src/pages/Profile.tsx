@@ -280,8 +280,8 @@ export default function Profile() {
             />
 
             {/* Main Content */}
-            <div className="flex-1 space-y-8">
-              <div className="text-center lg:text-left mb-8">
+            <div className="flex-1 space-y-6">
+              <div className="text-center lg:text-left mb-6">
                 <h1 className="text-4xl md:text-5xl font-bold mb-2 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">{t.title}</h1>
                 <p className="text-muted-foreground text-lg font-medium">Manage your account and preferences</p>
               </div>
@@ -304,8 +304,8 @@ export default function Profile() {
                       {isEditing ? t.cancel : t.edit}
                     </Button>
                   </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="flex items-center justify-center mb-6">
+                  <CardContent className="p-6 space-y-6">
+                    <div className="flex items-center justify-center mb-4">
                       <Avatar className="h-28 w-28 border-4 border-primary/20 shadow-lg">
                         <AvatarImage src="" />
                         <AvatarFallback className="text-2xl font-bold bg-primary/10">
@@ -315,7 +315,7 @@ export default function Profile() {
                     </div>
 
                     {/* User Stats */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                       <Card className="rounded-xl border-2 bg-primary/10 border-primary/20 hover:shadow-lg transition-all">
                         <CardContent className="p-6 text-center">
                           <ShoppingBag className="h-8 w-8 mx-auto mb-3 text-primary" />
@@ -339,7 +339,7 @@ export default function Profile() {
                       </Card>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <Label htmlFor="name" className="text-sm font-semibold mb-2 block">{t.name}</Label>
                         {isEditing ? (
@@ -447,7 +447,7 @@ export default function Profile() {
               )}
 
               {/* Additional Sections based on activeSection */}
-              <div className="space-y-6">
+              <div>
                 {activeSection === "orders" && <ProfileOrders />}
                 {activeSection === "addresses" && <ProfileAddresses />}
                 {activeSection === "payment" && <ProfilePayment />}

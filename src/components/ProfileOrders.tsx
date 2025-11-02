@@ -295,29 +295,33 @@ const ProfileOrders = () => {
 
   if (orders.length === 0) {
     return (
-      <div className="text-center py-12">
-        <Package className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-        <h2 className="text-2xl font-semibold mb-2">{t.noOrders}</h2>
-        <p className="text-muted-foreground mb-8">{t.noOrdersDesc}</p>
-        <Link to="/">
-          <Button size="lg">{t.startShopping}</Button>
-        </Link>
-      </div>
+      <Card className="rounded-xl border-2 shadow-lg bg-background/95 backdrop-blur-sm">
+        <CardContent className="p-12 text-center">
+          <Package className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+          <h2 className="text-2xl font-bold mb-2">{t.noOrders}</h2>
+          <p className="text-muted-foreground mb-8 font-medium text-lg">{t.noOrdersDesc}</p>
+          <Link to="/">
+            <Button size="lg" className="rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all">
+              {t.startShopping}
+            </Button>
+          </Link>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold mb-2">{t.title}</h2>
-        <p className="text-muted-foreground">{t.subtitle}</p>
+    <div className="space-y-4">
+      <div className="mb-4">
+        <h2 className="text-3xl font-bold mb-2 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">{t.title}</h2>
+        <p className="text-muted-foreground text-lg font-medium">{t.subtitle}</p>
       </div>
 
       <div className="space-y-4">
         {Array.isArray(orders) && orders.length > 0 ? (
           orders.map((order) => (
-            <Card key={order._id} className="overflow-hidden">
-              <CardHeader className="bg-muted/50">
+            <Card key={order._id} className="overflow-hidden rounded-xl border-2 shadow-lg hover:shadow-xl transition-all bg-background/95 backdrop-blur-sm">
+              <CardHeader className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-b-2 border-primary/20">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
                     <div className="flex items-center space-x-2">
@@ -326,7 +330,7 @@ const ProfileOrders = () => {
                         {t.orderNumber}{order.orderNumber}
                       </span>
                     </div>
-                    <Badge className={getStatusColor(order.status)}>
+                    <Badge className={`${getStatusColor(order.status)} rounded-lg border-2 font-semibold px-3 py-1`}>
                       {order.status}
                     </Badge>
                   </div>
@@ -345,7 +349,7 @@ const ProfileOrders = () => {
                       <img
                         src={item.productId?.images?.[0] || '/placeholder.svg'}
                         alt={item.name}
-                        className="w-12 h-12 object-cover rounded"
+                        className="w-16 h-16 object-cover rounded-lg border-2 shadow-md"
                       />
                       <div className="flex-1">
                         <p className="font-medium text-sm">{item.name}</p>
@@ -382,7 +386,7 @@ const ProfileOrders = () => {
                     <p className="text-sm font-medium text-muted-foreground mb-1 mt-2">
                       {t.paymentStatus}
                     </p>
-                    <Badge variant={order.paymentStatus === 'paid' ? 'default' : 'secondary'}>
+                    <Badge variant={order.paymentStatus === 'paid' ? 'default' : 'secondary'} className="rounded-lg border-2 font-semibold">
                       {order.paymentStatus}
                     </Badge>
                   </div>
@@ -403,7 +407,7 @@ const ProfileOrders = () => {
                       variant="destructive" 
                       size="sm" 
                       onClick={() => openCancelDialog(order._id)}
-                      className="hover:bg-destructive/90 transition-colors"
+                      className="rounded-lg font-semibold shadow-md hover:shadow-lg transition-all"
                     >
                       <XCircle className="h-4 w-4 mr-2" />
                       {getCancelButtonText(order)}
