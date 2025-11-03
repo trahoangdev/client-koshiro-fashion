@@ -18,7 +18,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import ThemeToggle from "@/components/ThemeToggle";
 import { Link, useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useAuth } from "@/contexts";
+import { useAuth, useSettings } from "@/contexts";
 
 interface HeaderProps {
   cartItemsCount: number;
@@ -34,7 +34,10 @@ const Header = ({ cartItemsCount: propCartItemsCount, onSearch, refreshWishlistT
   const [categories, setCategories] = useState<Category[]>([]);
   const { language, setLanguage } = useLanguage();
   const { user, isAuthenticated, logout } = useAuth();
+  const { settings } = useSettings();
   const navigate = useNavigate();
+  
+  const websiteName = settings?.websiteName || 'KOSHIRO';
 
   // Load cart count from API
   const loadCartCount = useCallback(async () => {
@@ -287,20 +290,34 @@ const Header = ({ cartItemsCount: propCartItemsCount, onSearch, refreshWishlistT
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-20 items-center justify-between px-6 lg:px-8 xl:px-12">
         {/* Logo - Better spacing */}
-        <div className="flex items-center min-w-[140px] lg:min-w-[160px]">
-          <Link to="/" className="flex items-center space-x-3">
-            <img 
-              src="/koshino_logo_dark.png" 
-              alt="KOSHIRO" 
-              className="h-8 w-auto dark:hidden"
-            />
-            <img 
-              src="/koshino_logo.png" 
-              alt="KOSHIRO" 
-              className="h-8 w-auto hidden dark:block"
-            />
-            <h1 className="text-2xl lg:text-3xl font-bold tracking-tight cursor-pointer hover:text-primary transition-colors duration-500">
-              KOSHIRO
+        <div className="flex items-center min-w-0 flex-shrink-0">
+          <Link to="/" className="flex items-center space-x-3 min-w-0 flex-shrink-0">
+            <div className="flex-shrink-0">
+              <img 
+                key={`logo-light-${settings?.logoUrl || 'default'}`}
+                src={settings?.logoUrl || "/koshino_logo_dark.png"} 
+                alt={websiteName} 
+                className="h-8 w-auto max-w-[120px] object-contain dark:hidden"
+                style={{ imageRendering: 'auto' }}
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = "/koshino_logo_dark.png";
+                }}
+              />
+              <img 
+                key={`logo-dark-${settings?.logoUrl || 'default'}`}
+                src={settings?.logoUrl || "/koshino_logo.png"} 
+                alt={websiteName} 
+                className="h-8 w-auto max-w-[120px] object-contain hidden dark:block"
+                style={{ imageRendering: 'auto' }}
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = "/koshino_logo.png";
+                }}
+              />
+            </div>
+            <h1 className="text-xl lg:text-2xl xl:text-3xl font-bold tracking-tight cursor-pointer hover:text-primary transition-colors duration-500 whitespace-nowrap overflow-hidden text-ellipsis">
+              {websiteName}
             </h1>
           </Link>
         </div>

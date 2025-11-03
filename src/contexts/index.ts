@@ -76,3 +76,15 @@ export { useLanguage, LanguageProvider } from './LanguageContext';
  * ```
  */
 export { useNotifications, NotificationsProvider } from './NotificationsContext';
+
+// ============================================================================
+// SETTINGS CONTEXT
+// ============================================================================
+/**
+ * Settings context hook and provider
+ * @example
+ * ```tsx
+ * const { settings, refreshSettings } = useSettings();
+ * ```
+ */
+export { useSettings, SettingsProvider } from './SettingsContext';

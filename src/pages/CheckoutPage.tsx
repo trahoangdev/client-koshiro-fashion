@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useAuth } from "@/contexts";
+import { useAuth, useSettings } from "@/contexts";
 import { useToast } from "@/hooks/use-toast";
 import { api, Product } from "@/lib/api";
 import { formatCurrency } from "@/lib/currency";
@@ -47,11 +47,13 @@ interface CartItem {
 const CheckoutPage = () => {
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
+  const { settings } = useSettings();
   const [isProcessing, setIsProcessing] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [paymentMethod, setPaymentMethod] = useState<'cod' | 'online'>('cod');
+  const [paymentMethod, setPaymentMethod] = useState<'cod' | 'bank' | 'stripe' | 'paypal'>('cod');
+  const [selectedShippingZone, setSelectedShippingZone] = useState<string>('');
   const [formData, setFormData] = useState({
     // Shipping Information
     firstName: "",
@@ -174,7 +176,32 @@ const CheckoutPage = () => {
   }, [loading, cartItems.length, navigate, isAuthenticated]);
 
   const subtotal = cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
-  const shipping = subtotal > 2000000 ? 0 : 50000; // Free shipping over 2M VND
+  
+  // Calculate shipping cost based on settings
+  const calculateShipping = () => {
+    if (!settings) {
+      // Fallback to default
+      return subtotal > 2000000 ? 0 : 50000;
+    }
+    
+    // Check free shipping threshold
+    if (settings.freeShippingThreshold > 0 && subtotal >= settings.freeShippingThreshold) {
+      return 0;
+    }
+    
+    // Check if shipping zone is selected
+    if (selectedShippingZone && settings.shippingZones && settings.shippingZones.length > 0) {
+      const zone = settings.shippingZones.find(z => z.name === selectedShippingZone);
+      if (zone) {
+        return zone.cost;
+      }
+    }
+    
+    // Use default shipping cost
+    return settings.defaultShippingCost || 50000;
+  };
+  
+  const shipping = calculateShipping();
   const tax = subtotal * 0.1; // 10% tax
   const total = subtotal + shipping + tax;
 
@@ -380,11 +407,13 @@ const CheckoutPage = () => {
       }
 
       // Validate payment method specific fields
-      if (paymentMethod === 'online') {
+      if (paymentMethod === 'stripe') {
         if (!formData.cardNumber || !formData.cardName || !formData.expiryMonth || !formData.expiryYear || !formData.cvv) {
-          throw new Error('Please fill in all card details for online payment');
+          throw new Error('Please fill in all card details for Stripe payment');
         }
       }
+      
+      // PayPal and bank transfer don't require card details
 
       // Prepare order data
       const orderData = {
@@ -409,7 +438,10 @@ const CheckoutPage = () => {
           city: formData.city,
           district: formData.state
         },
-        paymentMethod: paymentMethod === 'cod' ? 'Cash on Delivery' : 'Online Payment',
+        paymentMethod: paymentMethod === 'cod' ? 'Cash on Delivery' : 
+                      paymentMethod === 'bank' ? 'Bank Transfer' :
+                      paymentMethod === 'stripe' ? 'Stripe' :
+                      paymentMethod === 'paypal' ? 'PayPal' : 'Online Payment',
         notes: formData.notes
       };
 
@@ -672,6 +704,23 @@ const CheckoutPage = () => {
                         </SelectContent>
                       </Select>
                     </div>
+                    {settings && settings.shippingZones && settings.shippingZones.length > 0 && (
+                      <div>
+                        <label className="text-sm font-semibold mb-2 block">Shipping Zone</label>
+                        <Select value={selectedShippingZone} onValueChange={setSelectedShippingZone}>
+                          <SelectTrigger className="rounded-lg border-2 focus:border-primary transition-all">
+                            <SelectValue placeholder="Select shipping zone" />
+                          </SelectTrigger>
+                          <SelectContent className="rounded-lg border-2">
+                            {settings.shippingZones.map((zone) => (
+                              <SelectItem key={zone.name} value={zone.name} className="rounded-md">
+                                {zone.name} - {formatCurrency(zone.cost, settings.currency || 'VND')}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
 
@@ -691,73 +740,119 @@ const CheckoutPage = () => {
                       <label className="text-lg font-semibold mb-6 block">{t.paymentMethod}</label>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* COD Option */}
-                        <div
-                          className={`p-6 border-2 rounded-xl cursor-pointer transition-all duration-300 hover:shadow-lg ${
-                            paymentMethod === 'cod'
-                              ? 'border-primary bg-primary/10 shadow-md scale-[1.02]'
-                              : 'border-muted hover:border-primary/50 bg-muted/30 hover:bg-muted/50'
-                          }`}
-                          onClick={() => setPaymentMethod('cod')}
-                        >
-                          <div className="flex items-start space-x-4">
-                            <div className={`p-3 rounded-full ${
-                              paymentMethod === 'cod' ? 'bg-primary text-primary-foreground' : 'bg-background'
-                            }`}>
-                              <Banknote className="h-5 w-5" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <h3 className="font-bold text-lg mb-2">{t.cod}</h3>
-                              <p className="text-sm text-muted-foreground mb-3 leading-relaxed font-medium">{t.codDescription}</p>
-                              <div className="flex items-center space-x-2">
-                                <Badge variant="secondary" className="text-xs px-2 py-1 rounded-lg border-2 font-semibold">
-                                  <DollarSign className="h-3 w-3 mr-1" />
-                                  Cash
-                                </Badge>
+                        {(!settings || settings.cashOnDelivery) && (
+                          <div
+                            className={`p-6 border-2 rounded-xl cursor-pointer transition-all duration-300 hover:shadow-lg ${
+                              paymentMethod === 'cod'
+                                ? 'border-primary bg-primary/10 shadow-md scale-[1.02]'
+                                : 'border-muted hover:border-primary/50 bg-muted/30 hover:bg-muted/50'
+                            }`}
+                            onClick={() => setPaymentMethod('cod')}
+                          >
+                            <div className="flex items-start space-x-4">
+                              <div className={`p-3 rounded-full ${
+                                paymentMethod === 'cod' ? 'bg-primary text-primary-foreground' : 'bg-background'
+                              }`}>
+                                <Banknote className="h-5 w-5" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h3 className="font-bold text-lg mb-2">{t.cod}</h3>
+                                <p className="text-sm text-muted-foreground mb-3 leading-relaxed font-medium">{t.codDescription}</p>
+                                <div className="flex items-center space-x-2">
+                                  <Badge variant="secondary" className="text-xs px-2 py-1 rounded-lg border-2 font-semibold">
+                                    <DollarSign className="h-3 w-3 mr-1" />
+                                    Cash
+                                  </Badge>
+                                </div>
                               </div>
                             </div>
                           </div>
-                        </div>
+                        )}
 
-                        {/* Online Payment Option */}
-                        <div
-                          className={`p-6 border-2 rounded-xl cursor-pointer transition-all duration-300 hover:shadow-lg ${
-                            paymentMethod === 'online'
-                              ? 'border-primary bg-primary/10 shadow-md scale-[1.02]'
-                              : 'border-muted hover:border-primary/50 bg-muted/30 hover:bg-muted/50'
-                          }`}
-                          onClick={() => setPaymentMethod('online')}
-                        >
-                          <div className="flex items-start space-x-4">
-                            <div className={`p-3 rounded-full ${
-                              paymentMethod === 'online' ? 'bg-primary text-primary-foreground' : 'bg-background'
-                            }`}>
-                              <CreditCard className="h-5 w-5" />
+                        {/* Bank Transfer Option */}
+                        {(!settings || settings.bankTransfer) && (
+                          <div
+                            className={`p-6 border-2 rounded-xl cursor-pointer transition-all duration-300 hover:shadow-lg ${
+                              paymentMethod === 'bank'
+                                ? 'border-primary bg-primary/10 shadow-md scale-[1.02]'
+                                : 'border-muted hover:border-primary/50 bg-muted/30 hover:bg-muted/50'
+                            }`}
+                            onClick={() => setPaymentMethod('bank')}
+                          >
+                            <div className="flex items-start space-x-4">
+                              <div className={`p-3 rounded-full ${
+                                paymentMethod === 'bank' ? 'bg-primary text-primary-foreground' : 'bg-background'
+                              }`}>
+                                <Wallet className="h-5 w-5" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h3 className="font-bold text-lg mb-2">Bank Transfer</h3>
+                                <p className="text-sm text-muted-foreground mb-3 leading-relaxed font-medium">Transfer directly to our bank account</p>
+                              </div>
                             </div>
-                            <div className="flex-1 min-w-0">
-                              <h3 className="font-bold text-lg mb-2">{t.online}</h3>
-                              <p className="text-sm text-muted-foreground mb-3 leading-relaxed font-medium">{t.onlineDescription}</p>
-                              <div className="flex items-center space-x-2 flex-wrap">
-                                <Badge variant="secondary" className="text-xs px-2 py-1 mb-1 rounded-lg border-2 font-semibold">
+                          </div>
+                        )}
+
+                        {/* Stripe Option */}
+                        {settings && settings.stripeEnabled && (
+                          <div
+                            className={`p-6 border-2 rounded-xl cursor-pointer transition-all duration-300 hover:shadow-lg ${
+                              paymentMethod === 'stripe'
+                                ? 'border-primary bg-primary/10 shadow-md scale-[1.02]'
+                                : 'border-muted hover:border-primary/50 bg-muted/30 hover:bg-muted/50'
+                            }`}
+                            onClick={() => setPaymentMethod('stripe')}
+                          >
+                            <div className="flex items-start space-x-4">
+                              <div className={`p-3 rounded-full ${
+                                paymentMethod === 'stripe' ? 'bg-primary text-primary-foreground' : 'bg-background'
+                              }`}>
+                                <CreditCard className="h-5 w-5" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h3 className="font-bold text-lg mb-2">Stripe</h3>
+                                <p className="text-sm text-muted-foreground mb-3 leading-relaxed font-medium">Pay with credit/debit card via Stripe</p>
+                                <Badge variant="secondary" className="text-xs px-2 py-1 rounded-lg border-2 font-semibold">
                                   <CreditCard className="h-3 w-3 mr-1" />
-                                  Card
-                                </Badge>
-                                <Badge variant="secondary" className="text-xs px-2 py-1 mb-1 rounded-lg border-2 font-semibold">
-                                  <Smartphone className="h-3 w-3 mr-1" />
-                                  E-Wallet
-                                </Badge>
-                                <Badge variant="secondary" className="text-xs px-2 py-1 mb-1 rounded-lg border-2 font-semibold">
-                                  <QrCode className="h-3 w-3 mr-1" />
-                                  QR
+                                  Secure
                                 </Badge>
                               </div>
                             </div>
                           </div>
-                        </div>
+                        )}
+
+                        {/* PayPal Option */}
+                        {settings && settings.paypalEnabled && (
+                          <div
+                            className={`p-6 border-2 rounded-xl cursor-pointer transition-all duration-300 hover:shadow-lg ${
+                              paymentMethod === 'paypal'
+                                ? 'border-primary bg-primary/10 shadow-md scale-[1.02]'
+                                : 'border-muted hover:border-primary/50 bg-muted/30 hover:bg-muted/50'
+                            }`}
+                            onClick={() => setPaymentMethod('paypal')}
+                          >
+                            <div className="flex items-start space-x-4">
+                              <div className={`p-3 rounded-full ${
+                                paymentMethod === 'paypal' ? 'bg-primary text-primary-foreground' : 'bg-background'
+                              }`}>
+                                <QrCode className="h-5 w-5" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h3 className="font-bold text-lg mb-2">PayPal</h3>
+                                <p className="text-sm text-muted-foreground mb-3 leading-relaxed font-medium">Pay with your PayPal account</p>
+                                <Badge variant="secondary" className="text-xs px-2 py-1 rounded-lg border-2 font-semibold">
+                                  <QrCode className="h-3 w-3 mr-1" />
+                                  PayPal
+                                </Badge>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
 
-                    {/* Online Payment Details */}
-                    {paymentMethod === 'online' && (
+                    {/* Payment Details */}
+                    {(paymentMethod === 'stripe' || paymentMethod === 'paypal') && (
                       <div className="space-y-6 p-6 rounded-xl border-2 border-primary/20 bg-muted/30">
                         <div className="flex items-center space-x-3 mb-5 pb-4 border-b-2 border-primary/20">
                           <div className="p-2 rounded-full bg-green-100 dark:bg-green-900/50">
@@ -774,7 +869,7 @@ const CheckoutPage = () => {
                               value={formData.cardNumber}
                               onChange={(e) => handleInputChange('cardNumber', e.target.value)}
                               placeholder="1234 5678 9012 3456"
-                              required={paymentMethod === 'online'}
+                              required={paymentMethod === 'stripe'}
                               className="rounded-lg border-2 focus:border-primary transition-all"
                             />
                           </div>
@@ -784,7 +879,7 @@ const CheckoutPage = () => {
                               value={formData.cardName}
                               onChange={(e) => handleInputChange('cardName', e.target.value)}
                               placeholder="John Doe"
-                              required={paymentMethod === 'online'}
+                              required={paymentMethod === 'stripe'}
                               className="rounded-lg border-2 focus:border-primary transition-all"
                             />
                           </div>
@@ -826,7 +921,7 @@ const CheckoutPage = () => {
                                 onChange={(e) => handleInputChange('cvv', e.target.value)}
                                 placeholder="123"
                                 maxLength={4}
-                                required={paymentMethod === 'online'}
+                                required={paymentMethod === 'stripe'}
                                 className="rounded-lg border-2 focus:border-primary transition-all"
                               />
                             </div>
