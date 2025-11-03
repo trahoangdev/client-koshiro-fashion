@@ -1,11 +1,15 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
+import { api } from "@/lib/api";
+import { logger } from "@/lib/logger";
+import { Loader2 } from "lucide-react";
 import { 
   Bell, 
   Mail, 
@@ -54,8 +58,11 @@ const ProfileNotifications = () => {
       promotions: false
     }
   });
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const { language, t: tCommon } = useLanguage();
   const { toast } = useToast();
+  const { isAuthenticated, refreshUser } = useAuth();
 
   const translations = {
     en: {
@@ -131,6 +138,53 @@ const ProfileNotifications = () => {
 
   const tl = translations[language as keyof typeof translations] || translations.en;
 
+  // Load notification preferences from API
+  useEffect(() => {
+    const loadNotificationPreferences = async () => {
+      if (!isAuthenticated) return;
+      
+      try {
+        setIsLoading(true);
+        const response = await api.getProfile();
+        
+        if (response && response.user && response.user.preferences?.notificationPreferences) {
+          const prefs = response.user.preferences.notificationPreferences;
+          setSettings({
+            email: {
+              orderUpdates: prefs.email?.orderUpdates ?? true,
+              promotions: prefs.email?.promotions ?? true,
+              newsletters: prefs.email?.newsletters ?? false,
+              productRecommendations: prefs.email?.productRecommendations ?? true
+            },
+            push: {
+              orderUpdates: prefs.push?.orderUpdates ?? true,
+              promotions: prefs.push?.promotions ?? false,
+              backInStock: prefs.push?.backInStock ?? true,
+              priceDrops: prefs.push?.priceDrops ?? true
+            },
+            sms: {
+              orderUpdates: prefs.sms?.orderUpdates ?? false,
+              promotions: prefs.sms?.promotions ?? false
+            }
+          });
+        }
+      } catch (error) {
+        logger.error('Error loading notification preferences', error);
+        toast({
+          title: tCommon('error'),
+          description: language === 'vi' ? 'Không thể tải cài đặt thông báo' : 
+                       language === 'ja' ? '通知設定を読み込めませんでした' : 
+                       'Could not load notification settings',
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadNotificationPreferences();
+  }, [isAuthenticated, toast, tCommon, language]);
+
   const handleToggle = (category: keyof NotificationSettings, setting: string) => {
     setSettings(prev => ({
       ...prev,
@@ -141,12 +195,56 @@ const ProfileNotifications = () => {
     }));
   };
 
-  const handleSave = () => {
-    // In a real app, this would save to the backend
-    toast({
-      title: tCommon('success'),
-      description: tl.settingsSaved,
-    });
+  const handleSave = async () => {
+    if (!isAuthenticated) return;
+    
+    try {
+      setIsSaving(true);
+      
+      await api.updateProfile({
+        preferences: {
+          notificationPreferences: {
+            email: {
+              orderUpdates: settings.email.orderUpdates,
+              promotions: settings.email.promotions,
+              newsletters: settings.email.newsletters,
+              productRecommendations: settings.email.productRecommendations
+            },
+            push: {
+              orderUpdates: settings.push.orderUpdates,
+              promotions: settings.push.promotions,
+              backInStock: settings.push.backInStock,
+              priceDrops: settings.push.priceDrops
+            },
+            sms: {
+              orderUpdates: settings.sms.orderUpdates,
+              promotions: settings.sms.promotions
+            }
+          }
+        }
+      });
+      
+      // Refresh user data to get latest preferences
+      if (refreshUser) {
+        refreshUser();
+      }
+      
+      toast({
+        title: tCommon('success'),
+        description: tl.settingsSaved,
+      });
+    } catch (error) {
+      logger.error('Error saving notification preferences', error);
+      toast({
+        title: tCommon('error'),
+        description: language === 'vi' ? 'Không thể lưu cài đặt thông báo' : 
+                     language === 'ja' ? '通知設定を保存できませんでした' : 
+                     'Could not save notification settings',
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleEnableAll = () => {
@@ -226,6 +324,21 @@ const ProfileNotifications = () => {
     </div>
   );
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+          <p className="text-muted-foreground">
+            {language === 'vi' ? 'Đang tải cài đặt thông báo...' : 
+             language === 'ja' ? '通知設定を読み込み中...' : 
+             'Loading notification settings...'}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between mb-4">
@@ -234,10 +347,10 @@ const ProfileNotifications = () => {
           <p className="text-muted-foreground text-lg font-medium">{tl.subtitle}</p>
         </div>
         <div className="flex space-x-2">
-          <Button variant="outline" size="sm" onClick={handleEnableAll} className="rounded-lg font-semibold border-2">
+          <Button variant="outline" size="sm" onClick={handleEnableAll} className="rounded-lg font-semibold border-2" disabled={isSaving}>
             {tl.enableAll}
           </Button>
-          <Button variant="outline" size="sm" onClick={handleDisableAll} className="rounded-lg font-semibold border-2">
+          <Button variant="outline" size="sm" onClick={handleDisableAll} className="rounded-lg font-semibold border-2" disabled={isSaving}>
             {tl.disableAll}
           </Button>
         </div>
@@ -358,9 +471,22 @@ const ProfileNotifications = () => {
 
       {/* Save Button */}
       <div className="flex justify-end">
-        <Button onClick={handleSave} className="rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all">
-          <Save className="h-4 w-4 mr-2" />
-          {tl.save}
+        <Button 
+          onClick={handleSave} 
+          disabled={isSaving || isLoading}
+          className="rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all"
+        >
+          {isSaving ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              {language === 'vi' ? 'Đang lưu...' : language === 'ja' ? '保存中...' : 'Saving...'}
+            </>
+          ) : (
+            <>
+              <Save className="h-4 w-4 mr-2" />
+              {tl.save}
+            </>
+          )}
         </Button>
       </div>
     </div>

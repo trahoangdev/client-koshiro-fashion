@@ -1,5 +1,5 @@
 import express from 'express';
-import { register, login, adminLogin, getProfile, updateProfile, forgotPassword, resetPassword } from '../controllers/authController';
+import { register, login, adminLogin, getProfile, updateProfile, forgotPassword, resetPassword, changePassword, deleteAccount } from '../controllers/authController';
 import { getUserAddresses, addAddress, updateAddress, deleteAddress, setDefaultAddress } from '../controllers/addressController';
 import { authenticateToken } from '../middleware/auth';
 import { authLimiter, passwordResetLimiter } from '../middleware/rateLimit';
@@ -16,6 +16,8 @@ router.post('/reset-password', passwordResetLimiter, resetPassword);
 // Protected routes
 router.get('/profile', authenticateToken, getProfile);
 router.put('/profile', authenticateToken, updateProfile);
+router.post('/change-password', authenticateToken, changePassword);
+router.delete('/account', authenticateToken, deleteAccount);
 
 // Address routes
 router.get('/addresses', authenticateToken, getUserAddresses);

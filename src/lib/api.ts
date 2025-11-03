@@ -176,6 +176,31 @@ export interface User {
   orderCount: number;
   totalSpent: number;
   lastActive?: string;
+  preferences?: {
+    language?: string;
+    currency?: string;
+    emailNotifications?: boolean;
+    smsNotifications?: boolean;
+    marketingEmails?: boolean;
+    notificationPreferences?: {
+      email?: {
+        orderUpdates?: boolean;
+        promotions?: boolean;
+        newsletters?: boolean;
+        productRecommendations?: boolean;
+      };
+      push?: {
+        orderUpdates?: boolean;
+        promotions?: boolean;
+        backInStock?: boolean;
+        priceDrops?: boolean;
+      };
+      sms?: {
+        orderUpdates?: boolean;
+        promotions?: boolean;
+      };
+    };
+  };
   createdAt: string;
   updatedAt: string;
 }
@@ -297,13 +322,50 @@ export interface CreateReviewRequest {
 }
 
 // Settings types
+export interface ShippingZone {
+  name: string;
+  cost: number;
+}
+
 export interface Settings {
   _id: string;
+  // General Settings
   websiteName: string;
   websiteDescription: string;
   contactEmail: string;
   contactPhone: string;
+  address: string;
+  timezone: string;
+  currency: string;
+  language: string;
+  // Notification Settings
+  emailNotifications: boolean;
+  orderNotifications: boolean;
+  stockNotifications: boolean;
+  customerNotifications: boolean;
+  adminNotifications: boolean;
+  // Security Settings
+  sessionTimeout: number;
+  passwordMinLength: number;
+  requireTwoFactor: boolean;
+  maxLoginAttempts: number;
+  enableCaptcha: boolean;
+  // Payment Settings
+  stripeEnabled: boolean;
+  paypalEnabled: boolean;
+  cashOnDelivery: boolean;
+  bankTransfer: boolean;
+  // Shipping Settings
+  freeShippingThreshold: number;
+  defaultShippingCost: number;
+  enableTracking: boolean;
+  shippingZones: ShippingZone[];
+  // Appearance Settings
+  theme: string;
   primaryColor: string;
+  logoUrl: string;
+  faviconUrl: string;
+  // System Settings (legacy)
   enableDarkMode: boolean;
   maintenanceMode: boolean;
   debugMode: boolean;
@@ -490,6 +552,31 @@ class ApiClient {
     name?: string;
     phone?: string;
     address?: string;
+    preferences?: {
+      language?: string;
+      currency?: string;
+      emailNotifications?: boolean;
+      smsNotifications?: boolean;
+      marketingEmails?: boolean;
+      notificationPreferences?: {
+        email?: {
+          orderUpdates?: boolean;
+          promotions?: boolean;
+          newsletters?: boolean;
+          productRecommendations?: boolean;
+        };
+        push?: {
+          orderUpdates?: boolean;
+          promotions?: boolean;
+          backInStock?: boolean;
+          priceDrops?: boolean;
+        };
+        sms?: {
+          orderUpdates?: boolean;
+          promotions?: boolean;
+        };
+      };
+    };
   }): Promise<{ message: string; user: User }> {
     try {
       return await this.request<{ message: string; user: User }>('/auth/profile', {
@@ -498,6 +585,30 @@ class ApiClient {
       });
     } catch (error) {
       logger.error('Update profile API error', error);
+      throw error;
+    }
+  }
+
+  async changePassword(currentPassword: string, newPassword: string): Promise<{ message: string }> {
+    try {
+      return await this.request<{ message: string }>('/auth/change-password', {
+        method: 'POST',
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+    } catch (error) {
+      logger.error('Change password API error', error);
+      throw error;
+    }
+  }
+
+  async deleteAccount(password: string): Promise<{ message: string }> {
+    try {
+      return await this.request<{ message: string }>('/auth/account', {
+        method: 'DELETE',
+        body: JSON.stringify({ password }),
+      });
+    } catch (error) {
+      logger.error('Delete account API error', error);
       throw error;
     }
   }

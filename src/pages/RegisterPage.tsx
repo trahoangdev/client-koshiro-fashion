@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts";
+import { useAuth, useSettings } from "@/contexts";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -29,7 +29,10 @@ export default function RegisterPage() {
   const { language } = useLanguage();
   const { toast } = useToast();
   const { register, isAuthenticated } = useAuth();
+  const { settings } = useSettings();
   const navigate = useNavigate();
+  
+  const passwordMinLength = settings?.passwordMinLength || 8;
 
   // Redirect if already authenticated
   if (isAuthenticated) {
@@ -63,7 +66,7 @@ export default function RegisterPage() {
       passwordsNotMatch: "Passwords do not match",
       invalidEmail: "Please enter a valid email",
       invalidPhone: "Please enter a valid phone number",
-      passwordTooShort: "Password must be at least 8 characters",
+      passwordTooShort: `Password must be at least ${passwordMinLength} characters`,
       termsRequired: "You must agree to the terms and conditions",
       registerSuccess: "Account created successfully!",
       registerError: "Failed to create account. Please try again."
@@ -93,7 +96,7 @@ export default function RegisterPage() {
       passwordsNotMatch: "Mật khẩu không khớp",
       invalidEmail: "Vui lòng nhập email hợp lệ",
       invalidPhone: "Vui lòng nhập số điện thoại hợp lệ",
-      passwordTooShort: "Mật khẩu phải có ít nhất 8 ký tự",
+      passwordTooShort: `Mật khẩu phải có ít nhất ${passwordMinLength} ký tự`,
       termsRequired: "Bạn phải đồng ý với điều khoản và điều kiện",
       registerSuccess: "Tạo tài khoản thành công!",
       registerError: "Không thể tạo tài khoản. Vui lòng thử lại."
@@ -214,10 +217,12 @@ export default function RegisterPage() {
       });
       return false;
     }
-    if (formData.password.length < 8) {
+    if (formData.password.length < passwordMinLength) {
       toast({
         title: "Error",
-        description: t.passwordTooShort,
+        description: language === 'vi' ? `Mật khẩu phải có ít nhất ${passwordMinLength} ký tự` :
+                     language === 'ja' ? `パスワードは少なくとも${passwordMinLength}文字である必要があります` :
+                     `Password must be at least ${passwordMinLength} characters`,
         variant: "destructive"
       });
       return false;

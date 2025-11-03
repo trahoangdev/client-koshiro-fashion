@@ -1,14 +1,15 @@
 import { Request, Response } from 'express';
-import jwt from 'jsonwebtoken';
+import jwt, { SignOptions } from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import nodemailer from 'nodemailer';
 import { User } from '../models/User';
 import Role, { IRole } from '../models/Role';
+import { Settings } from '../models/Settings';
 import { asyncHandler, errors } from '../utils/errorHandler';
 import { logger } from '../lib/logger';
 
-const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_SECRET: string = process.env.JWT_SECRET as string;
 if (!JWT_SECRET) {
   throw new Error('JWT_SECRET environment variable is required');
 }
@@ -41,6 +42,17 @@ export const register = async (req: Request, res: Response) => {
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: 'Email already registered' });
+    }
+
+    // Get password minimum length from settings
+    const settings = await Settings.findOne();
+    const passwordMinLength = settings?.passwordMinLength || 8;
+
+    // Validate password length
+    if (password && password.length < passwordMinLength) {
+      return res.status(400).json({ 
+        message: `Password must be at least ${passwordMinLength} characters long` 
+      });
     }
 
     // Get or create Customer role
@@ -79,11 +91,25 @@ export const register = async (req: Request, res: Response) => {
     // Get user role name
     const userRole = typeof user.role === 'string' ? user.role : (user.role as unknown as IRole)?.name || 'Customer';
 
+    // Get session timeout from settings (in minutes, default to 7 days = 10080 minutes)
+    const sessionSettings = await Settings.findOne();
+    const sessionTimeoutMinutes = sessionSettings?.sessionTimeout || 10080; // Default 7 days
+    let expiresIn: string;
+    if (sessionTimeoutMinutes < 60) {
+      expiresIn = `${sessionTimeoutMinutes}m`;
+    } else if (sessionTimeoutMinutes < 1440) {
+      expiresIn = `${Math.floor(sessionTimeoutMinutes / 60)}h`;
+    } else {
+      expiresIn = `${Math.floor(sessionTimeoutMinutes / 1440)}d`;
+    }
+    
     // Generate JWT token
+    // @ts-expect-error - expiresIn accepts string format like "7d", "30m", etc.
+    const signOptions: SignOptions = { expiresIn };
     const token = jwt.sign(
       { userId: user._id, email: user.email, role: userRole, name: user.name },
       JWT_SECRET,
-      { expiresIn: '7d' }
+      signOptions
     );
 
     res.status(201).json({
@@ -109,15 +135,95 @@ export const login = async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
 
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Email and password are required' });
+    }
+
+    // Normalize email (lowercase, trim)
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // Get max login attempts from settings
+    const loginSettings = await Settings.findOne();
+    const maxLoginAttempts = loginSettings?.maxLoginAttempts || 5;
+    const lockoutDuration = 30 * 60 * 1000; // 30 minutes in milliseconds
+
     // Find user by email and populate role
-    const user = await User.findOne({ email }).populate('role');
+    const user = await User.findOne({ email: normalizedEmail }).populate('role');
     if (!user) {
+      logger.debug('Login attempt failed: User not found', { email: normalizedEmail });
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
+    logger.debug('Login attempt: User found', { email: normalizedEmail, userId: user._id, status: user.status });
+
+    // Check if account is locked
+    if (user.lockedUntil && user.lockedUntil > new Date()) {
+      const minutesLeft = Math.ceil((user.lockedUntil.getTime() - Date.now()) / (60 * 1000));
+      return res.status(429).json({ 
+        message: `Account is temporarily locked. Please try again in ${minutesLeft} minute(s).` 
+      });
+    }
+
+    // Reset lockout if expired
+    if (user.lockedUntil && user.lockedUntil <= new Date()) {
+      user.lockedUntil = undefined;
+      user.loginAttempts = 0;
+    }
+
+    // Reset login attempts if reset time has passed (1 hour)
+    if (user.loginAttemptsResetAt && user.loginAttemptsResetAt <= new Date()) {
+      user.loginAttempts = 0;
+      user.loginAttemptsResetAt = undefined;
+    }
+
     // Check password
-    const isPasswordValid = await user.comparePassword(password);
-    if (!isPasswordValid) {
+    try {
+      const isPasswordValid = await user.comparePassword(password);
+      if (!isPasswordValid) {
+        // Increment login attempts
+        user.loginAttempts = (user.loginAttempts || 0) + 1;
+        
+        // Set reset time if not set (1 hour from now)
+        if (!user.loginAttemptsResetAt) {
+          user.loginAttemptsResetAt = new Date(Date.now() + 60 * 60 * 1000);
+        }
+        
+        // Lock account if max attempts reached
+        if (user.loginAttempts >= maxLoginAttempts) {
+          user.lockedUntil = new Date(Date.now() + lockoutDuration);
+          await user.save();
+          logger.debug('Login attempt failed: Account locked', { 
+            email: normalizedEmail, 
+            userId: user._id,
+            attempts: user.loginAttempts,
+            lockedUntil: user.lockedUntil
+          });
+          return res.status(429).json({ 
+            message: `Too many failed login attempts. Account locked for 30 minutes.` 
+          });
+        }
+        
+        await user.save();
+        
+        logger.debug('Login attempt failed: Invalid password', { 
+          email: normalizedEmail, 
+          userId: user._id,
+          attempts: user.loginAttempts,
+          maxAttempts: maxLoginAttempts,
+          passwordHashLength: user.password?.length || 0
+        });
+        return res.status(401).json({ 
+          message: `Invalid credentials. ${maxLoginAttempts - user.loginAttempts} attempt(s) remaining.` 
+        });
+      }
+      logger.debug('Login attempt: Password validated successfully', { email: normalizedEmail, userId: user._id });
+      
+      // Reset login attempts on successful login
+      user.loginAttempts = 0;
+      user.loginAttemptsResetAt = undefined;
+      user.lockedUntil = undefined;
+    } catch (error) {
+      logger.error('Password comparison error', error);
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
@@ -133,11 +239,24 @@ export const login = async (req: Request, res: Response) => {
     // Get user role name
     const userRole = typeof user.role === 'string' ? user.role : (user.role as unknown as IRole)?.name || 'Customer';
 
+    // Get session timeout from settings (already loaded above for maxLoginAttempts)
+    const sessionTimeoutMinutes = loginSettings?.sessionTimeout || 10080; // Default 7 days
+    let expiresIn: string;
+    if (sessionTimeoutMinutes < 60) {
+      expiresIn = `${sessionTimeoutMinutes}m`;
+    } else if (sessionTimeoutMinutes < 1440) {
+      expiresIn = `${Math.floor(sessionTimeoutMinutes / 60)}h`;
+    } else {
+      expiresIn = `${Math.floor(sessionTimeoutMinutes / 1440)}d`;
+    }
+    
     // Generate JWT token
+    // @ts-expect-error - expiresIn accepts string format like "7d", "30m", etc.
+    const signOptions: SignOptions = { expiresIn };
     const token = jwt.sign(
       { userId: user._id, email: user.email, role: userRole, name: user.name },
       JWT_SECRET,
-      { expiresIn: '7d' }
+      signOptions
     );
 
     res.json({
@@ -151,7 +270,7 @@ export const login = async (req: Request, res: Response) => {
       }
     });
   } catch (error) {
-    console.error('Login error:', error);
+    logger.error('Login error', error);
     return res.status(500).json({ message: 'Internal server error' });
   }
 };
@@ -187,11 +306,25 @@ export const adminLogin = async (req: Request, res: Response) => {
     user.lastActive = new Date();
     await user.save();
 
+    // Get session timeout from settings (in minutes, default to 7 days = 10080 minutes)
+    const adminSessionSettings = await Settings.findOne();
+    const sessionTimeoutMinutes = adminSessionSettings?.sessionTimeout || 10080; // Default 7 days
+    let expiresIn: string;
+    if (sessionTimeoutMinutes < 60) {
+      expiresIn = `${sessionTimeoutMinutes}m`;
+    } else if (sessionTimeoutMinutes < 1440) {
+      expiresIn = `${Math.floor(sessionTimeoutMinutes / 60)}h`;
+    } else {
+      expiresIn = `${Math.floor(sessionTimeoutMinutes / 1440)}d`;
+    }
+    
     // Generate JWT token
+    // @ts-expect-error - expiresIn accepts string format like "7d", "30m", etc.
+    const signOptions: SignOptions = { expiresIn };
     const token = jwt.sign(
       { userId: user._id, email: user.email, role: userRole, name: user.name },
       JWT_SECRET,
-      { expiresIn: '7d' }
+      signOptions
     );
 
     res.json({
@@ -229,7 +362,7 @@ export const getProfile = async (req: Request, res: Response) => {
       }
     });
   } catch (error) {
-    console.error('Get profile error:', error);
+    logger.error('Get profile error', error);
     return res.status(500).json({ message: 'Internal server error' });
   }
 };
@@ -237,7 +370,7 @@ export const getProfile = async (req: Request, res: Response) => {
 export const updateProfile = async (req: Request, res: Response) => {
   try {
     const userId = (req as Request & { user: { id: string } }).user.id;
-    const { name, phone, address } = req.body;
+    const { name, phone, address, preferences } = req.body;
 
     // Find user and update allowed fields
     const user = await User.findById(userId);
@@ -249,8 +382,111 @@ export const updateProfile = async (req: Request, res: Response) => {
     if (name !== undefined) user.name = name;
     if (phone !== undefined) user.phone = phone;
     if (address !== undefined) user.address = address;
+    
+    // Update preferences if provided
+    if (preferences !== undefined) {
+      if (!user.preferences) {
+        user.preferences = {
+          emailNotifications: true,
+          smsNotifications: false,
+          marketingEmails: false,
+          language: 'en',
+          currency: 'USD'
+        };
+      }
+      
+      if (preferences.language !== undefined) user.preferences.language = preferences.language;
+      if (preferences.currency !== undefined) user.preferences.currency = preferences.currency;
+      if (preferences.emailNotifications !== undefined) user.preferences.emailNotifications = preferences.emailNotifications;
+      if (preferences.smsNotifications !== undefined) user.preferences.smsNotifications = preferences.smsNotifications;
+      if (preferences.marketingEmails !== undefined) user.preferences.marketingEmails = preferences.marketingEmails;
+      
+      // Update notification preferences if provided
+      if (preferences.notificationPreferences !== undefined) {
+        // Ensure notificationPreferences exists with all required fields
+        if (!user.preferences.notificationPreferences || !user.preferences.notificationPreferences.email || !user.preferences.notificationPreferences.push || !user.preferences.notificationPreferences.sms) {
+          user.preferences.notificationPreferences = {
+            email: {
+              orderUpdates: true,
+              promotions: true,
+              newsletters: false,
+              productRecommendations: true
+            },
+            push: {
+              orderUpdates: true,
+              promotions: false,
+              backInStock: true,
+              priceDrops: true
+            },
+            sms: {
+              orderUpdates: false,
+              promotions: false
+            }
+          };
+        }
+        
+        const notificationPrefs = user.preferences.notificationPreferences;
+        
+        // Ensure email object exists
+        if (!notificationPrefs.email) {
+          notificationPrefs.email = {
+            orderUpdates: true,
+            promotions: true,
+            newsletters: false,
+            productRecommendations: true
+          };
+        }
+        
+        // Ensure push object exists
+        if (!notificationPrefs.push) {
+          notificationPrefs.push = {
+            orderUpdates: true,
+            promotions: false,
+            backInStock: true,
+            priceDrops: true
+          };
+        }
+        
+        // Ensure sms object exists
+        if (!notificationPrefs.sms) {
+          notificationPrefs.sms = {
+            orderUpdates: false,
+            promotions: false
+          };
+        }
+        
+        // Update email preferences
+        if (preferences.notificationPreferences.email) {
+          const emailPrefs = preferences.notificationPreferences.email;
+          if (emailPrefs.orderUpdates !== undefined) notificationPrefs.email.orderUpdates = emailPrefs.orderUpdates;
+          if (emailPrefs.promotions !== undefined) notificationPrefs.email.promotions = emailPrefs.promotions;
+          if (emailPrefs.newsletters !== undefined) notificationPrefs.email.newsletters = emailPrefs.newsletters;
+          if (emailPrefs.productRecommendations !== undefined) notificationPrefs.email.productRecommendations = emailPrefs.productRecommendations;
+        }
+        
+        // Update push preferences
+        if (preferences.notificationPreferences.push) {
+          const pushPrefs = preferences.notificationPreferences.push;
+          if (pushPrefs.orderUpdates !== undefined) notificationPrefs.push.orderUpdates = pushPrefs.orderUpdates;
+          if (pushPrefs.promotions !== undefined) notificationPrefs.push.promotions = pushPrefs.promotions;
+          if (pushPrefs.backInStock !== undefined) notificationPrefs.push.backInStock = pushPrefs.backInStock;
+          if (pushPrefs.priceDrops !== undefined) notificationPrefs.push.priceDrops = pushPrefs.priceDrops;
+        }
+        
+        // Update SMS preferences
+        if (preferences.notificationPreferences.sms) {
+          const smsPrefs = preferences.notificationPreferences.sms;
+          if (smsPrefs.orderUpdates !== undefined) notificationPrefs.sms.orderUpdates = smsPrefs.orderUpdates;
+          if (smsPrefs.promotions !== undefined) notificationPrefs.sms.promotions = smsPrefs.promotions;
+        }
+      }
+    }
 
     await user.save();
+
+    // Populate role for response
+    await user.populate('role');
+    const userRole = typeof user.role === 'string' ? user.role : (user.role as unknown as IRole)?.name || 'Customer';
 
     // Return updated user without password
     const userResponse = {
@@ -259,7 +495,8 @@ export const updateProfile = async (req: Request, res: Response) => {
       name: user.name,
       phone: user.phone,
       address: user.address,
-      role: user.role
+      role: userRole,
+      preferences: user.preferences
     };
 
     res.json({
@@ -267,7 +504,7 @@ export const updateProfile = async (req: Request, res: Response) => {
       user: userResponse
     });
   } catch (error) {
-    console.error('Update profile error:', error);
+    logger.error('Update profile error', error);
     return res.status(500).json({ message: 'Internal server error' });
   }
 };
@@ -338,9 +575,19 @@ export const resetPassword = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'Invalid or expired reset token' });
     }
 
-    // Hash new password
-    const salt = await bcrypt.genSalt(10);
-    user.password = await bcrypt.hash(newPassword, salt);
+    // Get password minimum length from settings
+    const settings = await Settings.findOne();
+    const passwordMinLength = settings?.passwordMinLength || 8;
+
+    // Validate password length
+    if (newPassword.length < passwordMinLength) {
+      return res.status(400).json({ 
+        message: `New password must be at least ${passwordMinLength} characters long` 
+      });
+    }
+
+    // Set new password (pre-save hook will automatically hash it)
+    user.password = newPassword;
 
     // Clear reset token
     user.resetPasswordToken = undefined;
@@ -350,7 +597,83 @@ export const resetPassword = async (req: Request, res: Response) => {
 
     res.json({ message: 'Password has been reset successfully' });
   } catch (error) {
-    console.error('Reset password error:', error);
+    logger.error('Reset password error', error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+// Change password (for authenticated users)
+export const changePassword = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as Request & { user: { id: string } }).user.id;
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ message: 'Current password and new password are required' });
+    }
+
+    // Get password minimum length from settings
+    const passwordSettings = await Settings.findOne();
+    const passwordMinLength = passwordSettings?.passwordMinLength || 8;
+
+    // Validate password length
+    if (newPassword.length < passwordMinLength) {
+      return res.status(400).json({ 
+        message: `New password must be at least ${passwordMinLength} characters long` 
+      });
+    }
+
+    // Find user
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Verify current password
+    const isPasswordValid = await user.comparePassword(currentPassword);
+    if (!isPasswordValid) {
+      return res.status(401).json({ message: 'Current password is incorrect' });
+    }
+
+    // Set new password (pre-save hook will automatically hash it)
+    user.password = newPassword;
+    await user.save();
+
+    res.json({ message: 'Password changed successfully' });
+  } catch (error) {
+    logger.error('Change password error', error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+// Delete account (for authenticated users)
+export const deleteAccount = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as Request & { user: { id: string } }).user.id;
+    const { password } = req.body;
+
+    if (!password) {
+      return res.status(400).json({ message: 'Password is required to delete account' });
+    }
+
+    // Find user
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Verify password
+    const isPasswordValid = await user.comparePassword(password);
+    if (!isPasswordValid) {
+      return res.status(401).json({ message: 'Password is incorrect' });
+    }
+
+    // Delete user
+    await User.findByIdAndDelete(userId);
+
+    res.json({ message: 'Account deleted successfully' });
+  } catch (error) {
+    logger.error('Delete account error', error);
     return res.status(500).json({ message: 'Internal server error' });
   }
 }; 

@@ -14,6 +14,9 @@ export interface IUser extends Document {
   lastActive?: Date;
   resetPasswordToken?: string;
   resetPasswordExpires?: Date;
+  loginAttempts?: number;
+  loginAttemptsResetAt?: Date;
+  lockedUntil?: Date;
   addresses?: Array<{
     type: 'shipping' | 'billing';
     fullName: string;
@@ -31,6 +34,24 @@ export interface IUser extends Document {
     marketingEmails: boolean;
     language: string;
     currency: string;
+    notificationPreferences?: {
+      email?: {
+        orderUpdates?: boolean;
+        promotions?: boolean;
+        newsletters?: boolean;
+        productRecommendations?: boolean;
+      };
+      push?: {
+        orderUpdates?: boolean;
+        promotions?: boolean;
+        backInStock?: boolean;
+        priceDrops?: boolean;
+      };
+      sms?: {
+        orderUpdates?: boolean;
+        promotions?: boolean;
+      };
+    };
   };
   createdAt: Date;
   updatedAt: Date;
@@ -91,6 +112,16 @@ const userSchema = new Schema<IUser>({
   resetPasswordExpires: {
     type: Date
   },
+  loginAttempts: {
+    type: Number,
+    default: 0
+  },
+  loginAttemptsResetAt: {
+    type: Date
+  },
+  lockedUntil: {
+    type: Date
+  },
   addresses: [{
     type: {
       type: String,
@@ -131,6 +162,7 @@ const userSchema = new Schema<IUser>({
     }
   }],
   preferences: {
+    // Basic preferences
     emailNotifications: {
       type: Boolean,
       default: true
@@ -150,6 +182,25 @@ const userSchema = new Schema<IUser>({
     currency: {
       type: String,
       default: 'USD'
+    },
+    // Detailed notification preferences
+    notificationPreferences: {
+      email: {
+        orderUpdates: { type: Boolean, default: true },
+        promotions: { type: Boolean, default: true },
+        newsletters: { type: Boolean, default: false },
+        productRecommendations: { type: Boolean, default: true }
+      },
+      push: {
+        orderUpdates: { type: Boolean, default: true },
+        promotions: { type: Boolean, default: false },
+        backInStock: { type: Boolean, default: true },
+        priceDrops: { type: Boolean, default: true }
+      },
+      sms: {
+        orderUpdates: { type: Boolean, default: false },
+        promotions: { type: Boolean, default: false }
+      }
     }
   }
 }, {

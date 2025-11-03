@@ -8,6 +8,7 @@ import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { NotificationsProvider } from "@/contexts/NotificationsContext";
+import { SettingsProvider } from "@/contexts/SettingsContext";
 import ProtectedAdminRoute from "./components/ProtectedAdminRoute";
 import ScrollToTop from "./components/ScrollToTop";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -106,9 +107,10 @@ function App() {
         disableTransitionOnChange
       >
         <LanguageProvider>
-          <AuthProvider>
-            <NotificationsProvider>
-              <TooltipProvider>
+          <SettingsProvider>
+            <AuthProvider>
+              <NotificationsProvider>
+                <TooltipProvider>
                 <ErrorBoundary>
                 <Router>
                   <ScrollToTop />
@@ -492,9 +494,10 @@ function App() {
                   </Routes>
                 </Router>
                 </ErrorBoundary>
-              </TooltipProvider>
-            </NotificationsProvider>
-          </AuthProvider>
+                </TooltipProvider>
+              </NotificationsProvider>
+            </AuthProvider>
+          </SettingsProvider>
         </LanguageProvider>
       </ThemeProvider>
       <Toaster />

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Separator } from "@/components/ui/separator";
 import { Link } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useAuth } from "@/contexts";
+import { useAuth, useSettings } from "@/contexts";
 import { api, Category } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,8 +25,15 @@ import {
 const Footer = () => {
   const { language } = useLanguage();
   const { isAuthenticated } = useAuth();
+  const { settings } = useSettings();
   const [categories, setCategories] = useState<Category[]>([]);
   const [email, setEmail] = useState("");
+  
+  const websiteName = settings?.websiteName || 'KOSHIRO';
+  const websiteDescription = settings?.websiteDescription || 'Authentic Japanese fashion for the modern soul';
+  const contactEmail = settings?.contactEmail || 'contact@koshiro.com';
+  const contactPhone = settings?.contactPhone || '+84 123 456 789';
+  const address = settings?.address || '123 Fashion Street, Ho Chi Minh City, Vietnam';
 
   // Load categories from API
   useEffect(() => {
@@ -189,25 +196,37 @@ const Footer = () => {
           <div className="space-y-6 lg:col-span-2">
             <div>
               {/* Logo with Brand Text */}
-              <div className="mb-6 flex items-center gap-3">
-                <div className="relative">
+              <div className="mb-6 flex items-center gap-3 min-w-0">
+                <div className="relative flex-shrink-0">
                   <img
-                    src="/koshino_logo_dark.png"
-                    alt="Koshino Fashion Logo"
-                    className="h-12 w-auto opacity-90 hover:opacity-100 transition-all duration-300 dark:hidden"
+                    key={`footer-logo-light-${settings?.logoUrl || 'default'}`}
+                    src={settings?.logoUrl || "/koshino_logo_dark.png"}
+                    alt={websiteName}
+                    className="h-12 w-auto max-w-[150px] object-contain opacity-90 hover:opacity-100 transition-all duration-300 dark:hidden"
                     loading="lazy"
+                    style={{ imageRendering: 'auto' }}
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = "/koshino_logo_dark.png";
+                    }}
                   />
                   <img
-                    src="/koshino_logo.png"
-                    alt="Koshino Fashion Logo"
-                    className="h-12 w-auto opacity-90 hover:opacity-100 transition-all duration-300 hidden dark:block"
+                    key={`footer-logo-dark-${settings?.logoUrl || 'default'}`}
+                    src={settings?.logoUrl || "/koshino_logo.png"}
+                    alt={websiteName}
+                    className="h-12 w-auto max-w-[150px] object-contain opacity-90 hover:opacity-100 transition-all duration-300 hidden dark:block"
                     loading="lazy"
+                    style={{ imageRendering: 'auto' }}
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = "/koshino_logo.png";
+                    }}
                   />
                 </div>
-                <h3 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">{t.brand}</h3>
+                <h3 className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent whitespace-nowrap overflow-hidden text-ellipsis">{websiteName}</h3>
               </div>
               <p className="text-muted-foreground leading-relaxed font-medium mb-6 max-w-md">
-                {t.description}
+                {websiteDescription}
               </p>
               
               {/* Contact Info */}
@@ -216,15 +235,15 @@ const Footer = () => {
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-muted-foreground font-medium">
                     <Phone className="h-4 w-4 text-primary" />
-                    <span>+84 123 456 789</span>
+                    <span>{contactPhone}</span>
                   </div>
                   <div className="flex items-center gap-2 text-muted-foreground font-medium">
                     <Mail className="h-4 w-4 text-primary" />
-                    <span>contact@koshiro.com</span>
+                    <span>{contactEmail}</span>
                   </div>
                   <div className="flex items-center gap-2 text-muted-foreground font-medium">
                     <MapPin className="h-4 w-4 text-primary" />
-                    <span>123 Fashion Street, Ho Chi Minh City, Vietnam</span>
+                    <span>{address}</span>
                   </div>
                 </div>
               </div>
@@ -500,7 +519,7 @@ const Footer = () => {
         {/* Copyright */}
         <div className="text-center">
           <p className="text-muted-foreground font-medium">
-            &copy; 2025 <span className="font-bold text-primary">KOSHIRO</span> Fashion. {t.rights}
+            &copy; 2025 <span className="font-bold text-primary">{websiteName}</span>. {t.rights}
           </p>
         </div>
       </div>
