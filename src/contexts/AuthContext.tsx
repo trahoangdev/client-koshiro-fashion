@@ -4,6 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 import { User, normalizeUser, getUserRoleName, isAdminUser } from './authHelpers';
 import type { AuthContextType } from './AuthContextType';
 import { AuthContext } from './AuthContextInstance';
+import { logger } from '@/lib/logger';
 
 // Helper functions are imported from authHelpers.ts
 
@@ -91,7 +92,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         description: `Chào mừng bạn trở lại, ${normalizedUser.name}!`,
       });
     } catch (error) {
-      console.error('Login error:', error);
+      logger.error('Login error', error);
       const errorMessage = error instanceof Error ? error.message : "Có lỗi xảy ra khi đăng nhập";
       toast({
         title: "Đăng nhập thất bại",
@@ -130,7 +131,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }, 500);
       
     } catch (error) {
-      console.error('Admin login error:', error);
+      logger.error('Admin login error', error);
       const errorMessage = error instanceof Error ? error.message : "Có lỗi xảy ra khi đăng nhập Admin";
       toast({
         title: "Đăng nhập Admin thất bại",
@@ -172,7 +173,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         description: `Chào mừng bạn đến với Koshiro Fashion, ${normalizedUser.name}!`,
       });
     } catch (error) {
-      console.error('Register error:', error);
+      logger.error('Register error', error);
       const errorMessage = error instanceof Error ? error.message : "Có lỗi xảy ra khi đăng ký";
       toast({
         title: "Đăng ký thất bại",
@@ -201,7 +202,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         description: "Hẹn gặp lại bạn!",
       });
     } catch (error) {
-      console.error('Logout error:', error);
+      logger.error('Logout error', error);
       // Force clear state even if there's an error
       localStorage.removeItem('token');
       api.updateToken(null);
@@ -226,7 +227,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const normalizedUser = normalizeUser(response.user);
       setUser(normalizedUser);
     } catch (error) {
-      console.error('Refresh user error:', error);
+      logger.error('Refresh user error', error);
       // If token is invalid, clear it
       localStorage.removeItem('token');
       api.updateToken(null);
@@ -325,7 +326,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setUser(null);
         }
       } catch (error) {
-        console.error('Auth initialization error:', error);
+        logger.error('Auth initialization error', error);
         // Clear invalid token
         localStorage.removeItem('token');
         setUser(null);

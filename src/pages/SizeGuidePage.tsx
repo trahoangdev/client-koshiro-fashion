@@ -228,69 +228,69 @@ export default function SizeGuidePage() {
   };
 
   const renderSizeTable = (data: SizeDataItem[], type: string) => (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto rounded-lg">
       <table className="w-full border-collapse">
         <thead>
-          <tr className="border-b bg-muted/50">
-            <th className="p-3 text-left font-medium">{t.size}</th>
+          <tr className="border-b-2 bg-primary/10">
+            <th className="p-4 text-left font-bold">{t.size}</th>
             {type === "hakama" ? (
               <>
-                <th className="p-3 text-left font-medium">{t.height} (cm)</th>
-                <th className="p-3 text-left font-medium">{t.waist} (cm)</th>
-                <th className="p-3 text-left font-medium">{t.length} (cm)</th>
+                <th className="p-4 text-left font-bold">{t.height} (cm)</th>
+                <th className="p-4 text-left font-bold">{t.waist} (cm)</th>
+                <th className="p-4 text-left font-bold">{t.length} (cm)</th>
               </>
             ) : type === "tops" ? (
               <>
-                <th className="p-3 text-left font-medium">{t.chest} (cm)</th>
-                <th className="p-3 text-left font-medium">{t.waist} (cm)</th>
-                <th className="p-3 text-left font-medium">{t.length} (cm)</th>
-                <th className="p-3 text-left font-medium">{t.sleeve} (cm)</th>
+                <th className="p-4 text-left font-bold">{t.chest} (cm)</th>
+                <th className="p-4 text-left font-bold">{t.waist} (cm)</th>
+                <th className="p-4 text-left font-bold">{t.length} (cm)</th>
+                <th className="p-4 text-left font-bold">{t.sleeve} (cm)</th>
               </>
             ) : type === "bottoms" ? (
               <>
-                <th className="p-3 text-left font-medium">{t.waist} (cm)</th>
-                <th className="p-3 text-left font-medium">{t.hips} (cm)</th>
-                <th className="p-3 text-left font-medium">{t.inseam} (cm)</th>
-                <th className="p-3 text-left font-medium">{t.length} (cm)</th>
+                <th className="p-4 text-left font-bold">{t.waist} (cm)</th>
+                <th className="p-4 text-left font-bold">{t.hips} (cm)</th>
+                <th className="p-4 text-left font-bold">{t.inseam} (cm)</th>
+                <th className="p-4 text-left font-bold">{t.length} (cm)</th>
               </>
             ) : (
               <>
-                <th className="p-3 text-left font-medium">{t.chest} (cm)</th>
-                <th className="p-3 text-left font-medium">{t.waist} (cm)</th>
-                <th className="p-3 text-left font-medium">{t.length} (cm)</th>
+                <th className="p-4 text-left font-bold">{t.chest} (cm)</th>
+                <th className="p-4 text-left font-bold">{t.waist} (cm)</th>
+                <th className="p-4 text-left font-bold">{t.length} (cm)</th>
               </>
             )}
           </tr>
         </thead>
         <tbody>
           {data.map((item, index) => (
-            <tr key={index} className="border-b hover:bg-muted/30">
-              <td className="p-3 font-medium">{item.size}</td>
+            <tr key={index} className="border-b hover:bg-muted/30 transition-all">
+              <td className="p-4 font-bold">{item.size}</td>
               {type === "hakama" ? (
                 <>
-                  <td className="p-3">{item.height}</td>
-                  <td className="p-3">{item.waist}</td>
-                  <td className="p-3">{item.length}</td>
+                  <td className="p-4 font-medium">{item.height}</td>
+                  <td className="p-4 font-medium">{item.waist}</td>
+                  <td className="p-4 font-medium">{item.length}</td>
                 </>
               ) : type === "tops" ? (
                 <>
-                  <td className="p-3">{item.chest}</td>
-                  <td className="p-3">{item.waist}</td>
-                  <td className="p-3">{item.length}</td>
-                  <td className="p-3">{item.sleeve}</td>
+                  <td className="p-4 font-medium">{item.chest}</td>
+                  <td className="p-4 font-medium">{item.waist}</td>
+                  <td className="p-4 font-medium">{item.length}</td>
+                  <td className="p-4 font-medium">{item.sleeve}</td>
                 </>
               ) : type === "bottoms" ? (
                 <>
-                  <td className="p-3">{item.waist}</td>
-                  <td className="p-3">{item.hips}</td>
-                  <td className="p-3">{item.inseam}</td>
-                  <td className="p-3">{item.length}</td>
+                  <td className="p-4 font-medium">{item.waist}</td>
+                  <td className="p-4 font-medium">{item.hips}</td>
+                  <td className="p-4 font-medium">{item.inseam}</td>
+                  <td className="p-4 font-medium">{item.length}</td>
                 </>
               ) : (
                 <>
-                  <td className="p-3">{item.chest}</td>
-                  <td className="p-3">{item.waist}</td>
-                  <td className="p-3">{item.length}</td>
+                  <td className="p-4 font-medium">{item.chest}</td>
+                  <td className="p-4 font-medium">{item.waist}</td>
+                  <td className="p-4 font-medium">{item.length}</td>
                 </>
               )}
             </tr>
@@ -302,14 +302,16 @@ export default function SizeGuidePage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-zen">
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
         <Header cartItemsCount={0} onSearch={() => {}} />
-        <main className="py-16">
+        <main className="py-8">
           <div className="container mx-auto px-4">
-            <div className="text-center">
-              <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-              <p className="text-lg">{t.loading}</p>
-            </div>
+            <Card className="rounded-xl border-2 shadow-lg bg-background/95 backdrop-blur-sm">
+              <CardContent className="p-12 text-center">
+                <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+                <p className="text-lg font-medium text-muted-foreground">{t.loading}</p>
+              </CardContent>
+            </Card>
           </div>
         </main>
         <Footer />
@@ -318,48 +320,61 @@ export default function SizeGuidePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-zen">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       <Header cartItemsCount={0} onSearch={() => {}} />
       
-      <main className="py-16">
-        <div className="container mx-auto px-4">
+      <main className="py-8">
+        <div className="container mx-auto px-4 space-y-8">
           {/* Hero Section */}
-          <section className="relative overflow-hidden rounded-2xl mb-12">
-            {/* Banner Background */}
-            <div className="absolute inset-0">
-              <img 
-                src="/images/banners/banner-04.png" 
-                alt="Size Guide Banner"
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-black/50"></div>
-            </div>
-            
-            {/* Content */}
-            <div className="relative z-10 p-12 text-center text-white">
-              <h1 className="text-4xl font-bold mb-4">{t.title}</h1>
-              <p className="text-xl text-white/90 max-w-2xl mx-auto">
-                {t.subtitle}
-              </p>
+          <section className="text-center mb-12">
+            <div className="relative overflow-hidden rounded-2xl shadow-2xl">
+              {/* Banner Background */}
+              <div className="absolute inset-0">
+                <img 
+                  src="/images/banners/banner-04.png" 
+                  alt="Size Guide Banner"
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/50 to-black/60"></div>
+              </div>
+              
+              {/* Content */}
+              <div className="relative z-10 p-12 md:p-16 text-white">
+                <div className="flex justify-center mb-4">
+                  <div className="p-4 rounded-full bg-white/10 backdrop-blur-sm">
+                    <Ruler className="h-12 w-12 md:h-16 md:w-16 text-white" />
+                  </div>
+                </div>
+                <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-4 bg-gradient-to-r from-white via-white to-white/80 bg-clip-text text-transparent">
+                  {t.title}
+                </h1>
+                <p className="text-xl md:text-2xl text-white/90 max-w-2xl mx-auto leading-relaxed font-light">
+                  {t.subtitle}
+                </p>
+              </div>
             </div>
           </section>
 
-          <div className="grid lg:grid-cols-3 gap-8">
+          <div className="grid lg:grid-cols-3 gap-6">
             {/* Main Content */}
             <div className="lg:col-span-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Ruler className="h-5 w-5" />
+              <Card className="rounded-xl border-2 shadow-lg bg-background/95 backdrop-blur-sm">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center text-lg font-bold">
+                    <Ruler className="h-5 w-5 mr-2 text-primary" />
                     {t.measurements}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   {categories.length > 0 ? (
                     <Tabs value={activeTab} onValueChange={setActiveTab}>
-                      <TabsList className="grid w-full grid-cols-4">
+                      <TabsList className="grid w-full grid-cols-4 rounded-lg bg-muted/30 p-1 mb-6">
                         {categories.slice(0, 4).map((category) => (
-                          <TabsTrigger key={category._id} value={category._id}>
+                          <TabsTrigger 
+                            key={category._id} 
+                            value={category._id}
+                            className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all font-medium"
+                          >
                             {getCategoryName(category)}
                           </TabsTrigger>
                         ))}
@@ -373,23 +388,33 @@ export default function SizeGuidePage() {
                         return (
                           <TabsContent key={category._id} value={category._id} className="mt-6">
                             {categoryType === "accessories" ? (
-                              <div className="text-center py-8">
-                                <p className="text-muted-foreground mb-4">
-                                  {t.accessoriesNote}
-                                </p>
-                                <Badge variant="secondary">{t.oneSize}</Badge>
-                              </div>
+                              <Card className="rounded-lg border-2 bg-muted/30">
+                                <CardContent className="p-12 text-center">
+                                  <p className="text-muted-foreground mb-4 font-medium text-lg">
+                                    {t.accessoriesNote}
+                                  </p>
+                                  <Badge variant="secondary" className="text-lg px-4 py-2 font-semibold">
+                                    {t.oneSize}
+                                  </Badge>
+                                </CardContent>
+                              </Card>
                             ) : (
-                              renderSizeTable(sizeData, categoryType)
+                              <Card className="rounded-lg border-2 overflow-hidden">
+                                <CardContent className="p-0">
+                                  {renderSizeTable(sizeData, categoryType)}
+                                </CardContent>
+                              </Card>
                             )}
                           </TabsContent>
                         );
                       })}
                     </Tabs>
                   ) : (
-                    <div className="text-center py-8">
-                      <p className="text-muted-foreground">No categories available.</p>
-                    </div>
+                    <Card className="rounded-lg border-2 bg-muted/30">
+                      <CardContent className="p-12 text-center">
+                        <p className="text-muted-foreground font-medium">No categories available.</p>
+                      </CardContent>
+                    </Card>
                   )}
                 </CardContent>
               </Card>
@@ -398,38 +423,38 @@ export default function SizeGuidePage() {
             {/* Sidebar */}
             <div className="space-y-6">
               {/* How to Measure */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Ruler className="h-5 w-5" />
+              <Card className="rounded-xl border-2 shadow-lg bg-background/95 backdrop-blur-sm">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center text-lg font-bold">
+                    <Ruler className="h-5 w-5 mr-2 text-primary" />
                     {t.howToMeasure}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div>
-                    <h4 className="font-medium mb-2">{t.chest}</h4>
-                    <p className="text-sm text-muted-foreground">
+                  <div className="p-3 rounded-lg bg-muted/30 border-l-4 border-primary">
+                    <h4 className="font-bold mb-2">{t.chest}</h4>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
                       Measure around the fullest part of your chest, keeping the tape horizontal.
                     </p>
                   </div>
                   <Separator />
-                  <div>
-                    <h4 className="font-medium mb-2">{t.waist}</h4>
-                    <p className="text-sm text-muted-foreground">
+                  <div className="p-3 rounded-lg bg-muted/30 border-l-4 border-primary">
+                    <h4 className="font-bold mb-2">{t.waist}</h4>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
                       Measure around your natural waistline, keeping the tape comfortably loose.
                     </p>
                   </div>
                   <Separator />
-                  <div>
-                    <h4 className="font-medium mb-2">{t.hips}</h4>
-                    <p className="text-sm text-muted-foreground">
+                  <div className="p-3 rounded-lg bg-muted/30 border-l-4 border-primary">
+                    <h4 className="font-bold mb-2">{t.hips}</h4>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
                       Measure around the fullest part of your hips, keeping the tape horizontal.
                     </p>
                   </div>
                   <Separator />
-                  <div>
-                    <h4 className="font-medium mb-2">{t.length}</h4>
-                    <p className="text-sm text-muted-foreground">
+                  <div className="p-3 rounded-lg bg-muted/30 border-l-4 border-primary">
+                    <h4 className="font-bold mb-2">{t.length}</h4>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
                       For tops: from shoulder to desired length. For bottoms: from waist to desired length.
                     </p>
                   </div>
@@ -437,41 +462,41 @@ export default function SizeGuidePage() {
               </Card>
 
               {/* Sizing Tips */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Info className="h-5 w-5" />
+              <Card className="rounded-xl border-2 shadow-lg bg-background/95 backdrop-blur-sm">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center text-lg font-bold">
+                    <Info className="h-5 w-5 mr-2 text-primary" />
                     {t.tips}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <div className="flex items-start gap-3">
+                  <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-all">
                     <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
-                    <p className="text-sm">{t.tip1}</p>
+                    <p className="text-sm font-medium leading-relaxed">{t.tip1}</p>
                   </div>
-                  <div className="flex items-start gap-3">
+                  <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-all">
                     <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
-                    <p className="text-sm">{t.tip2}</p>
+                    <p className="text-sm font-medium leading-relaxed">{t.tip2}</p>
                   </div>
-                  <div className="flex items-start gap-3">
+                  <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-all">
                     <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
-                    <p className="text-sm">{t.tip3}</p>
+                    <p className="text-sm font-medium leading-relaxed">{t.tip3}</p>
                   </div>
-                  <div className="flex items-start gap-3">
+                  <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-all">
                     <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
-                    <p className="text-sm">{t.tip4}</p>
+                    <p className="text-sm font-medium leading-relaxed">{t.tip4}</p>
                   </div>
-                  <div className="flex items-start gap-3">
+                  <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-all">
                     <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
-                    <p className="text-sm">{t.tip5}</p>
+                    <p className="text-sm font-medium leading-relaxed">{t.tip5}</p>
                   </div>
                 </CardContent>
               </Card>
 
               {/* Download */}
-              <Card>
+              <Card className="rounded-xl border-2 shadow-lg bg-background/95 backdrop-blur-sm">
                 <CardContent className="pt-6">
-                  <Button className="w-full" variant="outline">
+                  <Button className="w-full rounded-xl font-semibold border-2 shadow-lg hover:shadow-xl transition-all" variant="outline">
                     <Download className="mr-2 h-4 w-4" />
                     {t.download}
                   </Button>

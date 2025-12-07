@@ -32,12 +32,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Category } from "@/lib/api";
+import { Category, api, Color } from "@/lib/api";
 import MDEditor from '@uiw/react-md-editor';
 import '@uiw/react-md-editor/markdown-editor.css';
 import '@/styles/markdown-editor.css';
 import CloudinaryImageUpload from './CloudinaryImageUpload';
-import CloudinaryVideoUpload from './CloudinaryVideoUpload';
 
 interface CloudinaryImage {
   publicId: string;
@@ -54,14 +53,6 @@ interface CloudinaryImage {
   };
 }
 
-interface CloudinaryVideo {
-  publicId: string;
-  secureUrl: string;
-  duration?: number;
-  format: string;
-  bytes: number;
-}
-
 interface ProductFormData {
   name: string;
   nameEn: string;
@@ -74,8 +65,6 @@ interface ProductFormData {
   categoryId: string;
   images: string[]; // Legacy field for backward compatibility
   cloudinaryImages: CloudinaryImage[]; // New Cloudinary images
-  galleryImages: CloudinaryImage[]; // Additional gallery images for product detail page
-  videos: CloudinaryVideo[]; // Video support
   sizes: string[];
   colors: Array<string | { name: string; value: string }>;
   stock: number;
@@ -96,6 +85,13 @@ interface ProductFormData {
   };
   sku: string;
   barcode: string;
+  materials: string[];
+  careInstructions: string;
+  careInstructionsEn: string;
+  careInstructionsJa: string;
+  origin: string;
+  originEn: string;
+  originJa: string;
 }
 
 interface ProductFormProps {
@@ -133,6 +129,33 @@ export default function ProductForm({
 }: ProductFormProps) {
   const { toast } = useToast();
   const { language } = useLanguage();
+
+  // State for colors from API
+  const [apiColors, setApiColors] = useState<Color[]>([]);
+  const [colorsLoading, setColorsLoading] = useState(true);
+  const [isCreatingColor, setIsCreatingColor] = useState(false);
+
+  // Fetch colors from API
+  useEffect(() => {
+    const loadColors = async () => {
+      try {
+        setColorsLoading(true);
+        const response = await api.getColors({ 
+          activeOnly: true, 
+          language: language as 'vi' | 'en' | 'ja'
+        });
+        setApiColors(response.colors || []);
+      } catch (error) {
+        console.error('Error loading colors:', error);
+        // Fallback to default colors if API fails
+        setApiColors([]);
+      } finally {
+        setColorsLoading(false);
+      }
+    };
+
+    loadColors();
+  }, [language]);
 
   // Function to get hex value from color name
   const getColorHex = (colorName: string): string => {
@@ -222,8 +245,6 @@ export default function ProductForm({
       categoryId: '',
       images: [], // Legacy field
       cloudinaryImages: [], // New Cloudinary images
-      galleryImages: [], // Additional gallery images for product detail page
-      videos: [], // Video support
       sizes: [],
       colors: [],
       stock: 0,
@@ -243,7 +264,14 @@ export default function ProductForm({
         height: 0
       },
       sku: '',
-      barcode: ''
+      barcode: '',
+      materials: [],
+      careInstructions: '',
+      careInstructionsEn: '',
+      careInstructionsJa: '',
+      origin: '',
+      originEn: '',
+      originJa: ''
     };
 
     if (initialData) {
@@ -263,11 +291,7 @@ export default function ProductForm({
   const [newColor, setNewColor] = useState('#000000');
   const [newColorName, setNewColorName] = useState('');
   const [displayValue, setDisplayValue] = useState('');
-  
-  // Refs to prevent unnecessary re-renders
-  const cloudinaryImagesRef = useRef<CloudinaryImage[]>([]);
-  const videosRef = useRef<CloudinaryVideo[]>([]);
-  const galleryImagesRef = useRef<CloudinaryImage[]>([]);
+  const [newMaterial, setNewMaterial] = useState('');
 
   // Auto-detect badge statuses from tags
   const detectBadgeFromTags = (tags: string[]) => {
@@ -324,34 +348,72 @@ export default function ProductForm({
     return errors;
   };
 
+  // Memoize normalized selected colors to prevent unnecessary re-computations and render loops
+  const normalizedSelectedColors = useMemo(() => {
+    return formData.colors.map((color) => {
+      let colorObj: { name: string; value: string };
+      
+      if (typeof color === 'object') {
+        // Already in object format
+        colorObj = color;
+      } else {
+        // Try to find color in API colors first (case-insensitive)
+        const normalizedName = color.toLowerCase();
+        const apiColor = apiColors.find(c => 
+          c.name.toLowerCase() === normalizedName ||
+          c.nameEn?.toLowerCase() === normalizedName ||
+          c.nameJa?.toLowerCase() === normalizedName
+        );
+        
+        if (apiColor) {
+          // Use API color for accurate hex value
+          colorObj = { name: apiColor.name, value: apiColor.hexValue };
+        } else {
+          // Fallback to local color map (for colors not yet in API)
+          colorObj = { name: color, value: getColorHex(color) };
+        }
+      }
+      
+      return colorObj;
+    });
+  }, [formData.colors, apiColors]);
+
   // Update formData when initialData changes (for edit mode)
   useEffect(() => {
     if (initialData) {
       setFormData(prev => ({
         ...prev,
         ...initialData,
-        colors: initialData.colors ? convertColorsToObjects(initialData.colors as string[]) : prev.colors,
-        videos: initialData.videos || []
+        colors: initialData.colors ? convertColorsToObjects(initialData.colors as string[]) : prev.colors
       }));
     }
   }, [initialData, convertColorsToObjects]);
 
-  // Call onFormChange callback when form data changes
+  // Debounce onFormChange to prevent excessive updates and render loops
+  const formChangeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
   useEffect(() => {
-    if (onFormChange && formData) {
-      onFormChange(formData);
+    if (!onFormChange) return;
+    
+    // Clear previous timeout
+    if (formChangeTimeoutRef.current) {
+      clearTimeout(formChangeTimeoutRef.current);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [formData]); // Remove onFormChange from dependencies to prevent infinite loops
+    
+    // Set new timeout
+    formChangeTimeoutRef.current = setTimeout(() => {
+      onFormChange(formData);
+    }, 150); // Debounce 150ms to prevent render loops
+    
+    // Cleanup
+    return () => {
+      if (formChangeTimeoutRef.current) {
+        clearTimeout(formChangeTimeoutRef.current);
+      }
+    };
+  }, [formData, onFormChange]);
 
-  // Sync refs with formData to prevent unnecessary re-renders
-  useEffect(() => {
-    cloudinaryImagesRef.current = formData.cloudinaryImages;
-    videosRef.current = formData.videos;
-    galleryImagesRef.current = formData.galleryImages;
-  }, [formData.cloudinaryImages, formData.videos, formData.galleryImages]);
-
-  const translations = useMemo(() => ({
+  const translations = {
     en: {
       title: mode === 'create' ? 'Create New Product' : 'Edit Product',
       name: 'Product Name',
@@ -383,6 +445,14 @@ export default function ProductForm({
       height: 'Height',
       sku: 'SKU',
       barcode: 'Barcode',
+      materials: 'Materials',
+      careInstructions: 'Care Instructions',
+      careInstructionsEn: 'Care Instructions (English)',
+      careInstructionsJa: 'Care Instructions (Japanese)',
+      origin: 'Country of Origin',
+      originEn: 'Origin (English)',
+      originJa: 'Origin (Japanese)',
+      technicalSpecs: 'Technical Specifications',
       addTag: 'Add Tag',
       addSize: 'Add Size',
       addColor: 'Add Color',
@@ -433,6 +503,14 @@ export default function ProductForm({
       height: 'Chiều Cao',
       sku: 'SKU',
       barcode: 'Mã Vạch',
+      materials: 'Chất Liệu',
+      careInstructions: 'Hướng Dẫn Bảo Quản',
+      careInstructionsEn: 'Hướng Dẫn Bảo Quản (Tiếng Anh)',
+      careInstructionsJa: 'Hướng Dẫn Bảo Quản (Tiếng Nhật)',
+      origin: 'Xuất Xứ',
+      originEn: 'Xuất Xứ (Tiếng Anh)',
+      originJa: 'Xuất Xứ (Tiếng Nhật)',
+      technicalSpecs: 'Thông Số Kỹ Thuật',
       addTag: 'Thêm Thẻ',
       addSize: 'Thêm Kích Thước',
       addColor: 'Thêm Màu',
@@ -483,6 +561,14 @@ export default function ProductForm({
       height: '高さ',
       sku: 'SKU',
       barcode: 'バーコード',
+      materials: '素材',
+      careInstructions: 'お手入れ方法',
+      careInstructionsEn: 'お手入れ方法（英語）',
+      careInstructionsJa: 'お手入れ方法（日本語）',
+      origin: '原産国',
+      originEn: '原産国（英語）',
+      originJa: '原産国（日本語）',
+      technicalSpecs: '技術仕様',
       addTag: 'タグを追加',
       addSize: 'サイズを追加',
       addColor: '色を追加',
@@ -502,12 +588,9 @@ export default function ProductForm({
       error: 'エラー',
       success: '商品が正常に保存されました'
     }
-  }), [mode]);
+  };
 
-  const t = useMemo(() => 
-    translations[language as keyof typeof translations] || translations.en, 
-    [language, translations]
-  );
+  const t = translations[language as keyof typeof translations] || translations.en;
 
   // Function to get color name from hex value
   const getColorName = (hex: string): string => {
@@ -674,44 +757,12 @@ export default function ProductForm({
     }));
   };
 
-  const addColor = () => {
+  const addColor = async () => {
     // Validate hex color format
     const isValidHex = /^#[0-9A-Fa-f]{6}$/.test(newColor) || /^#[0-9A-Fa-f]{3}$/.test(newColor);
     const colorName = newColorName.trim() || getColorName(newColor);
     
-    if (colorName && newColor.trim() && isValidHex) {
-      const colorExists = formData.colors.some(color => 
-        typeof color === 'string' ? color === colorName : color.name === colorName
-      );
-      
-      if (!colorExists) {
-        setFormData(prev => ({
-          ...prev,
-          colors: [...prev.colors, { name: colorName, value: newColor.trim() }]
-        }));
-        setNewColorName('');
-        setNewColor('#000000'); // Reset to default color
-        setDisplayValue('');
-        toast({
-          title: language === 'vi' ? 'Thêm màu thành công' : 
-                 language === 'ja' ? '色を追加しました' : 
-                 'Color added successfully',
-          description: language === 'vi' ? `Đã thêm màu ${colorName}` :
-                       language === 'ja' ? `${colorName}色を追加しました` :
-                       `Added color ${colorName}`,
-        });
-      } else {
-        toast({
-          title: language === 'vi' ? 'Màu đã tồn tại' : 
-                 language === 'ja' ? '色が既に存在します' : 
-                 'Color already exists',
-          description: language === 'vi' ? 'Màu này đã được thêm vào danh sách' :
-                       language === 'ja' ? 'この色は既にリストに追加されています' :
-                       'This color has already been added to the list',
-          variant: 'destructive',
-        });
-      }
-    } else {
+    if (!colorName || !newColor.trim() || !isValidHex) {
       let errorMessage = '';
       if (!colorName) {
         errorMessage = language === 'vi' ? 'Vui lòng nhập tên màu' :
@@ -730,6 +781,178 @@ export default function ProductForm({
         description: errorMessage,
         variant: 'destructive',
       });
+      return;
+    }
+
+    // Check if color already exists in formData
+    const colorExistsInForm = formData.colors.some(color => 
+      typeof color === 'string' ? color === colorName : color.name === colorName
+    );
+    
+    if (colorExistsInForm) {
+      toast({
+        title: language === 'vi' ? 'Màu đã tồn tại' : 
+               language === 'ja' ? '色が既に存在します' : 
+               'Color already exists',
+        description: language === 'vi' ? 'Màu này đã được thêm vào danh sách' :
+                     language === 'ja' ? 'この色は既にリストに追加されています' :
+                     'This color has already been added to the list',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      setIsCreatingColor(true);
+
+      // Check if color exists in API (local state)
+      let colorInApi = apiColors.find(c => 
+        c.name.toLowerCase() === colorName.toLowerCase() ||
+        c.nameEn?.toLowerCase() === colorName.toLowerCase() ||
+        c.nameJa?.toLowerCase() === colorName.toLowerCase()
+      );
+
+      // If color doesn't exist in local state, try to create it directly
+      // Don't check API first to avoid unnecessary 404 errors and render loops
+      if (!colorInApi) {
+        try {
+          const createColorData: {
+            name: string;
+            hexValue: string;
+            nameEn?: string;
+            nameJa?: string;
+            isActive?: boolean;
+            isDefault?: boolean;
+          } = {
+            name: colorName,
+            hexValue: newColor.trim().toUpperCase(),
+            isActive: true,
+            isDefault: false
+          };
+
+          // Don't add multilingual names automatically
+          // Only use base name to avoid conflicts
+          // Multilingual names can be added later via update if needed
+
+          const response = await api.createColor(createColorData);
+          colorInApi = response.color;
+          
+          // Check if this is an existing color (backend returns 200 with isExisting flag)
+          // TypeScript knows about isExisting now from API type definition
+          const isExisting = response.isExisting === true;
+          
+          // Update apiColors state
+          setApiColors(prev => {
+            const exists = prev.some(c => c._id === colorInApi._id);
+            return exists ? prev : [...prev, colorInApi!];
+          });
+          
+          if (isExisting) {
+            toast({
+              title: language === 'vi' ? 'Màu đã tồn tại' : 
+                     language === 'ja' ? '色は既に存在します' : 
+                     'Color already exists',
+              description: language === 'vi' ? `Màu "${colorName}" đã tồn tại trong hệ thống, đang sử dụng màu hiện có` :
+                           language === 'ja' ? `色"${colorName}"は既にシステムに存在します。既存の色を使用しています` :
+                           `Color "${colorName}" already exists in system, using existing color`,
+              variant: 'default',
+            });
+          } else {
+            toast({
+              title: language === 'vi' ? 'Đã tạo màu mới' : 
+                     language === 'ja' ? '新しい色を作成しました' : 
+                     'Created new color',
+              description: language === 'vi' ? `Đã tạo màu "${colorName}" trong hệ thống` :
+                           language === 'ja' ? `システムに"${colorName}"色を作成しました` :
+                           `Created color "${colorName}" in the system`,
+            });
+          }
+        } catch (createError: unknown) {
+              const createErr = createError as { statusCode?: number; message?: string };
+              // Note: Backend now returns existing color with status 200 instead of throwing error
+              // But keep this as fallback for other errors
+              if (createErr?.message?.includes('already exists') || createErr?.statusCode === 409 || createErr?.statusCode === 400) {
+                // Try to fetch all colors and find matching one
+                try {
+                  const allColorsResponse = await api.getColors({ activeOnly: false });
+                  colorInApi = allColorsResponse.colors?.find(c => 
+                    c.name.toLowerCase() === colorName.toLowerCase() ||
+                    c.nameEn?.toLowerCase() === colorName.toLowerCase() ||
+                    c.nameJa?.toLowerCase() === colorName.toLowerCase()
+                  );
+                  
+                  // Update apiColors state
+                  if (colorInApi) {
+                    setApiColors(prev => {
+                      const exists = prev.some(c => c._id === colorInApi._id);
+                      return exists ? prev : [...prev, colorInApi!];
+                    });
+                    
+                    toast({
+                      title: language === 'vi' ? 'Màu đã tồn tại' : 
+                             language === 'ja' ? '色は既に存在します' : 
+                             'Color already exists',
+                      description: language === 'vi' ? `Màu "${colorName}" đã tồn tại trong hệ thống, đang sử dụng màu hiện có` :
+                                   language === 'ja' ? `色"${colorName}"は既にシステムに存在します。既存の色を使用しています` :
+                                   `Color "${colorName}" already exists in system, using existing color`,
+                      variant: 'default',
+                    });
+                  }
+                } catch (retryError) {
+                  console.error('Error fetching colors list:', retryError);
+                  // Continue with local color
+                }
+              } else {
+                console.error('Error creating color:', createError);
+                // If API creation fails, still add to formData as a local color
+                toast({
+                  title: language === 'vi' ? 'Cảnh báo' : 
+                         language === 'ja' ? '警告' : 
+                         'Warning',
+                  description: language === 'vi' ? 'Không thể tạo màu trong hệ thống, chỉ thêm vào sản phẩm này' :
+                               language === 'ja' ? 'システムに色を作成できませんでした。この製品にのみ追加されます' :
+                               'Could not create color in system, only adding to this product',
+                  variant: 'default',
+                });
+              }
+        }
+      }
+
+      // Add color to formData
+      const colorToAdd = colorInApi 
+        ? { name: colorInApi.name, value: colorInApi.hexValue }
+        : { name: colorName, value: newColor.trim() };
+
+      setFormData(prev => ({
+        ...prev,
+        colors: [...prev.colors, colorToAdd]
+      }));
+
+      setNewColorName('');
+      setNewColor('#000000'); // Reset to default color
+      setDisplayValue('');
+      
+      toast({
+        title: language === 'vi' ? 'Thêm màu thành công' : 
+               language === 'ja' ? '色を追加しました' : 
+               'Color added successfully',
+        description: language === 'vi' ? `Đã thêm màu ${colorName} vào sản phẩm` :
+                     language === 'ja' ? `${colorName}色を製品に追加しました` :
+                     `Added color ${colorName} to product`,
+      });
+    } catch (error) {
+      console.error('Error adding color:', error);
+      toast({
+        title: language === 'vi' ? 'Lỗi' : 
+               language === 'ja' ? 'エラー' : 
+               'Error',
+        description: language === 'vi' ? 'Không thể thêm màu' :
+                     language === 'ja' ? '色を追加できませんでした' :
+                     'Failed to add color',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsCreatingColor(false);
     }
   };
 
@@ -742,7 +965,43 @@ export default function ProductForm({
     }));
   };
 
-  const handleImageUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  const addMaterial = () => {
+    const trimmedMaterial = newMaterial.trim();
+    if (trimmedMaterial && !formData.materials.includes(trimmedMaterial)) {
+      setFormData(prev => ({
+        ...prev,
+        materials: [...prev.materials, trimmedMaterial]
+      }));
+      setNewMaterial('');
+      toast({
+        title: language === 'vi' ? 'Thêm chất liệu thành công' : 
+               language === 'ja' ? '素材を追加しました' : 
+               'Material added successfully',
+        description: language === 'vi' ? `Đã thêm chất liệu "${trimmedMaterial}"` :
+                     language === 'ja' ? `素材"${trimmedMaterial}"を追加しました` :
+                     `Added material "${trimmedMaterial}"`,
+      });
+    } else if (trimmedMaterial && formData.materials.includes(trimmedMaterial)) {
+      toast({
+        title: language === 'vi' ? 'Chất liệu đã tồn tại' : 
+               language === 'ja' ? '素材が既に存在します' : 
+               'Material already exists',
+        description: language === 'vi' ? 'Chất liệu này đã được thêm vào danh sách' :
+                     language === 'ja' ? 'この素材は既にリストに追加されています' :
+                     'This material has already been added to the list',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const removeMaterial = (materialToRemove: string) => {
+    setFormData(prev => ({
+      ...prev,
+      materials: prev.materials.filter(material => material !== materialToRemove)
+    }));
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
       // In a real app, you would upload to a server and get URLs
@@ -752,124 +1011,29 @@ export default function ProductForm({
         images: [...prev.images, ...imageUrls]
       }));
     }
-  }, []);
+  };
 
-  const removeImage = useCallback((index: number) => {
+  const removeImage = (index: number) => {
     setFormData(prev => ({
       ...prev,
       images: prev.images.filter((_, i) => i !== index)
     }));
-  }, []);
+  };
 
-  // Cloudinary image handlers - memoized to prevent re-renders
-  const handleCloudinaryImagesUploaded = useCallback((newImages: CloudinaryImage[]) => {
-    setFormData(prev => {
-      const updatedImages = [...prev.cloudinaryImages, ...newImages];
-      cloudinaryImagesRef.current = updatedImages;
-      return {
-        ...prev,
-        cloudinaryImages: updatedImages
-      };
-    });
-  }, []);
+  // Cloudinary image handlers
+  const handleCloudinaryImagesUploaded = (newImages: CloudinaryImage[]) => {
+    setFormData(prev => ({
+      ...prev,
+      cloudinaryImages: [...prev.cloudinaryImages, ...newImages]
+    }));
+  };
 
-  const handleCloudinaryImagesRemoved = useCallback((publicIds: string[]) => {
-    setFormData(prev => {
-      const updatedImages = prev.cloudinaryImages.filter(img => !publicIds.includes(img.publicId));
-      cloudinaryImagesRef.current = updatedImages;
-      return {
-        ...prev,
-        cloudinaryImages: updatedImages
-      };
-    });
-  }, []);
-
-  // Cloudinary video handlers - memoized to prevent re-renders
-  const handleCloudinaryVideosUploaded = useCallback((newVideos: CloudinaryVideo[]) => {
-    setFormData(prev => {
-      const updatedVideos = [...prev.videos, ...newVideos];
-      videosRef.current = updatedVideos;
-      return {
-        ...prev,
-        videos: updatedVideos
-      };
-    });
-  }, []);
-
-  const handleCloudinaryVideosRemoved = useCallback((publicIds: string[]) => {
-    setFormData(prev => {
-      const updatedVideos = prev.videos.filter(video => !publicIds.includes(video.publicId));
-      videosRef.current = updatedVideos;
-      return {
-        ...prev,
-        videos: updatedVideos
-      };
-    });
-  }, []);
-
-  // Gallery image handlers - memoized to prevent re-renders
-  const handleGalleryImagesUploaded = useCallback((newImages: CloudinaryImage[]) => {
-    setFormData(prev => {
-      const updatedImages = [...prev.galleryImages, ...newImages];
-      galleryImagesRef.current = updatedImages;
-      return {
-        ...prev,
-        galleryImages: updatedImages
-      };
-    });
-    
-    // Call callback after state update to prevent immediate re-render
-    setTimeout(() => {
-      // Additional processing if needed
-    }, 0);
-  }, []);
-
-  const handleGalleryImagesRemoved = useCallback((publicIds: string[]) => {
-    setFormData(prev => {
-      const updatedImages = prev.galleryImages.filter(img => !publicIds.includes(img.publicId));
-      galleryImagesRef.current = updatedImages;
-      return {
-        ...prev,
-        galleryImages: updatedImages
-      };
-    });
-    
-    // Call callback after state update to prevent immediate re-render
-    setTimeout(() => {
-      // Additional processing if needed
-    }, 0);
-  }, []);
-
-  // Memoize props to prevent unnecessary re-renders
-  const cloudinaryImagesKey = useMemo(() => 
-    `${formData.cloudinaryImages.length}-${formData.cloudinaryImages.map(img => img.publicId).join(',')}`, 
-    [formData.cloudinaryImages]
-  );
-  
-  const videosKey = useMemo(() => 
-    `${formData.videos.length}-${formData.videos.map(video => video.publicId).join(',')}`, 
-    [formData.videos]
-  );
-  
-  const galleryImagesKey = useMemo(() => 
-    `${formData.galleryImages.length}-${formData.galleryImages.map(img => img.publicId).join(',')}`, 
-    [formData.galleryImages]
-  );
-  
-  const memoizedCloudinaryImages = useMemo(() => {
-    // Use ref if available, otherwise fallback to formData
-    return cloudinaryImagesRef.current.length > 0 ? cloudinaryImagesRef.current : formData.cloudinaryImages;
-  }, [formData.cloudinaryImages]);
-  
-  const memoizedVideos = useMemo(() => {
-    // Use ref if available, otherwise fallback to formData
-    return videosRef.current.length > 0 ? videosRef.current : formData.videos;
-  }, [formData.videos]);
-
-  const memoizedGalleryImages = useMemo(() => {
-    // Use ref if available, otherwise fallback to formData
-    return galleryImagesRef.current.length > 0 ? galleryImagesRef.current : formData.galleryImages;
-  }, [formData.galleryImages]);
+  const handleCloudinaryImagesRemoved = (publicIds: string[]) => {
+    setFormData(prev => ({
+      ...prev,
+      cloudinaryImages: prev.cloudinaryImages.filter(img => !publicIds.includes(img.publicId))
+    }));
+  };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -1174,144 +1338,233 @@ export default function ProductForm({
                   </Button>
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label>{t.colors}</Label>
-                <div className="space-y-3">
-                  <div className="flex flex-wrap gap-2">
-                    {/* Default colors */}
-                    {defaultColors.map(color => (
-                      <Badge
-                        key={color.name}
-                        variant={formData.colors.some(c => 
-                          typeof c === 'string' ? c === color.name : c.name === color.name
-                        ) ? "default" : "outline"}
-                        className="cursor-pointer hover:opacity-80 transition-opacity"
-                        style={{ backgroundColor: color.value, color: color.value === '#FFFFFF' ? '#000' : '#fff' }}
-                        onClick={() => {
-                          const colorExists = formData.colors.some(c => 
-                            typeof c === 'string' ? c === color.name : c.name === color.name
-                          );
-                          if (colorExists) {
-                            removeColor(color.name);
-                          } else {
-                            setFormData(prev => ({ ...prev, colors: [...prev.colors, color] }));
-                            // Auto-fill color picker and name when selecting from default colors
-                            setNewColor(color.value);
-                            setNewColorName(color.name);
-                            setDisplayValue(getColorName(color.value));
-                          }
-                        }}
-                      >
-                        {color.name}
-                      </Badge>
-                    ))}
-                    
-                    {/* Custom colors */}
-                    {formData.colors
-                      .filter(color => 
-                        typeof color === 'object' && !defaultColors.some(dc => dc.name === color.name)
-                      )
-                      .map((color, index) => {
-                        const colorObj = color as { name: string; value: string };
+              <div className="space-y-4">
+                <Label className="text-base font-semibold">{t.colors}</Label>
+                
+                {/* Selected Colors Display */}
+                {formData.colors.length > 0 && (
+                  <div className="space-y-2">
+                    <Label className="text-sm text-muted-foreground">
+                      {language === 'vi' ? 'Màu đã chọn' : language === 'ja' ? '選択された色' : 'Selected Colors'} ({formData.colors.length})
+                    </Label>
+                    <div className="flex flex-wrap gap-2 p-3 rounded-lg border bg-muted/30">
+                      {normalizedSelectedColors.map((colorObj) => {
+                        // Use stable key with name and value to avoid re-render issues
+                        const colorKey = `selected-${colorObj.name}-${colorObj.value}`;
+                        
                         return (
-                          <Badge
-                            key={`custom-${index}`}
-                            variant="secondary"
-                            className="cursor-pointer hover:opacity-80 transition-opacity"
-                            style={{ backgroundColor: colorObj.value, color: colorObj.value === '#FFFFFF' ? '#000' : '#fff' }}
-                            onClick={() => {
-                              removeColor(colorObj.name);
+                          <div
+                            key={colorKey}
+                            className="group relative flex items-center gap-2 px-3 py-1.5 rounded-lg border-2 transition-all hover:scale-105 hover:shadow-md"
+                            style={{ 
+                              backgroundColor: colorObj.value,
+                              borderColor: colorObj.value === '#FFFFFF' || colorObj.value === '#ffffff' ? '#e5e7eb' : colorObj.value,
                             }}
                           >
-                            {colorObj.name}
-                          </Badge>
+                            <span 
+                              className="text-sm font-medium"
+                              style={{ color: colorObj.value === '#FFFFFF' || colorObj.value === '#ffffff' || colorObj.value === '#FFFF00' || colorObj.value === '#ffff00' ? '#000' : '#fff' }}
+                            >
+                              {colorObj.name}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                e.preventDefault();
+                                removeColor(colorObj.name);
+                              }}
+                              className="opacity-0 group-hover:opacity-100 transition-opacity ml-1 p-0.5 rounded hover:bg-black/20"
+                              style={{ color: colorObj.value === '#FFFFFF' || colorObj.value === '#ffffff' || colorObj.value === '#FFFF00' || colorObj.value === '#ffff00' ? '#000' : '#fff' }}
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </div>
                         );
                       })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Available Colors Picker */}
+                <div className="space-y-3">
+                  <Label className="text-sm font-medium">
+                    {language === 'vi' ? 'Màu Sắc Có Sẵn' : language === 'ja' ? '利用可能な色' : 'Available Colors'}
+                  </Label>
+                  {colorsLoading ? (
+                    <div className="flex items-center justify-center p-4">
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      <span className="text-sm text-muted-foreground">
+                        {language === 'vi' ? 'Đang tải màu sắc...' : language === 'ja' ? '色を読み込み中...' : 'Loading colors...'}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="flex flex-wrap gap-2 p-3 rounded-lg border bg-muted/20">
+                      {apiColors.length > 0 ? apiColors.map(color => {
+                        const colorName = language === 'en' ? (color.nameEn || color.name) :
+                                         language === 'ja' ? (color.nameJa || color.name) :
+                                         color.name;
+                        const colorHex = color.hexValue;
+                        const isSelected = formData.colors.some(c => 
+                          typeof c === 'string' ? c === color.name : c.name === color.name
+                        );
+                        return (
+                          <button
+                            key={color._id || color.name}
+                            type="button"
+                            onClick={() => {
+                              if (isSelected) {
+                                removeColor(color.name);
+                              } else {
+                                setFormData(prev => ({ 
+                                  ...prev, 
+                                  colors: [...prev.colors, { name: color.name, value: colorHex }] 
+                                }));
+                                // Auto-fill color picker for editing
+                                setNewColor(colorHex);
+                                setNewColorName(color.name);
+                                setDisplayValue(getColorName(colorHex));
+                              }
+                            }}
+                            className={`
+                              px-4 py-2 rounded-lg font-medium text-sm transition-all
+                              ${isSelected 
+                                ? 'ring-2 ring-offset-2 ring-primary shadow-md scale-105' 
+                                : 'hover:scale-105 hover:shadow-md opacity-90 hover:opacity-100'
+                              }
+                            `}
+                            style={{ 
+                              backgroundColor: colorHex, 
+                              color: colorHex === '#FFFFFF' || colorHex === '#FFFF00' ? '#000' : '#fff',
+                              border: `2px solid ${isSelected ? '#3b82f6' : 'transparent'}`
+                            }}
+                          >
+                            {colorName}
+                          </button>
+                        );
+                      }) : (
+                        <p className="text-sm text-muted-foreground p-4">
+                          {language === 'vi' ? 'Không có màu sắc có sẵn' : 
+                           language === 'ja' ? '利用可能な色がありません' : 
+                           'No colors available'}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Custom Color Input Section */}
+                <div className="space-y-3 p-4 rounded-lg border bg-muted/10">
+                  <Label className="text-sm font-medium">
+                    {language === 'vi' ? 'Tùy Chỉnh Màu Sắc' : language === 'ja' ? 'カスタム色' : 'Custom Color'}
+                  </Label>
+                  
+                  {/* Color Name Input */}
+                  <div className="space-y-2">
+                    <Label className="text-xs text-muted-foreground">
+                      {language === 'vi' ? 'Tên màu' : language === 'ja' ? '色名' : 'Color name'}
+                    </Label>
+                    <Input
+                      placeholder={language === 'vi' ? 'Nhập tên màu (ví dụ: Đỏ, Xanh lá, ...)' : 
+                                 language === 'ja' ? '色名を入力（例：赤、緑など）' : 
+                                 'Enter color name (e.g., Red, Green, ...)'}
+                      value={newColorName || getColorName(newColor)}
+                      onChange={(e) => setNewColorName(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addColor())}
+                      className="w-full"
+                    />
                   </div>
 
-                </div>
-                <div className="space-y-3">
-                  <div className="grid grid-cols-2 gap-2">
-                                            <Input
-                          placeholder={language === 'vi' ? 'Tên màu' : 
-                                     language === 'ja' ? '色名' : 
-                                     'Color name'}
-                          value={newColorName || getColorName(newColor)}
-                          onChange={(e) => setNewColorName(e.target.value)}
-                          onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addColor())}
-                        />
-                    <div className="space-y-2">
+                  {/* Color Picker & Preview */}
+                  <div className="grid grid-cols-[auto_1fr_auto] gap-3 items-center">
+                    <div className="flex flex-col gap-2">
+                      <Label className="text-xs text-muted-foreground">
+                        {language === 'vi' ? 'Chọn màu' : language === 'ja' ? '色を選択' : 'Pick color'}
+                      </Label>
+                      <Input
+                        type="color"
+                        value={newColor}
+                        onChange={(e) => {
+                          setNewColor(e.target.value);
+                          const colorName = getColorName(e.target.value);
+                          setDisplayValue(colorName);
+                          if (!newColorName || newColorName === getColorName(newColor)) {
+                            setNewColorName(colorName);
+                          }
+                        }}
+                        className="w-14 h-14 p-1 border-2 rounded-lg cursor-pointer hover:border-primary transition-colors"
+                        title={`${getColorName(newColor)} (${newColor})`}
+                      />
+                    </div>
+                    
+                    {/* Color Preview */}
+                    <div className="flex flex-col gap-2">
+                      <Label className="text-xs text-muted-foreground">
+                        {language === 'vi' ? 'Xem trước' : language === 'ja' ? 'プレビュー' : 'Preview'}
+                      </Label>
                       <div className="flex items-center gap-2">
-                        <Input
-                          type="color"
-                          value={newColor}
-                          onChange={(e) => {
-                            setNewColor(e.target.value);
-                            setDisplayValue(getColorName(e.target.value));
-                            // Always auto-fill color name when color picker changes
-                            setNewColorName(getColorName(e.target.value));
-                          }}
-                          className="w-12 h-10 p-1 border rounded cursor-pointer"
-                          title={`${getColorName(newColor)} (${newColor})`}
-                        />
                         <div 
-                          className="w-8 h-8 rounded border"
+                          className="w-12 h-12 rounded-lg border-2 shadow-md"
                           style={{ backgroundColor: newColor }}
                           title={`${getColorName(newColor)} (${newColor})`}
                         />
+                        <div className="flex-1">
+                          <div className="text-sm font-medium">{newColorName || getColorName(newColor)}</div>
+                          <div className="text-xs text-muted-foreground">{newColor.toUpperCase()}</div>
+                        </div>
                       </div>
+                    </div>
+
+                    {/* Hex Input */}
+                    <div className="flex flex-col gap-2">
+                      <Label className="text-xs text-muted-foreground">Hex</Label>
                       <div className="flex items-center gap-2">
                         <Input
-                          placeholder={language === 'vi' ? 'Nhập mã hex (ví dụ: #FF0000)' : 
-                                     language === 'ja' ? '16進数を入力（例：#FF0000）' : 
-                                     'Enter hex code (e.g., #FF0000)'}
-                          value={displayValue}
+                          placeholder="#FF0000"
+                          value={newColor.toUpperCase()}
                           onChange={(e) => {
-                            const inputValue = e.target.value;
+                            const inputValue = e.target.value.toUpperCase();
                             
-                            // If user is typing a hex code
                             if (inputValue.startsWith('#') || /^[0-9A-Fa-f]/.test(inputValue)) {
                               let hexValue = inputValue;
                               
-                              // Auto-add # if user types without it
                               if (hexValue && !hexValue.startsWith('#')) {
                                 hexValue = '#' + hexValue;
                               }
                               
-                              // Validate hex color format (3 or 6 digits)
                               if (/^#[0-9A-Fa-f]{6}$/.test(hexValue) || /^#[0-9A-Fa-f]{3}$/.test(hexValue)) {
                                 setNewColor(hexValue);
-                                setDisplayValue(getColorName(hexValue));
-                                // Always auto-fill color name when valid hex is entered
-                                setNewColorName(getColorName(hexValue));
+                                setDisplayValue(hexValue);
+                                const colorName = getColorName(hexValue);
+                                if (!newColorName || newColorName === getColorName(newColor)) {
+                                  setNewColorName(colorName);
+                                }
                               } else if (hexValue === '' || hexValue === '#') {
                                 setNewColor('#000000');
                                 setDisplayValue('');
                               } else {
-                                // Allow partial input for better UX
                                 setNewColor(hexValue);
                                 setDisplayValue(hexValue);
                               }
                             } else {
-                              // If user is typing a color name, search for matching hex
                               setDisplayValue(inputValue);
-                              // You could add logic here to search for color names and match to hex values
                             }
                           }}
-                          className="flex-1 text-sm"
+                          className="w-24 text-sm font-mono"
+                          maxLength={7}
                         />
-                        <span className="text-xs text-muted-foreground">
-                          {language === 'vi' ? 'Hex' : 
-                           language === 'ja' ? '16進数' : 
-                           'Hex'}
-                        </span>
                       </div>
-                      
-
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Button type="button" variant="outline" onClick={addColor} className="flex-1">
+
+                  {/* Add Color Button */}
+                  <div className="flex items-center gap-2 pt-2">
+                    <Button 
+                      type="button" 
+                      onClick={addColor}
+                      className="flex-1"
+                      disabled={!newColorName.trim() && getColorName(newColor) === 'Unknown'}
+                    >
                       <Plus className="h-4 w-4 mr-2" />
                       {t.addColor}
                     </Button>
@@ -1325,6 +1578,7 @@ export default function ProductForm({
                           setNewColor('#000000');
                           setDisplayValue('');
                         }}
+                        title={language === 'vi' ? 'Xóa' : language === 'ja' ? 'クリア' : 'Clear'}
                       >
                         <X className="h-4 w-4" />
                       </Button>
@@ -1350,42 +1604,253 @@ export default function ProductForm({
               <CloudinaryImageUpload
                 onImagesUploaded={handleCloudinaryImagesUploaded}
                 onImagesRemoved={handleCloudinaryImagesRemoved}
-                existingImages={memoizedCloudinaryImages}
+                existingImages={formData.cloudinaryImages}
                 maxFiles={10}
                 maxSize={10 * 1024 * 1024} // 10MB
                 acceptedTypes={['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']}
               />
             </div>
-            
-            <Separator />
-            
+          </CardContent>
+        </Card>
+
+        {/* Technical Specifications */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Ruler className="h-5 w-5" />
+              {t.technicalSpecs}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Materials */}
             <div className="space-y-2">
-              <Label>Product Videos</Label>
-              <CloudinaryVideoUpload
-                onVideosUploaded={handleCloudinaryVideosUploaded}
-                onVideosRemoved={handleCloudinaryVideosRemoved}
-                existingVideos={memoizedVideos}
-                maxFiles={5}
-                maxSize={100 * 1024 * 1024} // 100MB
-                acceptedTypes={['video/mp4', 'video/webm', 'video/ogg', 'video/avi', 'video/mov', 'video/wmv']}
-              />
-            </div>
-            
-            <Separator />
-            
-            <div className="space-y-2">
-              <Label>Gallery Images (Additional)</Label>
-              <p className="text-sm text-muted-foreground">
-                Additional images for product detail page gallery. These will be displayed in the product gallery section.
+              <Label>{t.materials}</Label>
+              <div className="flex flex-wrap gap-2 mb-2">
+                {formData.materials.map(material => (
+                  <Badge 
+                    key={material} 
+                    variant="secondary" 
+                    className="cursor-pointer hover:opacity-80 transition-opacity"
+                    onClick={() => removeMaterial(material)}
+                  >
+                    {material} <X className="h-3 w-3 ml-1" />
+                  </Badge>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <Input
+                  placeholder={language === 'vi' ? 'Nhập chất liệu (ví dụ: 100% Lụa, Cotton, Polyester...)' : 
+                             language === 'ja' ? '素材を入力（例：100%シルク、綿、ポリエステル...）' : 
+                             'Enter material (e.g., 100% Silk, Cotton, Polyester...)'}
+                  value={newMaterial}
+                  onChange={(e) => setNewMaterial(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addMaterial())}
+                />
+                <Button type="button" variant="outline" onClick={addMaterial}>
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {language === 'vi' ? 'Gợi ý: 100% Lụa, Cotton 70% Polyester 30%, Vải lanh, Satin...' :
+                 language === 'ja' ? '推奨：100%シルク、綿70%ポリエステル30%、リネン、サテン...' :
+                 'Suggestions: 100% Silk, 70% Cotton 30% Polyester, Linen, Satin...'}
               </p>
-              <CloudinaryImageUpload
-                onImagesUploaded={handleGalleryImagesUploaded}
-                onImagesRemoved={handleGalleryImagesRemoved}
-                existingImages={memoizedGalleryImages}
-                maxFiles={20}
-                maxSize={10 * 1024 * 1024} // 10MB
-                acceptedTypes={['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']}
-              />
+            </div>
+
+            <Separator />
+
+            {/* Origin */}
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="origin">{t.origin}</Label>
+                <Input
+                  id="origin"
+                  placeholder={language === 'vi' ? 'Nhập xuất xứ (ví dụ: Nhật Bản, Việt Nam, ...)' : 
+                             language === 'ja' ? '原産国を入力（例：日本、ベトナム...）' : 
+                             'Enter origin (e.g., Japan, Vietnam, ...)'}
+                  value={formData.origin}
+                  onChange={(e) => setFormData(prev => ({ ...prev, origin: e.target.value }))}
+                  className="w-full"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="originEn">{t.originEn}</Label>
+                <Input
+                  id="originEn"
+                  placeholder="Enter origin in English (e.g., Japan, Vietnam, ...)"
+                  value={formData.originEn}
+                  onChange={(e) => setFormData(prev => ({ ...prev, originEn: e.target.value }))}
+                  className="w-full"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="originJa">{t.originJa}</Label>
+                <Input
+                  id="originJa"
+                  placeholder="原産国を日本語で入力（例：日本、ベトナム...）"
+                  value={formData.originJa}
+                  onChange={(e) => setFormData(prev => ({ ...prev, originJa: e.target.value }))}
+                  className="w-full"
+                />
+              </div>
+              
+              <p className="text-xs text-muted-foreground">
+                {language === 'vi' ? 'Quốc gia hoặc vùng sản xuất sản phẩm cho từng ngôn ngữ' :
+                 language === 'ja' ? '各言語の製品の製造国または地域' :
+                 'Country or region where the product is manufactured for each language'}
+              </p>
+            </div>
+
+            <Separator />
+
+            {/* Weight */}
+            <div className="space-y-2">
+              <Label htmlFor="weight">{t.weight}</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="weight"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={formData.weight || ''}
+                  onChange={(e) => {
+                    const value = parseFloat(e.target.value);
+                    setFormData(prev => ({ ...prev, weight: isNaN(value) ? 0 : value }));
+                  }}
+                  placeholder={language === 'vi' ? 'Nhập trọng lượng (kg)' : 
+                             language === 'ja' ? '重量を入力（kg）' : 
+                             'Enter weight (kg)'}
+                />
+                <span className="text-sm text-muted-foreground whitespace-nowrap">kg</span>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Dimensions */}
+            <div className="space-y-2">
+              <Label>{t.dimensions}</Label>
+              <div className="grid grid-cols-3 gap-2">
+                <div className="space-y-2">
+                  <Label className="text-xs text-muted-foreground">{t.length}</Label>
+                  <div className="flex items-center gap-1">
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.1"
+                      value={formData.dimensions.length || ''}
+                      onChange={(e) => {
+                        const value = parseFloat(e.target.value);
+                        setFormData(prev => ({
+                          ...prev,
+                          dimensions: { ...prev.dimensions, length: isNaN(value) ? 0 : value }
+                        }));
+                      }}
+                      placeholder="0"
+                      className="text-sm"
+                    />
+                    <span className="text-xs text-muted-foreground">cm</span>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs text-muted-foreground">{t.width}</Label>
+                  <div className="flex items-center gap-1">
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.1"
+                      value={formData.dimensions.width || ''}
+                      onChange={(e) => {
+                        const value = parseFloat(e.target.value);
+                        setFormData(prev => ({
+                          ...prev,
+                          dimensions: { ...prev.dimensions, width: isNaN(value) ? 0 : value }
+                        }));
+                      }}
+                      placeholder="0"
+                      className="text-sm"
+                    />
+                    <span className="text-xs text-muted-foreground">cm</span>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs text-muted-foreground">{t.height}</Label>
+                  <div className="flex items-center gap-1">
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.1"
+                      value={formData.dimensions.height || ''}
+                      onChange={(e) => {
+                        const value = parseFloat(e.target.value);
+                        setFormData(prev => ({
+                          ...prev,
+                          dimensions: { ...prev.dimensions, height: isNaN(value) ? 0 : value }
+                        }));
+                      }}
+                      placeholder="0"
+                      className="text-sm"
+                    />
+                    <span className="text-xs text-muted-foreground">cm</span>
+                  </div>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {language === 'vi' ? 'Kích thước khi đóng gói (Dài x Rộng x Cao)' :
+                 language === 'ja' ? 'パッケージサイズ（長さ x 幅 x 高さ）' :
+                 'Package dimensions (Length x Width x Height)'}
+              </p>
+            </div>
+
+            <Separator />
+
+            {/* Care Instructions */}
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="careInstructions">{t.careInstructions}</Label>
+                <Textarea
+                  id="careInstructions"
+                  placeholder={language === 'vi' ? 'Hướng dẫn bảo quản và giặt ủi (ví dụ: Giặt tay, Không sử dụng chất tẩy, Ủi ở nhiệt độ thấp...)' : 
+                             language === 'ja' ? 'お手入れ方法（例：手洗い、漂白剤を使用しない、低温でアイロンをかける...）' : 
+                             'Care instructions (e.g., Hand wash, Do not bleach, Iron on low heat...)'}
+                  value={formData.careInstructions}
+                  onChange={(e) => setFormData(prev => ({ ...prev, careInstructions: e.target.value }))}
+                  rows={3}
+                  className="resize-none"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="careInstructionsEn">{t.careInstructionsEn}</Label>
+                <Textarea
+                  id="careInstructionsEn"
+                  placeholder="Care instructions in English (e.g., Hand wash, Do not bleach, Iron on low heat...)"
+                  value={formData.careInstructionsEn}
+                  onChange={(e) => setFormData(prev => ({ ...prev, careInstructionsEn: e.target.value }))}
+                  rows={3}
+                  className="resize-none"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="careInstructionsJa">{t.careInstructionsJa}</Label>
+                <Textarea
+                  id="careInstructionsJa"
+                  placeholder="お手入れ方法を日本語で入力（例：手洗い、漂白剤を使用しない、低温でアイロンをかける...）"
+                  value={formData.careInstructionsJa}
+                  onChange={(e) => setFormData(prev => ({ ...prev, careInstructionsJa: e.target.value }))}
+                  rows={3}
+                  className="resize-none"
+                />
+              </div>
+              
+              <p className="text-xs text-muted-foreground">
+                {language === 'vi' ? 'Nhập hướng dẫn cách bảo quản và chăm sóc sản phẩm cho từng ngôn ngữ' :
+                 language === 'ja' ? '各言語の製品の保管とお手入れ方法を入力' :
+                 'Enter instructions for product care and maintenance for each language'}
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -1507,84 +1972,6 @@ export default function ProductForm({
           </CardContent>
         </Card>
 
-        {/* Shipping */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Package className="h-5 w-5" />
-              {t.shipping}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="weight">{t.weight}</Label>
-              <Input
-                id="weight"
-                type="number"
-                min="0"
-                step="0.1"
-                value={formData.weight}
-                onChange={(e) => {
-                  const value = parseFloat(e.target.value);
-                  setFormData(prev => ({ ...prev, weight: isNaN(value) ? 0 : value }));
-                }}
-              />
-            </div>
-            <div className="grid grid-cols-3 gap-2">
-              <div className="space-y-2">
-                <Label htmlFor="length">{t.length}</Label>
-                <Input
-                  id="length"
-                  type="number"
-                  min="0"
-                  step="0.1"
-                  value={formData.dimensions.length}
-                  onChange={(e) => {
-                    const value = parseFloat(e.target.value);
-                    setFormData(prev => ({ 
-                      ...prev, 
-                      dimensions: { ...prev.dimensions, length: isNaN(value) ? 0 : value }
-                    }));
-                  }}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="width">{t.width}</Label>
-                <Input
-                  id="width"
-                  type="number"
-                  min="0"
-                  step="0.1"
-                  value={formData.dimensions.width}
-                  onChange={(e) => {
-                    const value = parseFloat(e.target.value);
-                    setFormData(prev => ({ 
-                      ...prev, 
-                      dimensions: { ...prev.dimensions, width: isNaN(value) ? 0 : value }
-                    }));
-                  }}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="height">{t.height}</Label>
-                <Input
-                  id="height"
-                  type="number"
-                  min="0"
-                  step="0.1"
-                  value={formData.dimensions.height}
-                  onChange={(e) => {
-                    const value = parseFloat(e.target.value);
-                    setFormData(prev => ({ 
-                      ...prev, 
-                      dimensions: { ...prev.dimensions, height: isNaN(value) ? 0 : value }
-                    }));
-                  }}
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </form>
   );

@@ -11,8 +11,10 @@ import Promotion from '../models/Promotion';
 import FlashSale from '../models/FlashSale';
 import { ShippingMethod } from '../models/Shipping';
 import { AdminPaymentMethod } from '../models/Payment';
+import { Review } from '../models/Review';
 import Role from '../models/Role';
 import Permission from '../models/Permission';
+import Color from '../models/Color';
 
 dotenv.config();
 
@@ -162,6 +164,42 @@ const seedData = async () => {
     });
     await adminUser.save();
     console.log('✅ Created admin user with role');
+
+    // Seed colors
+    console.log('🎨 Seeding colors...');
+    const defaultColors = [
+      { name: 'Đen', nameEn: 'Black', nameJa: '黒', hexValue: '#000000', isDefault: true },
+      { name: 'Trắng', nameEn: 'White', nameJa: '白', hexValue: '#FFFFFF', isDefault: true },
+      { name: 'Đỏ', nameEn: 'Red', nameJa: '赤', hexValue: '#FF0000', isDefault: true },
+      { name: 'Xanh dương', nameEn: 'Blue', nameJa: '青', hexValue: '#0000FF', isDefault: true },
+      { name: 'Xanh lá', nameEn: 'Green', nameJa: '緑', hexValue: '#00FF00', isDefault: true },
+      { name: 'Hồng', nameEn: 'Pink', nameJa: 'ピンク', hexValue: '#FFC0CB', isDefault: true },
+      { name: 'Tím', nameEn: 'Purple', nameJa: '紫', hexValue: '#800080', isDefault: true },
+      { name: 'Vàng', nameEn: 'Yellow', nameJa: '黄色', hexValue: '#FFFF00', isDefault: true },
+      { name: 'Cam', nameEn: 'Orange', nameJa: 'オレンジ', hexValue: '#FFA500', isDefault: true },
+      { name: 'Nâu', nameEn: 'Brown', nameJa: '茶色', hexValue: '#A52A2A', isDefault: true },
+      { name: 'Xám', nameEn: 'Gray', nameJa: 'グレー', hexValue: '#808080', isDefault: true },
+      { name: 'Xanh ngọc', nameEn: 'Turquoise', nameJa: 'ターコイズ', hexValue: '#40E0D0', isDefault: true },
+      { name: 'Bạc', nameEn: 'Silver', nameJa: 'シルバー', hexValue: '#C0C0C0', isDefault: true },
+      { name: 'Vàng kim', nameEn: 'Gold', nameJa: 'ゴールド', hexValue: '#FFD700', isDefault: true },
+      { name: 'Xanh nhạt', nameEn: 'Light Blue', nameJa: '薄い青', hexValue: '#93C5FD', isDefault: true },
+      { name: 'Xám đậm', nameEn: 'Dark Gray', nameJa: '濃いグレー', hexValue: '#374151', isDefault: true },
+      { name: 'Xám nhạt', nameEn: 'Light Gray', nameJa: '薄いグレー', hexValue: '#D1D5DB', isDefault: true },
+      { name: 'Xanh đen', nameEn: 'Navy', nameJa: 'ネイビー', hexValue: '#000080', isDefault: true }
+    ];
+
+    // Upsert colors (update if exists, create if not)
+    for (const colorData of defaultColors) {
+      await Color.findOneAndUpdate(
+        { name: colorData.name },
+        { 
+          ...colorData,
+          isActive: true
+        },
+        { upsert: true, new: true }
+      );
+    }
+    console.log(`✅ Seeded ${defaultColors.length} colors`);
 
     // Create sample users
     const sampleUsers = [
@@ -1154,6 +1192,108 @@ const seedData = async () => {
     await AdminPaymentMethod.insertMany(paymentMethods);
     console.log('✅ Created payment methods');
 
+    // Create sample reviews for products
+    const reviews = [];
+    const reviewTemplates = [
+      {
+        rating: 5,
+        title: 'Sản phẩm tuyệt vời!',
+        titleEn: 'Excellent product!',
+        titleJa: '素晴らしい製品！',
+        comment: 'Tôi rất hài lòng với chất lượng sản phẩm. Chất liệu tốt và thiết kế đẹp. Đáng giá mỗi đồng!',
+        commentEn: 'I am very satisfied with the product quality. Good material and beautiful design. Worth every penny!',
+        commentJa: '製品の品質に非常に満足しています。良い素材と美しいデザイン。一銭一銭の価値があります！',
+        verified: true
+      },
+      {
+        rating: 5,
+        title: 'Rất đẹp và chất lượng cao',
+        titleEn: 'Very beautiful and high quality',
+        titleJa: '非常に美しく高品質',
+        comment: 'Sản phẩm vượt quá mong đợi của tôi. Chất lượng silk rất tốt và họa tiết rất tinh xảo. Rất hài lòng!',
+        commentEn: 'Product exceeded my expectations. Silk quality is excellent and patterns are very delicate. Very satisfied!',
+        commentJa: '製品は私の期待を超えました。シルクの品質は優れており、パターンは非常に繊細です。非常に満足しています！',
+        verified: true
+      },
+      {
+        rating: 4,
+        title: 'Tốt nhưng có thể cải thiện',
+        titleEn: 'Good but could be improved',
+        titleJa: '良いが改善できる',
+        comment: 'Sản phẩm đẹp nhưng tôi nghĩ có thể cải thiện thêm về kích thước. Nhìn chung là tốt.',
+        commentEn: 'Product is beautiful but I think sizing could be improved further. Overall good.',
+        commentJa: '製品は美しいですが、サイズはさらに改善できると思います。全体的に良いです。',
+        verified: true
+      },
+      {
+        rating: 5,
+        title: 'Hoàn hảo cho dịp đặc biệt',
+        titleEn: 'Perfect for special occasions',
+        titleJa: '特別な機会に最適',
+        comment: 'Tôi đã mặc nó cho đám cưới và nhận được rất nhiều lời khen. Sản phẩm rất đẹp và sang trọng.',
+        commentEn: 'I wore it to a wedding and received many compliments. Product is very beautiful and luxurious.',
+        commentJa: '結婚式に着用し、多くの賛辞を受けました。製品は非常に美しく豪華です。',
+        verified: true
+      },
+      {
+        rating: 4,
+        title: 'Chất lượng tốt',
+        titleEn: 'Good quality',
+        titleJa: '良い品質',
+        comment: 'Chất lượng sản phẩm tốt, phù hợp với giá tiền. Giao hàng nhanh và đóng gói cẩn thận.',
+        commentEn: 'Product quality is good, worth the price. Fast delivery and careful packaging.',
+        commentJa: '製品の品質は良好で、価格に見合う価値があります。迅速な配送と丁寧な梱包。',
+        verified: false
+      },
+      {
+        rating: 3,
+        title: 'Ổn nhưng không xuất sắc',
+        titleEn: 'Okay but not outstanding',
+        titleJa: 'まあまあだが、際立っていない',
+        comment: 'Sản phẩm ổn nhưng tôi cảm thấy có thể tốt hơn. Họa tiết hơi đơn giản so với giá tiền.',
+        commentEn: 'Product is okay but I feel it could be better. Patterns are a bit simple for the price.',
+        commentJa: '製品は問題ありませんが、もっと良くなると思います。価格の割にパターンが少しシンプルです。',
+        verified: false
+      }
+    ];
+
+    // Create 2-4 reviews for each product
+    for (let i = 0; i < createdProducts.length; i++) {
+      const product = createdProducts[i] as unknown as IProduct;
+      const numReviews = Math.floor(Math.random() * 3) + 2; // 2-4 reviews per product
+      
+      for (let j = 0; j < numReviews; j++) {
+        const template = reviewTemplates[Math.floor(Math.random() * reviewTemplates.length)];
+        const userIndex = Math.floor(Math.random() * createdUsers.length);
+        const user = createdUsers[userIndex];
+        
+        // Determine language for review based on user preference
+        let title = template.title;
+        let comment = template.comment;
+        if (user.preferences?.language === 'en') {
+          title = template.titleEn;
+          comment = template.commentEn;
+        } else if (user.preferences?.language === 'ja') {
+          title = template.titleJa;
+          comment = template.commentJa;
+        }
+        
+        reviews.push({
+          userId: user._id,
+          productId: product._id,
+          rating: template.rating,
+          title: title,
+          comment: comment,
+          verified: template.verified,
+          helpful: Math.floor(Math.random() * 20), // Random helpful count 0-19
+          createdAt: new Date(Date.now() - Math.random() * 60 * 24 * 60 * 60 * 1000) // Random date within last 60 days
+        });
+      }
+    }
+
+    await Review.insertMany(reviews);
+    console.log(`✅ Created ${reviews.length} reviews`);
+
     // Update category product counts
     for (const category of createdCategories) {
       const count = await Product.countDocuments({ categoryId: category._id });
@@ -1166,6 +1306,7 @@ const seedData = async () => {
     console.log(`   - Users: ${await User.countDocuments()}`);
     console.log(`   - Roles: ${await Role.countDocuments()}`);
     console.log(`   - Permissions: ${await Permission.countDocuments()}`);
+    console.log(`   - Colors: ${await Color.countDocuments()}`);
     console.log(`   - Categories: ${await Category.countDocuments()}`);
     console.log(`   - Products: ${await Product.countDocuments()}`);
     console.log(`   - Orders: ${await Order.countDocuments()}`);
@@ -1175,6 +1316,7 @@ const seedData = async () => {
     console.log(`   - Flash Sales: ${await FlashSale.countDocuments()}`);
     console.log(`   - Shipping Methods: ${await ShippingMethod.countDocuments()}`);
     console.log(`   - Payment Methods: ${await AdminPaymentMethod.countDocuments()}`);
+    console.log(`   - Reviews: ${await Review.countDocuments()}`);
     console.log('🔑 Admin credentials: admin@koshiro.com / admin123');
     console.log('👥 Customer credentials: customer1@example.com / password123');
     console.log('👑 Role & Permission System: Ready with RBAC');

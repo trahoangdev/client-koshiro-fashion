@@ -315,7 +315,7 @@ class ExportImportService {
               await api.createUser(transformedData as any);
               break;
             case 'categories':
-              await api.createCategory(transformedData as any);
+              await api.createCategory(transformedData as Partial<Category>);
               break;
             case 'inventory':
               // For inventory, we might need to create or update inventory items

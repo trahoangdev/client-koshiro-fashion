@@ -138,73 +138,89 @@ const ContactPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-zen">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       <Header
         cartItemsCount={0}
         onSearch={() => {}}
       />
 
-      <main className="py-16">
-        <div className="container space-y-16">
+      <main className="py-8">
+        <div className="container mx-auto px-4 space-y-8">
           {/* Hero Section */}
-          <section className="relative overflow-hidden rounded-2xl">
-            {/* Banner Background */}
-            <div className="absolute inset-0">
-              <img 
-                src="/images/banners/banner-04.png" 
-                alt="Contact Us Banner"
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-black/50"></div>
-            </div>
-            
-            {/* Content */}
-            <div className="relative z-10 p-12 md:p-16 text-center text-white">
-              <h1 className="text-4xl md:text-6xl font-bold mb-4">
-                {t.title}
-              </h1>
-              <p className="text-xl md:text-2xl mb-4 text-white/90">
-                {t.subtitle}
-              </p>
-              <p className="text-lg max-w-2xl mx-auto text-white/80">
-                {t.description}
-              </p>
+          <section className="text-center mb-12">
+            <div className="relative overflow-hidden rounded-2xl shadow-2xl">
+              {/* Banner Background */}
+              <div className="absolute inset-0">
+                <img 
+                  src="/images/banners/banner-04.png" 
+                  alt="Contact Us Banner"
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/50 to-black/60"></div>
+              </div>
+              
+              {/* Content */}
+              <div className="relative z-10 p-12 md:p-16 text-white">
+                <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-4 bg-gradient-to-r from-white via-white to-white/80 bg-clip-text text-transparent">
+                  {t.title}
+                </h1>
+                <p className="text-xl md:text-2xl mb-4 text-white/90 font-light">
+                  {t.subtitle}
+                </p>
+                <p className="text-lg max-w-2xl mx-auto text-white/80 mb-8 leading-relaxed">
+                  {t.description}
+                </p>
+              </div>
             </div>
           </section>
 
-          <div className="grid lg:grid-cols-2 gap-12">
+          <div className="grid lg:grid-cols-2 gap-8">
             {/* Contact Form */}
             <section>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-2xl">{t.title}</CardTitle>
+              <Card className="rounded-xl border-2 shadow-lg bg-background/95 backdrop-blur-sm">
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-2xl font-bold">{t.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   {isSubmitted ? (
                     <div className="text-center py-12">
-                      <CheckCircle className="h-16 w-16 mx-auto mb-4 text-green-500" />
-                      <h3 className="text-xl font-semibold mb-2">Thank you!</h3>
-                      <p className="text-muted-foreground mb-4">
-                        Your message has been sent successfully. We'll get back to you soon.
+                      <div className="p-4 rounded-full bg-green-100 dark:bg-green-900/20 w-fit mx-auto mb-4">
+                        <CheckCircle className="h-16 w-16 text-green-600 dark:text-green-400" />
+                      </div>
+                      <h3 className="text-2xl font-bold mb-3">
+                        {language === 'vi' ? 'Cảm ơn bạn!' :
+                         language === 'ja' ? 'ありがとうございます！' :
+                         'Thank you!'}
+                      </h3>
+                      <p className="text-muted-foreground mb-6 text-lg">
+                        {language === 'vi' ? 'Tin nhắn của bạn đã được gửi thành công. Chúng tôi sẽ phản hồi sớm nhất có thể.' :
+                         language === 'ja' ? 'メッセージが正常に送信されました。できるだけ早くお返事いたします。' :
+                         'Your message has been sent successfully. We\'ll get back to you soon.'}
                       </p>
-                      <Button onClick={() => setIsSubmitted(false)}>
-                        Send Another Message
+                      <Button 
+                        onClick={() => setIsSubmitted(false)}
+                        className="rounded-xl font-semibold px-8"
+                      >
+                        {language === 'vi' ? 'Gửi Tin Nhắn Khác' :
+                         language === 'ja' ? '別のメッセージを送信' :
+                         'Send Another Message'}
                       </Button>
                     </div>
                   ) : (
-                    <form onSubmit={handleSubmit} className="space-y-6">
+                    <form onSubmit={handleSubmit} className="space-y-5">
                       <div>
-                        <label className="text-sm font-medium mb-2 block">
+                        <label className="text-sm font-semibold mb-2 block text-foreground">
                           {t.form.name}
                         </label>
                         <Input
                           value={formData.name}
                           onChange={(e) => handleInputChange('name', e.target.value)}
                           required
+                          className="rounded-lg border-2 focus:border-primary transition-all"
                         />
                       </div>
                       <div>
-                        <label className="text-sm font-medium mb-2 block">
+                        <label className="text-sm font-semibold mb-2 block text-foreground">
                           {t.form.email}
                         </label>
                         <Input
@@ -212,20 +228,22 @@ const ContactPage = () => {
                           value={formData.email}
                           onChange={(e) => handleInputChange('email', e.target.value)}
                           required
+                          className="rounded-lg border-2 focus:border-primary transition-all"
                         />
                       </div>
                       <div>
-                        <label className="text-sm font-medium mb-2 block">
+                        <label className="text-sm font-semibold mb-2 block text-foreground">
                           {t.form.subject}
                         </label>
                         <Input
                           value={formData.subject}
                           onChange={(e) => handleInputChange('subject', e.target.value)}
                           required
+                          className="rounded-lg border-2 focus:border-primary transition-all"
                         />
                       </div>
                       <div>
-                        <label className="text-sm font-medium mb-2 block">
+                        <label className="text-sm font-semibold mb-2 block text-foreground">
                           {t.form.message}
                         </label>
                         <Textarea
@@ -233,11 +251,12 @@ const ContactPage = () => {
                           onChange={(e) => handleInputChange('message', e.target.value)}
                           rows={5}
                           required
+                          className="rounded-lg border-2 focus:border-primary transition-all resize-none"
                         />
                       </div>
                       <Button 
                         type="submit" 
-                        className="w-full"
+                        className="w-full rounded-xl font-semibold h-11 shadow-lg hover:shadow-xl transition-all"
                         disabled={isSubmitting}
                       >
                         {isSubmitting ? (
@@ -259,60 +278,76 @@ const ContactPage = () => {
             </section>
 
             {/* Contact Information */}
-            <section className="space-y-8">
-              <Card>
-                <CardHeader>
-                  <CardTitle>{t.info.title}</CardTitle>
+            <section className="space-y-6">
+              <Card className="rounded-xl border-2 shadow-lg bg-background/95 backdrop-blur-sm">
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-xl font-bold">{t.info.title}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="flex items-start space-x-3">
-                    <MapPin className="h-5 w-5 text-primary mt-1" />
+                  <div className="flex items-start space-x-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-all">
+                    <div className="p-2 rounded-full bg-primary/10">
+                      <MapPin className="h-5 w-5 text-primary" />
+                    </div>
                     <div>
-                      <p className="font-medium">Address</p>
-                      <p className="text-muted-foreground">{t.info.address}</p>
+                      <p className="font-semibold mb-1">
+                        {language === 'vi' ? 'Địa Chỉ' : language === 'ja' ? '住所' : 'Address'}
+                      </p>
+                      <p className="text-sm text-muted-foreground">{t.info.address}</p>
                     </div>
                   </div>
-                  <div className="flex items-start space-x-3">
-                    <Phone className="h-5 w-5 text-primary mt-1" />
+                  <div className="flex items-start space-x-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-all">
+                    <div className="p-2 rounded-full bg-primary/10">
+                      <Phone className="h-5 w-5 text-primary" />
+                    </div>
                     <div>
-                      <p className="font-medium">Phone</p>
-                      <p className="text-muted-foreground">{t.info.phone}</p>
+                      <p className="font-semibold mb-1">
+                        {language === 'vi' ? 'Điện Thoại' : language === 'ja' ? '電話' : 'Phone'}
+                      </p>
+                      <p className="text-sm text-muted-foreground">{t.info.phone}</p>
                     </div>
                   </div>
-                  <div className="flex items-start space-x-3">
-                    <Mail className="h-5 w-5 text-primary mt-1" />
+                  <div className="flex items-start space-x-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-all">
+                    <div className="p-2 rounded-full bg-primary/10">
+                      <Mail className="h-5 w-5 text-primary" />
+                    </div>
                     <div>
-                      <p className="font-medium">Email</p>
-                      <p className="text-muted-foreground">{t.info.email}</p>
+                      <p className="font-semibold mb-1">
+                        {language === 'vi' ? 'Email' : language === 'ja' ? 'メール' : 'Email'}
+                      </p>
+                      <p className="text-sm text-muted-foreground">{t.info.email}</p>
                     </div>
                   </div>
-                  <div className="flex items-start space-x-3">
-                    <Clock className="h-5 w-5 text-primary mt-1" />
+                  <div className="flex items-start space-x-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-all">
+                    <div className="p-2 rounded-full bg-primary/10">
+                      <Clock className="h-5 w-5 text-primary" />
+                    </div>
                     <div>
-                      <p className="font-medium">Business Hours</p>
-                      <p className="text-muted-foreground">{t.info.hours}</p>
+                      <p className="font-semibold mb-1">
+                        {language === 'vi' ? 'Giờ Làm Việc' : language === 'ja' ? '営業時間' : 'Business Hours'}
+                      </p>
+                      <p className="text-sm text-muted-foreground">{t.info.hours}</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
               {/* FAQ Section */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>{t.faq.title}</CardTitle>
+              <Card className="rounded-xl border-2 shadow-lg bg-background/95 backdrop-blur-sm">
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-xl font-bold">{t.faq.title}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div>
-                    <h4 className="font-medium mb-2">{t.faq.shipping}</h4>
-                    <p className="text-sm text-muted-foreground">{t.faq.shippingAnswer}</p>
+                  <div className="p-3 rounded-lg bg-muted/30 border-l-4 border-primary">
+                    <h4 className="font-semibold mb-2">{t.faq.shipping}</h4>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{t.faq.shippingAnswer}</p>
                   </div>
-                  <div>
-                    <h4 className="font-medium mb-2">{t.faq.returns}</h4>
-                    <p className="text-sm text-muted-foreground">{t.faq.returnsAnswer}</p>
+                  <div className="p-3 rounded-lg bg-muted/30 border-l-4 border-primary">
+                    <h4 className="font-semibold mb-2">{t.faq.returns}</h4>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{t.faq.returnsAnswer}</p>
                   </div>
-                  <div>
-                    <h4 className="font-medium mb-2">{t.faq.sizing}</h4>
-                    <p className="text-sm text-muted-foreground">{t.faq.sizingAnswer}</p>
+                  <div className="p-3 rounded-lg bg-muted/30 border-l-4 border-primary">
+                    <h4 className="font-semibold mb-2">{t.faq.sizing}</h4>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{t.faq.sizingAnswer}</p>
                   </div>
                 </CardContent>
               </Card>

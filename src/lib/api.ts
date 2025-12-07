@@ -1,3 +1,5 @@
+import { logger } from './logger';
+
 const API_BASE_URL = 'http://localhost:3000/api';
 
 // Types
@@ -36,90 +38,12 @@ export interface AuthResponse {
   user: User;
 }
 
-// API Key Management types
-export interface ApiKey {
-  _id: string;
-  name: string;
-  key: string;
-  description: string;
-  permissions: string[];
-  isActive: boolean;
-  lastUsed?: string;
-  usageCount: number;
-  rateLimit: number;
-  expiresAt?: string;
-  createdBy: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface Integration {
-  _id: string;
-  name: string;
-  nameEn?: string;
-  nameJa?: string;
-  type: 'payment' | 'shipping' | 'email' | 'sms' | 'analytics' | 'social' | 'other';
-  provider: string;
-  status: 'active' | 'inactive' | 'error' | 'pending';
-  description: string;
-  descriptionEn?: string;
-  descriptionJa?: string;
-  config: Record<string, unknown>;
-  webhookUrl?: string;
-  webhookSecret?: string;
-  lastSync?: string;
-  errorCount: number;
-  successCount: number;
-  lastError?: string;
-  createdBy: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface ApiLog {
-  _id: string;
-  apiKey: string;
-  endpoint: string;
-  method: string;
-  statusCode: number;
-  responseTime: number;
-  ipAddress: string;
-  userAgent?: string;
-  requestBody?: unknown;
-  responseBody?: unknown;
-  error?: string;
-  timestamp: string;
-}
-
-export interface ApiStats {
-  totalRequests: number;
-  successRequests: number;
-  errorRequests: number;
-  successRate: number;
-  avgResponseTime: number;
-  uniqueApiKeys: number;
-  uniqueEndpoints: number;
-}
-
-export interface ApiKeyStats {
-  totalKeys: number;
-  activeKeys: number;
-  expiredKeys: number;
-}
-
-export interface IntegrationStats {
-  totalIntegrations: number;
-  activeIntegrations: number;
-  errorIntegrations: number;
-}
-
 // Product types
 export interface ProductVideo {
-  publicId: string;
-  secureUrl: string;
+  url: string;
+  thumbnail?: string;
+  title?: string;
   duration?: number;
-  format: string;
-  bytes: number;
 }
 
 export interface CloudinaryImage {
@@ -157,7 +81,6 @@ export interface Product {
   };
   images: string[]; // Legacy field for backward compatibility
   cloudinaryImages?: CloudinaryImage[]; // New Cloudinary images
-  galleryImages?: CloudinaryImage[]; // Additional gallery images for product detail page
   videos?: ProductVideo[];
   sizes: string[];
   colors: string[];
@@ -169,6 +92,7 @@ export interface Product {
   isLimitedEdition: boolean;
   isBestSeller: boolean;
   tags: string[];
+  views?: number; // Product view count
   // New fields
   slug?: string;
   metaTitle?: string;
@@ -181,6 +105,11 @@ export interface Product {
   };
   materials?: string[];
   careInstructions?: string;
+  careInstructionsEn?: string;
+  careInstructionsJa?: string;
+  origin?: string;
+  originEn?: string;
+  originJa?: string;
   sku?: string;
   barcode?: string;
   createdAt: string;
@@ -247,6 +176,31 @@ export interface User {
   orderCount: number;
   totalSpent: number;
   lastActive?: string;
+  preferences?: {
+    language?: string;
+    currency?: string;
+    emailNotifications?: boolean;
+    smsNotifications?: boolean;
+    marketingEmails?: boolean;
+    notificationPreferences?: {
+      email?: {
+        orderUpdates?: boolean;
+        promotions?: boolean;
+        newsletters?: boolean;
+        productRecommendations?: boolean;
+      };
+      push?: {
+        orderUpdates?: boolean;
+        promotions?: boolean;
+        backInStock?: boolean;
+        priceDrops?: boolean;
+      };
+      sms?: {
+        orderUpdates?: boolean;
+        promotions?: boolean;
+      };
+    };
+  };
   createdAt: string;
   updatedAt: string;
 }
@@ -368,13 +322,50 @@ export interface CreateReviewRequest {
 }
 
 // Settings types
+export interface ShippingZone {
+  name: string;
+  cost: number;
+}
+
 export interface Settings {
   _id: string;
+  // General Settings
   websiteName: string;
   websiteDescription: string;
   contactEmail: string;
   contactPhone: string;
+  address: string;
+  timezone: string;
+  currency: string;
+  language: string;
+  // Notification Settings
+  emailNotifications: boolean;
+  orderNotifications: boolean;
+  stockNotifications: boolean;
+  customerNotifications: boolean;
+  adminNotifications: boolean;
+  // Security Settings
+  sessionTimeout: number;
+  passwordMinLength: number;
+  requireTwoFactor: boolean;
+  maxLoginAttempts: number;
+  enableCaptcha: boolean;
+  // Payment Settings
+  stripeEnabled: boolean;
+  paypalEnabled: boolean;
+  cashOnDelivery: boolean;
+  bankTransfer: boolean;
+  // Shipping Settings
+  freeShippingThreshold: number;
+  defaultShippingCost: number;
+  enableTracking: boolean;
+  shippingZones: ShippingZone[];
+  // Appearance Settings
+  theme: string;
   primaryColor: string;
+  logoUrl: string;
+  faviconUrl: string;
+  // System Settings (legacy)
   enableDarkMode: boolean;
   maintenanceMode: boolean;
   debugMode: boolean;
@@ -432,34 +423,6 @@ class ApiClient {
     }
   }
 
-  // Method to get current token
-  getToken(): string | null {
-    return this.token;
-  }
-
-  // Method to check if user is authenticated
-  isAuthenticated(): boolean {
-    return !!this.token;
-  }
-
-  // Method to clear authentication
-  clearAuth(): void {
-    this.token = null;
-    localStorage.removeItem('token');
-  }
-
-  // Method to refresh token (placeholder for future implementation)
-  async refreshToken(): Promise<boolean> {
-    try {
-      // This would typically call a refresh endpoint
-      // For now, just return false as we don't have refresh logic
-      return false;
-    } catch (error) {
-      console.error('Token refresh failed:', error);
-      return false;
-    }
-  }
-
   private async request<T>(
     endpoint: string,
     options: RequestInit = {}
@@ -473,15 +436,9 @@ class ApiClient {
 
     if (this.token) {
       (headers as Record<string, string>).Authorization = `Bearer ${this.token}`;
-      // Only log in development mode
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`API Request to ${endpoint} with token: ${this.token.substring(0, 20)}...`);
-      }
+      logger.debug(`API Request to ${endpoint} with token`, { token: this.token.substring(0, 20) + '...' });
     } else {
-      // Only log in development mode
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`API Request to ${endpoint} without token`);
-      }
+      logger.debug(`API Request to ${endpoint} without token`);
     }
 
     const config: RequestInit = {
@@ -493,34 +450,25 @@ class ApiClient {
       const response = await fetch(url, config);
       
       if (!response.ok) {
-        let errorMessage = `HTTP error! status: ${response.status}`;
-        let errorData: Record<string, unknown> = {};
-        
-        try {
-          errorData = await response.json();
-          errorMessage = (errorData.message as string) || errorMessage;
-        } catch {
-          // If response is not JSON, use status text
-          errorMessage = response.statusText || errorMessage;
-        }
-        
-        console.error(`API Error for ${endpoint}:`, errorData);
-        throw new Error(errorMessage);
+        const errorData = await response.json().catch(() => ({}));
+        logger.error(`API Error for ${endpoint}`, errorData);
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json();
-      // Only log in development mode
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`API Success for ${endpoint}:`, data);
+      
+      // If response has success field and it's false, throw error
+      if (data && typeof data === 'object' && 'success' in data && data.success === false) {
+        logger.error(`API Error for ${endpoint}`, data);
+        const errorMessage = data.message || 'Request failed';
+        throw new Error(errorMessage);
       }
+      
+      logger.debug(`API Success for ${endpoint}`, data);
       return data;
     } catch (error) {
-      console.error('API request failed:', error);
-      // Re-throw with more context
-      if (error instanceof Error) {
-        throw new Error(`API request to ${endpoint} failed: ${error.message}`);
-      }
-      throw new Error(`API request to ${endpoint} failed: Unknown error`);
+      logger.error('API request failed', error);
+      throw error;
     }
   }
 
@@ -542,7 +490,7 @@ class ApiClient {
         user: response.user
       };
     } catch (error) {
-      console.error('Login API error:', error);
+      logger.error('Login API error', error);
       throw error;
     }
   }
@@ -564,7 +512,7 @@ class ApiClient {
         user: response.user
       };
     } catch (error) {
-      console.error('Admin login API error:', error);
+      logger.error('Admin login API error', error);
       throw error;
     }
   }
@@ -586,52 +534,7 @@ class ApiClient {
         user: response.user
       };
     } catch (error) {
-      console.error('Register API error:', error);
-      throw error;
-    }
-  }
-
-  // OAuth methods
-  async googleLogin(token: string): Promise<AuthResponse> {
-    try {
-      const response = await this.request<{ message: string; token: string; user: User }>('/auth/google', {
-        method: 'POST',
-        body: JSON.stringify({ token }),
-      });
-      
-      if (response.token) {
-        this.token = response.token;
-        localStorage.setItem('token', response.token);
-      }
-      
-      return {
-        token: response.token,
-        user: response.user
-      };
-    } catch (error) {
-      console.error('Google login API error:', error);
-      throw error;
-    }
-  }
-
-  async facebookLogin(token: string): Promise<AuthResponse> {
-    try {
-      const response = await this.request<{ message: string; token: string; user: User }>('/auth/facebook', {
-        method: 'POST',
-        body: JSON.stringify({ token }),
-      });
-      
-      if (response.token) {
-        this.token = response.token;
-        localStorage.setItem('token', response.token);
-      }
-      
-      return {
-        token: response.token,
-        user: response.user
-      };
-    } catch (error) {
-      console.error('Facebook login API error:', error);
+      logger.error('Register API error', error);
       throw error;
     }
   }
@@ -640,9 +543,7 @@ class ApiClient {
     try {
       return await this.request<{ user: User }>('/auth/profile');
     } catch (error) {
-      console.error('Get profile API error:', error);
-      // If profile fetch fails, user might not be authenticated
-      this.clearAuth();
+      logger.error('Get profile API error', error);
       throw error;
     }
   }
@@ -651,6 +552,31 @@ class ApiClient {
     name?: string;
     phone?: string;
     address?: string;
+    preferences?: {
+      language?: string;
+      currency?: string;
+      emailNotifications?: boolean;
+      smsNotifications?: boolean;
+      marketingEmails?: boolean;
+      notificationPreferences?: {
+        email?: {
+          orderUpdates?: boolean;
+          promotions?: boolean;
+          newsletters?: boolean;
+          productRecommendations?: boolean;
+        };
+        push?: {
+          orderUpdates?: boolean;
+          promotions?: boolean;
+          backInStock?: boolean;
+          priceDrops?: boolean;
+        };
+        sms?: {
+          orderUpdates?: boolean;
+          promotions?: boolean;
+        };
+      };
+    };
   }): Promise<{ message: string; user: User }> {
     try {
       return await this.request<{ message: string; user: User }>('/auth/profile', {
@@ -658,7 +584,31 @@ class ApiClient {
         body: JSON.stringify(userData),
       });
     } catch (error) {
-      console.error('Update profile API error:', error);
+      logger.error('Update profile API error', error);
+      throw error;
+    }
+  }
+
+  async changePassword(currentPassword: string, newPassword: string): Promise<{ message: string }> {
+    try {
+      return await this.request<{ message: string }>('/auth/change-password', {
+        method: 'POST',
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+    } catch (error) {
+      logger.error('Change password API error', error);
+      throw error;
+    }
+  }
+
+  async deleteAccount(password: string): Promise<{ message: string }> {
+    try {
+      return await this.request<{ message: string }>('/auth/account', {
+        method: 'DELETE',
+        body: JSON.stringify({ password }),
+      });
+    } catch (error) {
+      logger.error('Delete account API error', error);
       throw error;
     }
   }
@@ -670,7 +620,7 @@ class ApiClient {
         body: JSON.stringify({ email }),
       });
     } catch (error) {
-      console.error('Forgot password API error:', error);
+      logger.error('Forgot password API error', error);
       throw error;
     }
   }
@@ -682,7 +632,7 @@ class ApiClient {
         body: JSON.stringify({ token, newPassword }),
       });
     } catch (error) {
-      console.error('Reset password API error:', error);
+      logger.error('Reset password API error', error);
       throw error;
     }
   }
@@ -706,7 +656,7 @@ class ApiClient {
     try {
       return await this.request<PaymentMethod[]>('/payment-methods');
     } catch (error) {
-      console.error('Get customer payment methods API error:', error);
+      logger.error('Get customer payment methods API error', error);
       throw error;
     }
   }
@@ -726,7 +676,7 @@ class ApiClient {
         body: JSON.stringify(paymentData),
       });
     } catch (error) {
-      console.error('Add customer payment method API error:', error);
+      logger.error('Add customer payment method API error', error);
       throw error;
     }
   }
@@ -746,7 +696,7 @@ class ApiClient {
         body: JSON.stringify(paymentData),
       });
     } catch (error) {
-      console.error('Update customer payment method API error:', error);
+      logger.error('Update customer payment method API error', error);
       throw error;
     }
   }
@@ -757,7 +707,7 @@ class ApiClient {
         method: 'DELETE',
       });
     } catch (error) {
-      console.error('Delete customer payment method API error:', error);
+      logger.error('Delete customer payment method API error', error);
       throw error;
     }
   }
@@ -768,13 +718,14 @@ class ApiClient {
         method: 'PUT',
       });
     } catch (error) {
-      console.error('Set default payment method API error:', error);
+      logger.error('Set default payment method API error', error);
       throw error;
     }
   }
 
   logout(): void {
-    this.clearAuth();
+    this.token = null;
+    localStorage.removeItem('token');
   }
 
   // Address methods
@@ -782,7 +733,7 @@ class ApiClient {
     try {
       return await this.request<{ addresses: Address[] }>('/auth/addresses');
     } catch (error) {
-      console.error('Get addresses API error:', error);
+      logger.error('Get addresses API error', error);
       throw error;
     }
   }
@@ -804,7 +755,7 @@ class ApiClient {
         body: JSON.stringify(addressData),
       });
     } catch (error) {
-      console.error('Add address API error:', error);
+      logger.error('Add address API error', error);
       throw error;
     }
   }
@@ -826,7 +777,7 @@ class ApiClient {
         body: JSON.stringify(addressData),
       });
     } catch (error) {
-      console.error('Update address API error:', error);
+      logger.error('Update address API error', error);
       throw error;
     }
   }
@@ -837,7 +788,7 @@ class ApiClient {
         method: 'DELETE',
       });
     } catch (error) {
-      console.error('Delete address API error:', error);
+      logger.error('Delete address API error', error);
       throw error;
     }
   }
@@ -848,7 +799,7 @@ class ApiClient {
         method: 'PUT',
       });
     } catch (error) {
-      console.error('Set default address API error:', error);
+      logger.error('Set default address API error', error);
       throw error;
     }
   }
@@ -865,7 +816,7 @@ class ApiClient {
     isFeatured?: boolean;
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
-  }): Promise<{ products: Product[]; pagination?: { page: number; limit: number; total: number; pages: number } }> {
+  }): Promise<{ products: Product[] }> {
     const searchParams = new URLSearchParams();
     
     if (params) {
@@ -879,65 +830,20 @@ class ApiClient {
     const queryString = searchParams.toString();
     const endpoint = `/products${queryString ? `?${queryString}` : ''}`;
     
-    const response = await this.request<{ success: boolean; data: { products: Product[]; pagination: { page: number; limit: number; total: number; pages: number } } } | { products: Product[] } | Product[]>(endpoint);
-    
-    // Handle both old and new response formats for backward compatibility
-    if ('success' in response && response.success && response.data) {
-      return {
-        products: response.data.products,
-        pagination: response.data.pagination
-      };
-    } else if (Array.isArray(response)) {
-      // Handle old format where response is directly an array
-      return { products: response as Product[] };
-    } else if ('products' in response && response.products) {
-      // Handle old format where response has products property
-      return { products: response.products };
-    } else {
-      return { products: [] };
-    }
+    return this.request<{ products: Product[] }>(endpoint);
   }
 
-  async getProduct(id: string): Promise<{ product: Product }> {
-    const response = await this.request<{ success: boolean; data: { product: Product } } | { product: Product }>(`/products/${id}`);
-    
-    // Handle both old and new response formats for backward compatibility
-    if ('success' in response && response.success && response.data) {
-      return { product: response.data.product };
-    } else if ('product' in response && response.product) {
-      // Handle old format where response has product property
-      return { product: response.product };
-    } else {
-      throw new Error('Product not found');
-    }
+  async getProduct(id: string, trackView: boolean = false): Promise<{ product: Product }> {
+    const url = trackView ? `/products/${id}?trackView=true` : `/products/${id}`;
+    return this.request<{ product: Product }>(url);
   }
 
   async getFeaturedProducts(limit: number = 6): Promise<{ products: Product[] }> {
-    const response = await this.request<{ success: boolean; data: { products: Product[] } } | { products: Product[] }>(`/products/featured?limit=${limit}`);
-    
-    // Handle both old and new response formats for backward compatibility
-    if ('success' in response && response.success && response.data) {
-      return { products: response.data.products };
-    } else if ('products' in response && response.products) {
-      // Handle old format where response has products property
-      return { products: response.products };
-    } else {
-      return { products: [] };
-    }
+    return this.request<{ products: Product[] }>(`/products/featured?limit=${limit}`);
   }
 
   async searchProducts(query: string, limit: number = 10): Promise<{ products: Product[] }> {
-    const response = await this.request<{ success: boolean; data: { products: Product[] } } | { products: Product[] }>(`/products/search?q=${encodeURIComponent(query)}&limit=${limit}`);
-    
-    // Handle both old and new response formats for backward compatibility
-    if ('success' in response && response.success && response.data) {
-      return { products: response.data.products };
-    } else if ('products' in response && response.products) {
-      // Handle old format where response has products property
-      return { products: response.products };
-    } else {
-      return { products: [] };
-    }
+    return this.request<{ products: Product[] }>(`/products/search?q=${encodeURIComponent(query)}&limit=${limit}`);
   }
 
   // Category methods
@@ -1040,7 +946,6 @@ class ApiClient {
 
   async createOrder(orderData: {
     userId?: string;
-    email?: string; // For guest orders
     items: Array<{
       productId: string;
       quantity: number;
@@ -1073,45 +978,6 @@ class ApiClient {
       method: 'POST',
       body: JSON.stringify(orderData),
     });
-  }
-
-  // Create guest order (no authentication required)
-  async createGuestOrder(orderData: {
-    email: string;
-    items: Array<{
-      productId: string;
-      quantity: number;
-      size?: string;
-      color?: string;
-    }>;
-    shippingAddress: {
-      name: string;
-      phone: string;
-      address: string;
-      city: string;
-      district: string;
-    };
-    billingAddress?: {
-      name: string;
-      phone: string;
-      address: string;
-      city: string;
-      district: string;
-    };
-    paymentMethod: string;
-    notes?: string;
-  }): Promise<{ message: string; order: Order }> {
-    // Try guest order endpoint first (if backend supports it)
-    try {
-      return await this.request<{ message: string; order: Order }>('/orders/guest', {
-        method: 'POST',
-        body: JSON.stringify(orderData),
-      });
-    } catch (error) {
-      // If guest endpoint doesn't exist, this will be handled by backend
-      // For now, we'll throw the error - backend needs to support guest orders
-      throw error;
-    }
   }
 
   async cancelOrder(id: string): Promise<{ message: string; order: Order }> {
@@ -1148,12 +1014,7 @@ class ApiClient {
 
   // Health check
   async healthCheck(): Promise<{ status: string; message: string; timestamp: string }> {
-    try {
-      return await this.request<{ status: string; message: string; timestamp: string }>('/health');
-    } catch (error) {
-      console.error('Health check failed:', error);
-      throw new Error('Service is currently unavailable');
-    }
+    return this.request<{ status: string; message: string; timestamp: string }>('/health');
   }
 
   // Admin Dashboard methods
@@ -1481,10 +1342,10 @@ class ApiClient {
     }>; total: number }>('/cart');
   }
 
-  async addToCart(productId: string, quantity: number = 1, size?: string, color?: string): Promise<{ message: string }> {
+  async addToCart(productId: string, quantity: number = 1): Promise<{ message: string }> {
     return this.request<{ message: string }>('/cart', {
       method: 'POST',
-      body: JSON.stringify({ productId, quantity, size, color }),
+      body: JSON.stringify({ productId, quantity }),
     });
   }
 
@@ -2457,22 +2318,12 @@ class ApiClient {
     nextFlashSale?: FlashSale;
     message?: string;
   }> {
-    try {
-      return await this.request<{ 
-        success: boolean; 
-        flashSale: FlashSale | null; 
-        nextFlashSale?: FlashSale;
-        message?: string;
-      }>('/flash-sales/current');
-    } catch (error) {
-      console.error('Get current flash sale failed:', error);
-      // Return empty state instead of throwing
-      return {
-        success: false,
-        flashSale: null,
-        message: 'Failed to load flash sale data'
-      };
-    }
+    return this.request<{ 
+      success: boolean; 
+      flashSale: FlashSale | null; 
+      nextFlashSale?: FlashSale;
+      message?: string;
+    }>('/flash-sales/current');
   }
 
   async getFlashSaleById(id: string): Promise<{ success: boolean; flashSale: FlashSale }> {
@@ -2626,206 +2477,48 @@ class ApiClient {
     });
   }
 
-  // API Key Management methods
-  async getApiKeys(params?: {
-    page?: number;
-    limit?: number;
-    search?: string;
-    status?: string;
-  }): Promise<{ success: boolean; data: { apiKeys: ApiKey[]; pagination: { page: number; limit: number; total: number; pages: number } } }> {
-    const queryParams = new URLSearchParams();
-    if (params?.page) queryParams.append('page', params.page.toString());
-    if (params?.limit) queryParams.append('limit', params.limit.toString());
-    if (params?.search) queryParams.append('search', params.search);
-    if (params?.status) queryParams.append('status', params.status);
+  // Color API methods
+  async getColors(params?: { activeOnly?: boolean; language?: 'vi' | 'en' | 'ja' }): Promise<{ success: boolean; colors: Color[]; total: number }> {
+    const searchParams = new URLSearchParams();
+    if (params?.activeOnly !== undefined) searchParams.append('activeOnly', params.activeOnly.toString());
+    if (params?.language) searchParams.append('language', params.language);
+
+    const queryString = searchParams.toString();
+    const endpoint = `/colors${queryString ? `?${queryString}` : ''}`;
     
-    const endpoint = `/admin/api-keys/keys${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
     return this.request(endpoint);
   }
 
-  async getApiKey(id: string): Promise<{ success: boolean; data: ApiKey }> {
-    return this.request(`/admin/api-keys/keys/${id}`);
+  async getColor(id: string): Promise<{ success: boolean; color: Color }> {
+    return this.request(`/colors/${id}`);
   }
 
-  async createApiKey(data: {
-    name: string;
-    description: string;
-    permissions: string[];
-    rateLimit?: number;
-    expiresAt?: string;
-  }): Promise<{ success: boolean; data: ApiKey; message: string }> {
-    return this.request('/admin/api-keys/keys', {
+  async getColorByName(name: string): Promise<{ success: boolean; color: Color }> {
+    return this.request(`/colors/name/${encodeURIComponent(name)}`);
+  }
+
+  async getColorHex(name: string): Promise<{ success: boolean; name: string; hexValue: string }> {
+    return this.request(`/colors/hex/${encodeURIComponent(name)}`);
+  }
+
+  async createColor(color: CreateColorRequest): Promise<{ success: boolean; message: string; color: Color; isExisting?: boolean }> {
+    return this.request('/colors', {
       method: 'POST',
-      body: JSON.stringify(data),
+      body: JSON.stringify(color),
     });
   }
 
-  async updateApiKey(id: string, data: Partial<ApiKey>): Promise<{ success: boolean; data: ApiKey; message: string }> {
-    return this.request(`/admin/api-keys/keys/${id}`, {
+  async updateColor(id: string, color: UpdateColorRequest): Promise<{ success: boolean; message: string; color: Color }> {
+    return this.request(`/colors/${id}`, {
       method: 'PUT',
-      body: JSON.stringify(data),
+      body: JSON.stringify(color),
     });
   }
 
-  async deleteApiKey(id: string): Promise<{ success: boolean; message: string }> {
-    return this.request(`/admin/api-keys/keys/${id}`, {
+  async deleteColor(id: string): Promise<{ success: boolean; message: string }> {
+    return this.request(`/colors/${id}`, {
       method: 'DELETE',
     });
-  }
-
-  async regenerateApiKey(id: string): Promise<{ success: boolean; data: ApiKey; message: string }> {
-    return this.request(`/admin/api-keys/keys/${id}/regenerate`, {
-      method: 'POST',
-    });
-  }
-
-  // Integration Management methods
-  async getIntegrations(params?: {
-    page?: number;
-    limit?: number;
-    search?: string;
-    type?: string;
-    status?: string;
-  }): Promise<{ success: boolean; data: { integrations: Integration[]; pagination: { page: number; limit: number; total: number; pages: number } } }> {
-    const queryParams = new URLSearchParams();
-    if (params?.page) queryParams.append('page', params.page.toString());
-    if (params?.limit) queryParams.append('limit', params.limit.toString());
-    if (params?.search) queryParams.append('search', params.search);
-    if (params?.type) queryParams.append('type', params.type);
-    if (params?.status) queryParams.append('status', params.status);
-    
-    const endpoint = `/admin/api-keys/integrations${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
-    return this.request(endpoint);
-  }
-
-  async createIntegration(data: {
-    name: string;
-    nameEn?: string;
-    nameJa?: string;
-    type: string;
-    provider: string;
-    description: string;
-    descriptionEn?: string;
-    descriptionJa?: string;
-    config: Record<string, unknown>;
-    webhookUrl?: string;
-    webhookSecret?: string;
-  }): Promise<{ success: boolean; data: Integration; message: string }> {
-    return this.request('/admin/api-keys/integrations', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-  }
-
-  async updateIntegration(id: string, data: Partial<Integration>): Promise<{ success: boolean; data: Integration; message: string }> {
-    return this.request(`/admin/api-keys/integrations/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    });
-  }
-
-  async deleteIntegration(id: string): Promise<{ success: boolean; message: string }> {
-    return this.request(`/admin/api-keys/integrations/${id}`, {
-      method: 'DELETE',
-    });
-  }
-
-  async testIntegration(id: string): Promise<{ success: boolean; data: { success: boolean }; message: string }> {
-    return this.request(`/admin/api-keys/integrations/${id}/test`, {
-      method: 'POST',
-    });
-  }
-
-  async syncIntegration(id: string): Promise<{ success: boolean; data: { success: boolean }; message: string }> {
-    return this.request(`/admin/api-keys/integrations/${id}/sync`, {
-      method: 'POST',
-    });
-  }
-
-  // API Logs methods
-  async getApiLogs(params?: {
-    page?: number;
-    limit?: number;
-    apiKey?: string;
-    endpoint?: string;
-    statusCode?: number;
-    startDate?: string;
-    endDate?: string;
-  }): Promise<{ success: boolean; data: { logs: ApiLog[]; pagination: { page: number; limit: number; total: number; pages: number } } }> {
-    const queryParams = new URLSearchParams();
-    if (params?.page) queryParams.append('page', params.page.toString());
-    if (params?.limit) queryParams.append('limit', params.limit.toString());
-    if (params?.apiKey) queryParams.append('apiKey', params.apiKey);
-    if (params?.endpoint) queryParams.append('endpoint', params.endpoint);
-    if (params?.statusCode) queryParams.append('statusCode', params.statusCode.toString());
-    if (params?.startDate) queryParams.append('startDate', params.startDate);
-    if (params?.endDate) queryParams.append('endDate', params.endDate);
-    
-    const endpoint = `/admin/api-keys/logs${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
-    return this.request(endpoint);
-  }
-
-  async getApiStats(params?: {
-    startDate?: string;
-    endDate?: string;
-  }): Promise<{ 
-    success: boolean; 
-    data: { 
-      apiStats: ApiStats; 
-      apiKeyStats: ApiKeyStats; 
-      integrationStats: IntegrationStats; 
-    } 
-  }> {
-    const queryParams = new URLSearchParams();
-    if (params?.startDate) queryParams.append('startDate', params.startDate);
-    if (params?.endDate) queryParams.append('endDate', params.endDate);
-    
-    const endpoint = `/admin/api-keys/stats${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
-    return this.request(endpoint);
-  }
-
-  async clearApiLogs(olderThan?: string): Promise<{ success: boolean; data: { deletedCount: number }; message: string }> {
-    return this.request('/admin/api-keys/logs', {
-      method: 'DELETE',
-      body: JSON.stringify({ olderThan }),
-    });
-  }
-
-  // Export/Import methods
-  async exportApiKeys(format: 'json' | 'csv' = 'json', includeInactive: boolean = false): Promise<Blob> {
-    const queryParams = new URLSearchParams();
-    queryParams.append('format', format);
-    if (includeInactive) queryParams.append('includeInactive', 'true');
-    
-    try {
-      const response = await fetch(`${this.baseURL}/admin/api-keys/export?${queryParams.toString()}`, {
-        headers: {
-          'Authorization': `Bearer ${this.token}`,
-        },
-      });
-      
-      if (!response.ok) {
-        const errorText = await response.text().catch(() => 'Unknown error');
-        throw new Error(`Export failed: ${response.status} ${errorText}`);
-      }
-      
-      return response.blob();
-    } catch (error) {
-      console.error('Export API keys failed:', error);
-      throw new Error(`Failed to export API keys: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-
-  async importApiKeys(data: Record<string, unknown>, overwrite: boolean = false): Promise<{ success: boolean; data: Record<string, unknown>; message: string }> {
-    try {
-      return await this.request('/admin/api-keys/import', {
-        method: 'POST',
-        body: JSON.stringify({ data, overwrite }),
-      });
-    } catch (error) {
-      console.error('Import API keys failed:', error);
-      throw new Error(`Failed to import API keys: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
   }
 }
 
@@ -2856,6 +2549,37 @@ export interface FlashSale {
   textColor?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+// Color types
+export interface Color {
+  _id: string;
+  name: string;
+  nameEn?: string;
+  nameJa?: string;
+  hexValue: string;
+  isActive: boolean;
+  isDefault: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateColorRequest {
+  name: string;
+  nameEn?: string;
+  nameJa?: string;
+  hexValue: string;
+  isActive?: boolean;
+  isDefault?: boolean;
+}
+
+export interface UpdateColorRequest {
+  name?: string;
+  nameEn?: string;
+  nameJa?: string;
+  hexValue?: string;
+  isActive?: boolean;
+  isDefault?: boolean;
 }
 
 // Create and export API client instance

@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { api, Category } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { ArrowRight, Package, Search, Grid, List, SortAsc, SortDesc, Filter, TrendingUp, Star, Eye, Users } from "lucide-react";
 import CloudinaryImage from "@/components/CloudinaryImage";
 
@@ -99,7 +99,7 @@ const CategoriesPage = () => {
         const name = getCategoryName(category);
         const description = getCategoryDescription(category);
         return name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-               description.toLowerCase().includes(searchQuery.toLowerCase());
+               (description && description.toLowerCase().includes(searchQuery.toLowerCase()));
       });
     }
 
@@ -120,6 +120,7 @@ const CategoriesPage = () => {
     });
 
     setFilteredCategories(filtered);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [categories, searchQuery, sortBy, language]);
 
   const translations = {
@@ -221,6 +222,9 @@ const CategoriesPage = () => {
     }
   };
 
+  // Calculate total products across all categories
+  const totalProducts = categories.reduce((sum, cat) => sum + (cat.productCount || 0), 0);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       <Header
@@ -229,45 +233,52 @@ const CategoriesPage = () => {
       />
 
       <main className="py-8">
-        <div className="container space-y-8">
+        <div className="container mx-auto px-4 space-y-8">
           {/* Enhanced Hero Section */}
-          <section className="text-center">
-            <div className="relative overflow-hidden rounded-2xl mb-8">
-              {/* Banner Background */}
+          <section className="text-center mb-12">
+            <div className="relative overflow-hidden rounded-2xl shadow-2xl">
+              {/* Banner Background with Gradient */}
               <div className="absolute inset-0">
                 <img 
                   src="/images/banners/banner-04.png" 
                   alt="Categories Banner"
                   className="w-full h-full object-cover"
                 />
-                <div className="absolute inset-0 bg-black/40"></div>
+                <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/50 to-black/60"></div>
               </div>
               
               {/* Content */}
-              <div className="relative z-10 p-12 text-white">
-                <h1 className="text-4xl md:text-6xl font-bold mb-4">
+              <div className="relative z-10 p-12 md:p-16 text-white">
+                <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-4 bg-gradient-to-r from-white via-white to-white/80 bg-clip-text text-transparent">
                   {t.title}
                 </h1>
-                <p className="text-xl md:text-2xl mb-4 text-white/90">
+                <p className="text-xl md:text-2xl mb-4 text-white/90 font-light">
                   {t.subtitle}
                 </p>
-                <p className="text-lg max-w-2xl mx-auto text-white/80 mb-6">
+                <p className="text-lg max-w-2xl mx-auto text-white/80 mb-8 leading-relaxed">
                   {t.description}
                 </p>
-                <Badge variant="secondary" className="bg-white/20 text-white text-lg px-4 py-2">
-                  {filteredCategories.length} {t.totalCategories}
-                </Badge>
+                <div className="flex items-center justify-center gap-4 flex-wrap">
+                  <Badge variant="secondary" className="bg-white/20 backdrop-blur-sm text-white text-lg px-6 py-2 border border-white/30">
+                    <Package className="h-4 w-4 mr-2" />
+                    {filteredCategories.length} {t.totalCategories}
+                  </Badge>
+                  <Badge variant="secondary" className="bg-white/20 backdrop-blur-sm text-white text-lg px-6 py-2 border border-white/30">
+                    <TrendingUp className="h-4 w-4 mr-2" />
+                    {totalProducts} {t.products}
+                  </Badge>
+                </div>
               </div>
             </div>
           </section>
 
           {/* Controls Section */}
           <section>
-            <Card>
-              <CardHeader>
+            <Card className="rounded-xl border-2 shadow-lg bg-background/95 backdrop-blur-sm">
+              <CardHeader className="pb-4">
                 <CardTitle className="flex items-center space-x-2">
-                  <Filter className="h-5 w-5" />
-                  <span>{t.exploreAll}</span>
+                  <Filter className="h-5 w-5 text-primary" />
+                  <span className="text-lg font-semibold">{t.exploreAll}</span>
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -279,12 +290,12 @@ const CategoriesPage = () => {
                       placeholder={t.search}
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-10"
+                      className="pl-10 rounded-lg border-2 focus:border-primary transition-all"
                     />
                   </div>
 
                   <Select value={sortBy} onValueChange={setSortBy}>
-                    <SelectTrigger>
+                    <SelectTrigger className="rounded-lg border-2">
                       <SelectValue placeholder={t.sortBy} />
                     </SelectTrigger>
                     <SelectContent>
@@ -296,11 +307,12 @@ const CategoriesPage = () => {
                   </Select>
 
                   <div className="flex items-center justify-end space-x-2">
-                    <span className="text-sm text-muted-foreground">{t.viewMode}:</span>
+                    <span className="text-sm font-medium text-muted-foreground">{t.viewMode}:</span>
                     <Button
                       variant={viewMode === 'grid' ? 'default' : 'outline'}
                       size="sm"
                       onClick={() => setViewMode('grid')}
+                      className="rounded-lg"
                     >
                       <Grid className="h-4 w-4" />
                     </Button>
@@ -308,6 +320,7 @@ const CategoriesPage = () => {
                       variant={viewMode === 'list' ? 'default' : 'outline'}
                       size="sm"
                       onClick={() => setViewMode('list')}
+                      className="rounded-lg"
                     >
                       <List className="h-4 w-4" />
                     </Button>
@@ -348,47 +361,50 @@ const CategoriesPage = () => {
             ) : (
               <div className={
                 viewMode === 'grid' 
-                  ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8'
+                  ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'
                   : 'space-y-4'
               }>
                 {filteredCategories.map((category) => (
                   <Card 
                     key={category._id} 
-                    className={`group hover:shadow-xl transition-all duration-300 cursor-pointer rounded-md ${
-                      viewMode === 'list' ? 'flex' : ''
+                    className={`group hover:shadow-xl transition-all duration-300 cursor-pointer rounded-xl border-2 overflow-hidden ${
+                      viewMode === 'list' ? 'flex hover:border-primary' : 'hover:scale-[1.02] hover:border-primary'
                     }`}
                     onClick={() => navigate(`/category/${category.slug}`)}
                   >
                     {viewMode === 'grid' ? (
                       <CardContent className="p-6">
                         <div className="flex items-center justify-between mb-4">
-                          {renderCategoryImage(category, "w-12 h-12")}
-                          <div className="flex items-center space-x-2">
-                            {category.isActive && (
-                              <Badge variant="secondary">Active</Badge>
-                            )}
-                            <Badge variant="outline" className="text-xs">
-                              <TrendingUp className="h-3 w-3 mr-1" />
-                              {category.productCount || 0}
-                            </Badge>
+                          <div className="relative">
+                            {renderCategoryImage(category, "w-16 h-16 rounded-xl")}
                           </div>
+                          <Badge variant="secondary" className="text-xs font-semibold px-3 py-1">
+                            <TrendingUp className="h-3 w-3 mr-1" />
+                            {category.productCount || 0}
+                          </Badge>
                         </div>
                         
-                        <h3 className="text-xl font-semibold mb-2 group-hover:text-primary transition-colors">
+                        <h3 className="text-xl font-bold mb-2 group-hover:text-primary transition-colors">
                           {getCategoryName(category)}
                         </h3>
                         
-                        <p className="text-muted-foreground mb-4 line-clamp-3 text-sm">
-                          {getCategoryDescription(category)}
-                        </p>
+                        {getCategoryDescription(category) && (
+                          <p className="text-muted-foreground mb-4 line-clamp-2 text-sm leading-relaxed">
+                            {getCategoryDescription(category)}
+                          </p>
+                        )}
                         
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-muted-foreground flex items-center">
-                            <Users className="h-3 w-3 mr-1" />
+                        <div className="flex items-center justify-between pt-2 border-t">
+                          <span className="text-sm font-medium text-muted-foreground flex items-center">
+                            <Package className="h-3.5 w-3.5 mr-1.5" />
                             {category.productCount || 0} {t.products}
                           </span>
                           
-                          <Button variant="outline" size="sm" className="group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="rounded-lg group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary transition-all"
+                          >
                             {t.viewProducts}
                             <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
                           </Button>
@@ -396,35 +412,38 @@ const CategoriesPage = () => {
                       </CardContent>
                     ) : (
                       <CardContent className="p-6 flex items-center space-x-6 w-full">
-                        {renderCategoryImage(category, "w-16 h-16 flex-shrink-0")}
+                        <div className="relative flex-shrink-0">
+                          {renderCategoryImage(category, "w-20 h-20 rounded-xl")}
+                        </div>
                         
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between mb-2">
-                            <h3 className="text-xl font-semibold group-hover:text-primary transition-colors">
+                            <h3 className="text-xl font-bold group-hover:text-primary transition-colors">
                               {getCategoryName(category)}
                             </h3>
-                            <div className="flex items-center space-x-2">
-                              {category.isActive && (
-                                <Badge variant="secondary">Active</Badge>
-                              )}
-                              <Badge variant="outline" className="text-xs">
-                                <TrendingUp className="h-3 w-3 mr-1" />
-                                {category.productCount || 0}
-                              </Badge>
-                            </div>
+                            <Badge variant="secondary" className="text-xs font-semibold px-3 py-1">
+                              <TrendingUp className="h-3 w-3 mr-1" />
+                              {category.productCount || 0} {t.products}
+                            </Badge>
                           </div>
                           
-                          <p className="text-muted-foreground mb-3 line-clamp-2 text-sm">
-                            {getCategoryDescription(category)}
-                          </p>
+                          {getCategoryDescription(category) && (
+                            <p className="text-muted-foreground mb-3 line-clamp-2 text-sm leading-relaxed">
+                              {getCategoryDescription(category)}
+                            </p>
+                          )}
                           
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm text-muted-foreground flex items-center">
-                              <Users className="h-3 w-3 mr-1" />
+                          <div className="flex items-center justify-between pt-2 border-t">
+                            <span className="text-sm font-medium text-muted-foreground flex items-center">
+                              <Package className="h-3.5 w-3.5 mr-1.5" />
                               {category.productCount || 0} {t.products}
                             </span>
                             
-                            <Button variant="outline" size="sm" className="group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary">
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="rounded-lg group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary transition-all"
+                            >
                               {t.viewProducts}
                               <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
                             </Button>
@@ -439,32 +458,43 @@ const CategoriesPage = () => {
           </section>
 
           {/* Enhanced CTA Section */}
-          <section className="text-center">
-            <div className="bg-gray-900 rounded-2xl overflow-hidden">
-              <div className="bg-gradient-to-r from-gray-100 to-gray-200 p-12 mx-4 my-4 rounded-xl">
-                <div className="flex items-center justify-center mb-4">
-                  <Star className="h-8 w-8 mr-2 text-gray-700" />
-                  <h2 className="text-3xl font-bold text-gray-900">Sẵn sàng mua sắm?</h2>
-                </div>
-                <p className="text-lg mb-8 text-gray-600 max-w-2xl mx-auto">
-                  Khám phá bộ sưu tập thời trang Nhật Bản hoàn chỉnh
-                </p>
-                <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4">
-                  <Link to="/">
-                    <Button size="lg" className="px-8 py-3 bg-gray-900 text-white hover:bg-gray-800 rounded-lg font-semibold">
+          <section className="mt-12">
+            <Card className="rounded-2xl border-2 shadow-2xl overflow-hidden bg-gradient-to-br from-muted/50 via-background to-muted/30">
+              <CardContent className="p-12 md:p-16">
+                <div className="text-center max-w-3xl mx-auto">
+                  <div className="flex items-center justify-center mb-6">
+                    <div className="p-3 rounded-full bg-primary/10">
+                      <Star className="h-8 w-8 text-primary fill-primary" />
+                    </div>
+                  </div>
+                  <h2 className="text-3xl md:text-4xl font-bold mb-4 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                    {t.ready}
+                  </h2>
+                  <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto leading-relaxed">
+                    {t.exploreCollection}
+                  </p>
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                    <Button 
+                      size="lg" 
+                      className="px-8 py-6 rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+                      onClick={() => navigate('/products')}
+                    >
                       <Eye className="h-5 w-5 mr-2" />
-                      Duyệt tất cả sản phẩm
+                      {t.browse}
                     </Button>
-                  </Link>
-                  <Link to="/sale">
-                    <Button size="lg" className="px-8 py-3 bg-gray-200 text-gray-900 hover:bg-gray-300 border-0 rounded-lg font-semibold">
+                    <Button 
+                      size="lg" 
+                      variant="outline"
+                      className="px-8 py-6 rounded-xl font-semibold text-lg border-2 hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all duration-300 hover:scale-105"
+                      onClick={() => navigate('/sale')}
+                    >
                       <TrendingUp className="h-5 w-5 mr-2" />
-                      Sale Items
+                      {language === 'vi' ? 'Sản Phẩm Giảm Giá' : language === 'ja' ? 'セール商品' : 'Sale Items'}
                     </Button>
-                  </Link>
+                  </div>
                 </div>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           </section>
         </div>
       </main>

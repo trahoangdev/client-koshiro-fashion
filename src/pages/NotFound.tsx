@@ -1,7 +1,10 @@
 import { useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Home } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -43,59 +46,60 @@ const NotFound = () => {
   }, [location.pathname, t.errorLog]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 relative">
+      <Header cartItemsCount={0} onSearch={() => {}} />
+      
       {/* Banner Background */}
-      <div className="absolute inset-0">
+      <div className="absolute inset-0 z-0">
         <img 
           src="/images/banners/banner-05.png" 
           alt="404 Banner"
           className="w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-black/50 dark:bg-black/70"></div>
-      </div>
-      
-      {/* Background Pattern Overlay */}
-      <div className="absolute inset-0 opacity-10">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.3)_1px,transparent_0)] bg-[length:24px_24px]"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/50 to-black/60"></div>
       </div>
       
       {/* Content */}
-      <div className="relative z-10 text-center max-w-lg mx-auto px-6">
-        {/* 404 Number */}
-        <div className="mb-8">
-          <h1 className="text-9xl font-bold bg-gradient-to-r from-white to-stone-200 bg-clip-text text-transparent mb-4 drop-shadow-2xl">
-            {t.title}
-          </h1>
+      <div className="relative z-10 flex items-center justify-center min-h-screen py-16">
+        <div className="text-center max-w-2xl mx-auto px-6">
+          <Card className="rounded-2xl border-2 shadow-2xl overflow-hidden bg-background/95 backdrop-blur-sm">
+            <CardContent className="p-12 md:p-16">
+              {/* 404 Number */}
+              <div className="mb-8">
+                <h1 className="text-9xl md:text-[12rem] font-bold bg-gradient-to-r from-primary via-primary to-primary/70 bg-clip-text text-transparent mb-4">
+                  {t.title}
+                </h1>
+              </div>
+              
+              {/* Main Content */}
+              <div className="space-y-6">
+                <h2 className="text-3xl md:text-4xl font-bold text-foreground">
+                  {t.subtitle}
+                </h2>
+                
+                <p className="text-lg md:text-xl text-muted-foreground leading-relaxed">
+                  {t.description}
+                </p>
+                
+                {/* Action Button */}
+                <div className="pt-4">
+                  <Link to="/">
+                    <Button 
+                      size="lg"
+                      className="rounded-xl font-semibold px-8 py-6 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+                    >
+                      <Home className="h-5 w-5 mr-2" />
+                      {t.returnHome}
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
-        
-        {/* Main Content */}
-        <div className="space-y-6">
-          <h2 className="text-3xl font-semibold text-white drop-shadow-lg">
-            {t.subtitle}
-          </h2>
-          
-          <p className="text-lg text-white/90 leading-relaxed drop-shadow-md">
-            {t.description}
-          </p>
-          
-          {/* Action Button */}
-          <div className="pt-4">
-            <Link to="/">
-              <Button 
-                size="lg"
-                className="flex items-center gap-3 bg-white/90 hover:bg-white text-stone-800 px-8 py-3 rounded-full transition-all duration-300 hover:scale-105 shadow-xl hover:shadow-2xl backdrop-blur-sm border border-white/20"
-              >
-                <Home className="h-5 w-5" />
-                {t.returnHome}
-              </Button>
-            </Link>
-          </div>
-        </div>
-        
-        {/* Decorative Elements */}
-        <div className="absolute -top-20 -left-20 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
-        <div className="absolute -bottom-20 -right-20 w-40 h-40 bg-white/5 rounded-full blur-3xl"></div>
       </div>
+      
+      <Footer />
     </div>
   );
 };

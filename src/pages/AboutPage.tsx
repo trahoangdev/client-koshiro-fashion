@@ -97,63 +97,71 @@ const AboutPage = () => {
   const t = translations[language as keyof typeof translations] || translations.en;
 
   return (
-    <div className="min-h-screen bg-gradient-zen">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       <Header
         cartItemsCount={0}
         onSearch={() => {}}
       />
 
-      <main className="py-16">
-        <div className="container space-y-16">
+      <main className="py-8">
+        <div className="container mx-auto px-4 space-y-12">
           {/* Hero Section */}
-          <section className="relative overflow-hidden rounded-2xl">
-            {/* Banner Background */}
-            <div className="absolute inset-0">
-              <img 
-                src="/images/banners/banner-04.png" 
-                alt="About Us Banner"
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-black/50"></div>
-            </div>
-            
-            {/* Content */}
-            <div className="relative z-10 p-12 md:p-16 text-center text-white">
-              <h1 className="text-4xl md:text-6xl font-bold mb-4">
-                {t.title}
-              </h1>
-              <p className="text-xl md:text-2xl mb-4 text-white/90">
-                {t.subtitle}
-              </p>
-              <p className="text-lg max-w-3xl mx-auto text-white/80">
-                {t.description}
-              </p>
+          <section className="text-center mb-12">
+            <div className="relative overflow-hidden rounded-2xl shadow-2xl">
+              {/* Banner Background */}
+              <div className="absolute inset-0">
+                <img 
+                  src="/images/banners/banner-04.png" 
+                  alt="About Us Banner"
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/50 to-black/60"></div>
+              </div>
+              
+              {/* Content */}
+              <div className="relative z-10 p-12 md:p-16 text-white">
+                <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-4 bg-gradient-to-r from-white via-white to-white/80 bg-clip-text text-transparent">
+                  {t.title}
+                </h1>
+                <p className="text-xl md:text-2xl mb-4 text-white/90 font-light">
+                  {t.subtitle}
+                </p>
+                <p className="text-lg max-w-3xl mx-auto text-white/80 mb-8 leading-relaxed">
+                  {t.description}
+                </p>
+              </div>
             </div>
           </section>
 
           {/* Stats Section */}
-          <section className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-primary mb-2">10K+</div>
-              <div className="text-muted-foreground">{t.stats.customers}</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-primary mb-2">50+</div>
-              <div className="text-muted-foreground">{t.stats.countries}</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-primary mb-2">500+</div>
-              <div className="text-muted-foreground">{t.stats.products}</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-primary mb-2">5+</div>
-              <div className="text-muted-foreground">{t.stats.years}</div>
-            </div>
+          <section>
+            <Card className="rounded-xl border-2 shadow-lg bg-background/95 backdrop-blur-sm">
+              <CardContent className="p-8">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                  <div className="text-center p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-all">
+                    <div className="text-3xl md:text-4xl font-bold text-primary mb-2">10K+</div>
+                    <div className="text-sm font-medium text-muted-foreground">{t.stats.customers}</div>
+                  </div>
+                  <div className="text-center p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-all">
+                    <div className="text-3xl md:text-4xl font-bold text-primary mb-2">50+</div>
+                    <div className="text-sm font-medium text-muted-foreground">{t.stats.countries}</div>
+                  </div>
+                  <div className="text-center p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-all">
+                    <div className="text-3xl md:text-4xl font-bold text-primary mb-2">500+</div>
+                    <div className="text-sm font-medium text-muted-foreground">{t.stats.products}</div>
+                  </div>
+                  <div className="text-center p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-all">
+                    <div className="text-3xl md:text-4xl font-bold text-primary mb-2">5+</div>
+                    <div className="text-sm font-medium text-muted-foreground">{t.stats.years}</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </section>
 
           {/* Story & Mission Section */}
-          <section className="grid md:grid-cols-2 gap-8">
-            <Card>
+          <section className="grid md:grid-cols-2 gap-6">
+            <Card className="rounded-xl border-2 shadow-lg hover:shadow-xl transition-all overflow-hidden">
               <CardContent className="p-8">
                 <h2 className="text-2xl font-bold mb-4">{t.story.title}</h2>
                 <p className="text-muted-foreground leading-relaxed">
@@ -161,7 +169,7 @@ const AboutPage = () => {
                 </p>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="rounded-xl border-2 shadow-lg hover:shadow-xl transition-all overflow-hidden">
               <CardContent className="p-8">
                 <h2 className="text-2xl font-bold mb-4">{t.mission.title}</h2>
                 <p className="text-muted-foreground leading-relaxed">
@@ -173,40 +181,48 @@ const AboutPage = () => {
 
           {/* Values Section */}
           <section>
-            <h2 className="text-3xl font-bold text-center mb-12">{t.values.title}</h2>
+            <h2 className="text-3xl md:text-4xl font-bold text-center mb-8">{t.values.title}</h2>
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <Card className="text-center">
+              <Card className="text-center rounded-xl border-2 shadow-lg hover:shadow-xl transition-all overflow-hidden group">
                 <CardContent className="p-6">
-                  <Award className="h-12 w-12 mx-auto mb-4 text-primary" />
-                  <h3 className="font-semibold mb-2">{t.values.quality}</h3>
-                  <p className="text-sm text-muted-foreground">
+                  <div className="p-3 rounded-full bg-primary/10 w-fit mx-auto mb-4 group-hover:bg-primary/20 transition-all">
+                    <Award className="h-8 w-8 mx-auto text-primary" />
+                  </div>
+                  <h3 className="font-bold mb-2 text-lg">{t.values.quality}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
                     Every piece is crafted with attention to detail and quality
                   </p>
                 </CardContent>
               </Card>
-              <Card className="text-center">
+              <Card className="text-center rounded-xl border-2 shadow-lg hover:shadow-xl transition-all overflow-hidden group">
                 <CardContent className="p-6">
-                  <Globe className="h-12 w-12 mx-auto mb-4 text-primary" />
-                  <h3 className="font-semibold mb-2">{t.values.authenticity}</h3>
-                  <p className="text-sm text-muted-foreground">
+                  <div className="p-3 rounded-full bg-primary/10 w-fit mx-auto mb-4 group-hover:bg-primary/20 transition-all">
+                    <Globe className="h-8 w-8 mx-auto text-primary" />
+                  </div>
+                  <h3 className="font-bold mb-2 text-lg">{t.values.authenticity}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
                     Authentic Japanese design and cultural heritage
                   </p>
                 </CardContent>
               </Card>
-              <Card className="text-center">
+              <Card className="text-center rounded-xl border-2 shadow-lg hover:shadow-xl transition-all overflow-hidden group">
                 <CardContent className="p-6">
-                  <Heart className="h-12 w-12 mx-auto mb-4 text-primary" />
-                  <h3 className="font-semibold mb-2">{t.values.sustainability}</h3>
-                  <p className="text-sm text-muted-foreground">
+                  <div className="p-3 rounded-full bg-primary/10 w-fit mx-auto mb-4 group-hover:bg-primary/20 transition-all">
+                    <Heart className="h-8 w-8 mx-auto text-primary fill-primary" />
+                  </div>
+                  <h3 className="font-bold mb-2 text-lg">{t.values.sustainability}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
                     Environmentally conscious and sustainable practices
                   </p>
                 </CardContent>
               </Card>
-              <Card className="text-center">
+              <Card className="text-center rounded-xl border-2 shadow-lg hover:shadow-xl transition-all overflow-hidden group">
                 <CardContent className="p-6">
-                  <Users className="h-12 w-12 mx-auto mb-4 text-primary" />
-                  <h3 className="font-semibold mb-2">{t.values.community}</h3>
-                  <p className="text-sm text-muted-foreground">
+                  <div className="p-3 rounded-full bg-primary/10 w-fit mx-auto mb-4 group-hover:bg-primary/20 transition-all">
+                    <Users className="h-8 w-8 mx-auto text-primary" />
+                  </div>
+                  <h3 className="font-bold mb-2 text-lg">{t.values.community}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
                     Building a global community of fashion enthusiasts
                   </p>
                 </CardContent>
@@ -215,20 +231,29 @@ const AboutPage = () => {
           </section>
 
           {/* CTA Section */}
-          <section className="text-center">
-            <div className="bg-gray-900 rounded-2xl overflow-hidden">
-              <div className="bg-gray-100 p-12 mx-4 my-4 rounded-xl">
-                <h2 className="text-3xl font-bold mb-4 text-gray-900">Ready to Experience Japanese Fashion?</h2>
-                <p className="text-lg mb-8 text-gray-600">
-                  Discover our collection and find your perfect piece
+          <section className="mt-12">
+            <Card className="rounded-2xl border-2 shadow-2xl overflow-hidden bg-gradient-to-br from-muted/50 via-background to-muted/30">
+              <CardContent className="p-12 md:p-16 text-center">
+                <h2 className="text-3xl md:text-4xl font-bold mb-4 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                  {language === 'vi' ? 'Sẵn Sàng Trải Nghiệm Thời Trang Nhật Bản?' :
+                   language === 'ja' ? '日本のファッションを体験する準備はできていますか？' :
+                   'Ready to Experience Japanese Fashion?'}
+                </h2>
+                <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto leading-relaxed">
+                  {language === 'vi' ? 'Khám phá bộ sưu tập của chúng tôi và tìm mảnh ghép hoàn hảo cho bạn' :
+                   language === 'ja' ? 'コレクションを探索して、あなたにぴったりの作品を見つけてください' :
+                   'Discover our collection and find your perfect piece'}
                 </p>
                 <Link to="/">
-                  <Button size="lg" className="bg-gray-900 text-white hover:bg-gray-800 px-8 py-3 rounded-lg font-semibold">
-                    Khám Phá Bộ Sưu Tập
+                  <Button 
+                    size="lg" 
+                    className="rounded-xl font-semibold text-lg px-8 py-6 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+                  >
+                    {t.cta}
                   </Button>
                 </Link>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           </section>
         </div>
       </main>

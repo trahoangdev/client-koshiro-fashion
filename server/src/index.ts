@@ -3,7 +3,9 @@ import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
 import { connectDB } from './config/database';
-import { validateCloudinaryConfig } from './config/cloudinary';
+import { apiLimiter, authLimiter, adminLimiter, passwordResetLimiter, productLimiter } from './middleware/rateLimit';
+import { logger } from './lib/logger';
+import { errorHandler } from './utils/errorHandler';
 
 // Import routes
 import authRoutes from './routes/auth';
@@ -25,8 +27,7 @@ import adminPaymentsRoutes from './routes/adminPayments';
 import flashSaleRoutes from './routes/flashSale';
 import roleRoutes from './routes/roles';
 import permissionRoutes from './routes/permissions';
-import apiKeyRoutes from './routes/apiKeys';
-import uploadRoutes from './routes/upload';
+import colorRoutes from './routes/colors';
 
 // Load environment variables
 dotenv.config();
@@ -58,34 +59,53 @@ app.use(helmet({
 // CORS configuration with validation
 const allowedOrigins = [
   process.env.FRONTEND_URL || 'http://localhost:8080',
-  'http://localhost:5173',
-  'http://localhost:3000',
-  'http://localhost:3001',
-  'http://localhost:3002',
-  'http://localhost:3003',
-  'http://localhost:3004',
-  'http://localhost:3005'
+  // Only allow specific localhost ports in development
+  ...(process.env.NODE_ENV === 'development' ? [
+    'http://localhost:5173',
+    'http://localhost:3000',
+    'http://localhost:3001',
+  ] : [])
 ].filter(Boolean);
+
+// Add production frontend URL if provided
+if (process.env.PRODUCTION_FRONTEND_URL) {
+  allowedOrigins.push(process.env.PRODUCTION_FRONTEND_URL);
+}
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
+    // In production, require origin
+    if (process.env.NODE_ENV === 'production' && !origin) {
+      return callback(new Error('CORS: Origin required in production'), false);
+    }
+    
+    // Allow requests with no origin only in development (for testing tools)
+    if (!origin) {
+      if (process.env.NODE_ENV === 'development') {
+        return callback(null, true);
+      }
+      return callback(new Error('CORS: Origin required'), false);
+    }
     
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
     
-    console.warn(`⚠️  CORS blocked request from origin: ${origin}`);
+    logger.warn(`CORS blocked request from origin: ${origin}`);
     return callback(new Error('Not allowed by CORS'), false);
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  exposedHeaders: ['X-Total-Count', 'X-Page-Count']
+  exposedHeaders: ['X-Total-Count', 'X-Page-Count'],
+  maxAge: 86400 // Cache preflight requests for 24 hours
 }));
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+// Request size limits (adjust based on needs)
+app.use(express.json({ limit: '5mb' })); // Reduced from 10mb for security
+app.use(express.urlencoded({ extended: true, limit: '5mb' }));
+
+// Apply general API rate limiting
+app.use('/api', apiLimiter);
 
 // Health check endpoint
 app.get('/health', (req: Request, res: Response) => {
@@ -138,30 +158,10 @@ app.use('/api/admin/payments', adminPaymentsRoutes);
 app.use('/api/flash-sales', flashSaleRoutes);
 app.use('/api/roles', roleRoutes);
 app.use('/api/permissions', permissionRoutes);
-app.use('/api/admin/api-keys', apiKeyRoutes);
-app.use('/api/upload', uploadRoutes);
+app.use('/api/colors', colorRoutes);
 
-// Error handling middleware
-interface CustomError extends Error {
-  status?: number;
-  statusCode?: number;
-}
-
-app.use((err: CustomError, req: Request, res: Response, next: NextFunction) => {
-  console.error('Error:', err);
-  
-  const statusCode = err.status || err.statusCode || 500;
-  const message = err.message || 'Internal Server Error';
-  
-  res.status(statusCode).json({
-    success: false,
-    message,
-    ...(process.env.NODE_ENV === 'development' && { 
-      stack: err.stack,
-      error: err 
-    })
-  });
-});
+// Error handling middleware - use centralized error handler (must be last)
+app.use(errorHandler);
 
 // Request logging middleware
 app.use((req: Request, res: Response, next: NextFunction) => {
@@ -169,13 +169,19 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   const startTime = Date.now();
   
   // Log request
-  console.log(`[${timestamp}] ${req.method} ${req.originalUrl} - ${req.ip} - ${req.get('User-Agent')?.substring(0, 50) || 'Unknown'}`);
+  logger.debug(`${req.method} ${req.originalUrl}`, { 
+    ip: req.ip, 
+    userAgent: req.get('User-Agent')?.substring(0, 50) || 'Unknown' 
+  });
   
   // Log response time
   res.on('finish', () => {
     const duration = Date.now() - startTime;
-    const statusColor = res.statusCode >= 400 ? '🔴' : res.statusCode >= 300 ? '🟡' : '🟢';
-    console.log(`${statusColor} [${timestamp}] ${req.method} ${req.originalUrl} - ${res.statusCode} - ${duration}ms`);
+    const logLevel = res.statusCode >= 400 ? 'error' : res.statusCode >= 300 ? 'warn' : 'debug';
+    logger[logLevel](`${req.method} ${req.originalUrl} - ${res.statusCode} - ${duration}ms`, {
+      statusCode: res.statusCode,
+      duration
+    });
   });
   
   next();
@@ -183,7 +189,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 
 // 404 handler
 app.use('*', (req: Request, res: Response) => {
-  console.warn(`⚠️  404 - Route not found: ${req.method} ${req.originalUrl} from ${req.ip}`);
+  logger.warn(`404 - Route not found: ${req.method} ${req.originalUrl}`, { ip: req.ip });
   
   res.status(404).json({
     success: false,
@@ -206,39 +212,33 @@ app.use('*', (req: Request, res: Response) => {
 // Start server
 const startServer = async () => {
   try {
-    console.log('🔄 Starting Koshiro Fashion API Server...');
-    console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`📦 Node.js version: ${process.version}`);
-    console.log(`💾 Memory usage: ${Math.round(process.memoryUsage().heapUsed / 1024 / 1024)}MB`);
+    logger.info('Starting Koshiro Fashion API Server', {
+      environment: process.env.NODE_ENV || 'development',
+      nodeVersion: process.version,
+      memoryUsage: Math.round(process.memoryUsage().heapUsed / 1024 / 1024) + 'MB'
+    });
     
     // Validate environment variables
     const requiredEnvVars = ['MONGODB_URI'];
     const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
     
     if (missingEnvVars.length > 0) {
+      logger.error('Missing required environment variables', { missing: missingEnvVars });
       console.error('❌ Missing required environment variables:', missingEnvVars);
       console.error('💡 Please check your .env file');
       process.exit(1);
     }
     
     // Connect to database
-    console.log('📡 Connecting to database...');
+    logger.info('Connecting to database...');
     await connectDB();
-    console.log('✅ Database connected successfully');
-    
-    // Validate Cloudinary configuration
-    console.log('☁️ Validating Cloudinary configuration...');
-    if (!validateCloudinaryConfig()) {
-      console.error('❌ Cloudinary configuration validation failed');
-      console.error('💡 Please check your Cloudinary environment variables');
-      process.exit(1);
-    }
-    console.log('✅ Cloudinary configuration validated');
+    logger.info('Database connected successfully');
     
     // Try to start server with automatic port handling
     await startServerWithPortHandling();
 
   } catch (error) {
+    logger.error('Failed to start server', error);
     console.error('❌ Failed to start server:', error);
     console.error('💡 Check your database connection and environment variables');
     console.error('💡 Make sure MongoDB is running and accessible');

@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 
 export interface IUser extends Document {
   email: string;
-  password?: string; // Optional for OAuth users
+  password: string;
   name: string;
   phone?: string;
   address?: string;
@@ -14,10 +14,9 @@ export interface IUser extends Document {
   lastActive?: Date;
   resetPasswordToken?: string;
   resetPasswordExpires?: Date;
-  // OAuth fields
-  googleId?: string;
-  facebookId?: string;
-  oauthProvider?: 'google' | 'facebook';
+  loginAttempts?: number;
+  loginAttemptsResetAt?: Date;
+  lockedUntil?: Date;
   addresses?: Array<{
     type: 'shipping' | 'billing';
     fullName: string;
@@ -35,6 +34,24 @@ export interface IUser extends Document {
     marketingEmails: boolean;
     language: string;
     currency: string;
+    notificationPreferences?: {
+      email?: {
+        orderUpdates?: boolean;
+        promotions?: boolean;
+        newsletters?: boolean;
+        productRecommendations?: boolean;
+      };
+      push?: {
+        orderUpdates?: boolean;
+        promotions?: boolean;
+        backInStock?: boolean;
+        priceDrops?: boolean;
+      };
+      sms?: {
+        orderUpdates?: boolean;
+        promotions?: boolean;
+      };
+    };
   };
   createdAt: Date;
   updatedAt: Date;
@@ -45,16 +62,13 @@ const userSchema = new Schema<IUser>({
   email: {
     type: String,
     required: true,
-    unique: true,
+    unique: false, // Remove unique from schema, use index instead
     lowercase: true,
     trim: true
   },
   password: {
     type: String,
-    required: function(this: IUser) {
-      // Password not required for OAuth users
-      return !this.googleId && !this.facebookId;
-    },
+    required: true,
     minlength: 6
   },
   name: {
@@ -98,6 +112,16 @@ const userSchema = new Schema<IUser>({
   resetPasswordExpires: {
     type: Date
   },
+  loginAttempts: {
+    type: Number,
+    default: 0
+  },
+  loginAttemptsResetAt: {
+    type: Date
+  },
+  lockedUntil: {
+    type: Date
+  },
   addresses: [{
     type: {
       type: String,
@@ -138,6 +162,7 @@ const userSchema = new Schema<IUser>({
     }
   }],
   preferences: {
+    // Basic preferences
     emailNotifications: {
       type: Boolean,
       default: true
@@ -157,32 +182,34 @@ const userSchema = new Schema<IUser>({
     currency: {
       type: String,
       default: 'USD'
+    },
+    // Detailed notification preferences
+    notificationPreferences: {
+      email: {
+        orderUpdates: { type: Boolean, default: true },
+        promotions: { type: Boolean, default: true },
+        newsletters: { type: Boolean, default: false },
+        productRecommendations: { type: Boolean, default: true }
+      },
+      push: {
+        orderUpdates: { type: Boolean, default: true },
+        promotions: { type: Boolean, default: false },
+        backInStock: { type: Boolean, default: true },
+        priceDrops: { type: Boolean, default: true }
+      },
+      sms: {
+        orderUpdates: { type: Boolean, default: false },
+        promotions: { type: Boolean, default: false }
+      }
     }
-  },
-  // OAuth fields
-  googleId: {
-    type: String,
-    sparse: true,
-    index: true
-  },
-  facebookId: {
-    type: String,
-    sparse: true,
-    index: true
-  },
-  oauthProvider: {
-    type: String,
-    enum: ['google', 'facebook'],
-    default: undefined
   }
 }, {
   timestamps: true
 });
 
-// Hash password before saving (only if password exists and is modified)
+// Hash password before saving
 userSchema.pre('save', async function(next) {
-  // Skip password hashing for OAuth users or if password not modified
-  if (!this.password || !this.isModified('password')) return next();
+  if (!this.isModified('password')) return next();
   
   try {
     const salt = await bcrypt.genSalt(10);
@@ -197,5 +224,14 @@ userSchema.pre('save', async function(next) {
 userSchema.methods.comparePassword = async function(candidatePassword: string): Promise<boolean> {
   return bcrypt.compare(candidatePassword, this.password);
 };
+
+// Indexes for better performance
+userSchema.index({ email: 1 }, { unique: true }); // Already unique, but explicit index
+userSchema.index({ role: 1 });
+userSchema.index({ status: 1 });
+userSchema.index({ createdAt: -1 });
+// Compound indexes for common queries
+userSchema.index({ role: 1, status: 1 });
+userSchema.index({ status: 1, createdAt: -1 });
 
 export const User = mongoose.model<IUser>('User', userSchema); 

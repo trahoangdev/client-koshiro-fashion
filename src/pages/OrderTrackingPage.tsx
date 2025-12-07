@@ -173,19 +173,43 @@ const OrderTrackingPage = () => {
   const t = translations[language as keyof typeof translations] || translations.en;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       <Header cartItemsCount={0} onSearch={() => {}} />
       
       <main className="py-8">
-        <div className="container mx-auto px-4">
-          {/* Header */}
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold mb-2">{t.title}</h1>
-            <p className="text-muted-foreground">{t.subtitle}</p>
-          </div>
+        <div className="container mx-auto px-4 space-y-8">
+          {/* Hero Section */}
+          <section className="text-center mb-12">
+            <div className="relative overflow-hidden rounded-2xl shadow-2xl">
+              {/* Banner Background */}
+              <div className="absolute inset-0">
+                <img 
+                  src="/images/banners/banner-03.png" 
+                  alt="Order Tracking Banner"
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/50 to-black/60"></div>
+              </div>
+              
+              {/* Content */}
+              <div className="relative z-10 p-12 md:p-16 text-white">
+                <div className="flex justify-center mb-6">
+                  <div className="p-4 rounded-full bg-white/10 backdrop-blur-sm">
+                    <Truck className="h-12 w-12 md:h-16 md:w-16 text-white" />
+                  </div>
+                </div>
+                <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-4 bg-gradient-to-r from-white via-white to-white/80 bg-clip-text text-transparent">
+                  {t.title}
+                </h1>
+                <p className="text-xl md:text-2xl text-white/90 font-light leading-relaxed">
+                  {t.subtitle}
+                </p>
+              </div>
+            </div>
+          </section>
 
           {/* Search Form */}
-          <Card className="max-w-2xl mx-auto mb-8">
+          <Card className="max-w-2xl mx-auto rounded-xl border-2 shadow-lg bg-background/95 backdrop-blur-sm">
             <CardContent className="p-6">
               <form onSubmit={handleSearch} className="flex gap-4">
                 <Input
@@ -193,15 +217,19 @@ const OrderTrackingPage = () => {
                   placeholder={t.searchPlaceholder}
                   value={orderNumber}
                   onChange={(e) => setOrderNumber(e.target.value)}
-                  className="flex-1"
+                  className="flex-1 rounded-lg border-2 focus:border-primary transition-all pl-10"
                 />
-                <Button type="submit" disabled={isLoading}>
+                <Button 
+                  type="submit" 
+                  disabled={isLoading}
+                  className="rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all px-8"
+                >
                   {isLoading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
                   ) : (
-                    <Search className="h-4 w-4" />
+                    <Search className="h-4 w-4 mr-2" />
                   )}
-                  <span className="ml-2">{t.search}</span>
+                  <span>{t.search}</span>
                 </Button>
               </form>
             </CardContent>
@@ -209,14 +237,14 @@ const OrderTrackingPage = () => {
 
           {/* Order Details */}
           {order && (
-            <Card className="max-w-4xl mx-auto">
-              <CardHeader>
-                <div className="flex items-center justify-between">
+            <Card className="max-w-4xl mx-auto rounded-xl border-2 shadow-lg bg-background/95 backdrop-blur-sm">
+              <CardHeader className="pb-4">
+                <div className="flex items-center justify-between flex-wrap gap-4">
                   <div>
-                    <CardTitle>{t.orderDetails}</CardTitle>
-                    <p className="text-muted-foreground">{order.orderNumber}</p>
+                    <CardTitle className="text-2xl font-bold mb-2">{t.orderDetails}</CardTitle>
+                    <p className="text-muted-foreground font-medium">{order.orderNumber}</p>
                   </div>
-                  <Badge className={getStatusColor(order.status)}>
+                  <Badge className={`${getStatusColor(order.status)} text-lg px-4 py-2 font-semibold rounded-lg border-2`}>
                     {getStatusIcon(order.status)}
                     <span className="ml-2">{getStatusText(order.status)}</span>
                   </Badge>
@@ -225,17 +253,20 @@ const OrderTrackingPage = () => {
               <CardContent className="space-y-6">
                 {/* Order Info */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <h4 className="font-semibold mb-2">{t.orderNumber}</h4>
-                    <p className="text-muted-foreground">{order.orderNumber}</p>
+                  <div className="p-4 rounded-lg bg-muted/30 border-l-4 border-primary">
+                    <h4 className="font-bold mb-2 text-foreground">{t.orderNumber}</h4>
+                    <p className="text-muted-foreground font-medium">{order.orderNumber}</p>
                   </div>
-                  <div>
-                    <h4 className="font-semibold mb-2">{t.orderDate}</h4>
-                    <p className="text-muted-foreground">{formatDate(order.createdAt)}</p>
+                  <div className="p-4 rounded-lg bg-muted/30 border-l-4 border-primary">
+                    <h4 className="font-bold mb-2 text-foreground flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-primary" />
+                      {t.orderDate}
+                    </h4>
+                    <p className="text-muted-foreground font-medium">{formatDate(order.createdAt)}</p>
                   </div>
-                  <div>
-                    <h4 className="font-semibold mb-2">{t.total}</h4>
-                    <p className="text-muted-foreground">{order.totalAmount.toLocaleString()} VND</p>
+                  <div className="p-4 rounded-lg bg-muted/30 border-l-4 border-primary">
+                    <h4 className="font-bold mb-2 text-foreground">{t.total}</h4>
+                    <p className="text-primary font-bold text-lg">{order.totalAmount.toLocaleString()} VND</p>
                   </div>
                 </div>
 
@@ -243,32 +274,34 @@ const OrderTrackingPage = () => {
 
                 {/* Items */}
                 <div>
-                  <h4 className="font-semibold mb-4">{t.items}</h4>
+                  <h4 className="font-bold text-xl mb-4">{t.items}</h4>
                   <div className="space-y-4">
                     {order.items.map((item, index) => (
-                      <div key={index} className="flex items-center space-x-4 p-4 border rounded-lg">
-                        <img
-                          src={item.productId?.images?.[0] || '/placeholder.svg'}
-                          alt={item.productId?.name || 'Product'}
-                          className="w-16 h-16 object-cover rounded"
-                        />
-                        <div className="flex-1">
-                          <h5 className="font-medium">{item.productId?.name || 'Unknown Product'}</h5>
-                          <p className="text-sm text-muted-foreground">
-                            {item.quantity} x {item.price.toLocaleString()} VND
-                          </p>
-                          {item.size && (
-                            <p className="text-sm text-muted-foreground">
-                              Size: {item.size}
-                            </p>
-                          )}
-                          {item.color && (
-                            <p className="text-sm text-muted-foreground">
-                              Color: {item.color}
-                            </p>
-                          )}
-                        </div>
-                      </div>
+                      <Card key={index} className="rounded-lg border-2 overflow-hidden hover:shadow-lg transition-all">
+                        <CardContent className="p-4">
+                          <div className="flex items-center space-x-4">
+                            <img
+                              src={item.productId?.images?.[0] || '/placeholder.svg'}
+                              alt={item.productId?.name || 'Product'}
+                              className="w-20 h-20 object-cover rounded-lg border-2"
+                            />
+                            <div className="flex-1">
+                              <h5 className="font-bold text-lg mb-1">{item.productId?.name || 'Unknown Product'}</h5>
+                              <p className="text-muted-foreground font-medium mb-2">
+                                {item.quantity} x {item.price.toLocaleString()} VND
+                              </p>
+                              <div className="flex gap-2 flex-wrap">
+                                {item.size && (
+                                  <Badge variant="secondary" className="text-xs">{t.items}: {item.size}</Badge>
+                                )}
+                                {item.color && (
+                                  <Badge variant="secondary" className="text-xs">Color: {item.color}</Badge>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
                     ))}
                   </div>
                 </div>
@@ -277,28 +310,39 @@ const OrderTrackingPage = () => {
 
                 {/* Shipping and Payment */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <h4 className="font-semibold mb-4 flex items-center gap-2">
-                      <MapPin className="h-4 w-4" />
-                      {t.shippingAddress}
-                    </h4>
-                    <div className="space-y-1 text-sm">
-                      <p>{order.shippingAddress.name}</p>
-                      <p>{order.shippingAddress.address}</p>
-                      <p>{order.shippingAddress.district}, {order.shippingAddress.city}</p>
-                      <p>{order.shippingAddress.phone}</p>
-                    </div>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold mb-4">{t.paymentMethod}</h4>
-                    <p className="text-sm text-muted-foreground mb-2">{order.paymentMethod}</p>
-                    <Badge variant={order.paymentStatus === 'paid' ? 'default' : 'secondary'}>
-                      {order.paymentStatus === 'paid' ? 
-                        (language === 'vi' ? 'Đã thanh toán' : language === 'ja' ? '支払い済み' : 'Paid') :
-                        (language === 'vi' ? 'Chưa thanh toán' : language === 'ja' ? '未払い' : 'Pending')
-                      }
-                    </Badge>
-                  </div>
+                  <Card className="rounded-lg border-2 bg-muted/30">
+                    <CardHeader className="pb-4">
+                      <h4 className="font-bold text-lg flex items-center gap-2">
+                        <MapPin className="h-5 w-5 text-primary" />
+                        {t.shippingAddress}
+                      </h4>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2 text-sm font-medium">
+                        <p className="text-foreground">{order.shippingAddress.name}</p>
+                        <p className="text-muted-foreground">{order.shippingAddress.address}</p>
+                        <p className="text-muted-foreground">{order.shippingAddress.district}, {order.shippingAddress.city}</p>
+                        <p className="text-muted-foreground">{order.shippingAddress.phone}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card className="rounded-lg border-2 bg-muted/30">
+                    <CardHeader className="pb-4">
+                      <h4 className="font-bold text-lg">{t.paymentMethod}</h4>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-muted-foreground mb-3 font-medium">{order.paymentMethod}</p>
+                      <Badge 
+                        variant={order.paymentStatus === 'paid' ? 'default' : 'secondary'} 
+                        className="text-base px-4 py-2 font-semibold rounded-lg border-2"
+                      >
+                        {order.paymentStatus === 'paid' ? 
+                          (language === 'vi' ? 'Đã thanh toán' : language === 'ja' ? '支払い済み' : 'Paid') :
+                          (language === 'vi' ? 'Chưa thanh toán' : language === 'ja' ? '未払い' : 'Pending')
+                        }
+                      </Badge>
+                    </CardContent>
+                  </Card>
                 </div>
               </CardContent>
             </Card>
@@ -306,11 +350,13 @@ const OrderTrackingPage = () => {
 
           {/* No Order State */}
           {!order && !isLoading && (
-            <div className="text-center py-16">
-              <Package className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-              <h2 className="text-2xl font-semibold mb-2">{t.noOrder}</h2>
-              <p className="text-muted-foreground">{t.noOrderDesc}</p>
-            </div>
+            <Card className="max-w-2xl mx-auto rounded-xl border-2 shadow-lg bg-background/95 backdrop-blur-sm">
+              <CardContent className="p-12 text-center">
+                <Package className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                <h2 className="text-2xl font-bold mb-2">{t.noOrder}</h2>
+                <p className="text-muted-foreground font-medium text-lg">{t.noOrderDesc}</p>
+              </CardContent>
+            </Card>
           )}
         </div>
       </main>

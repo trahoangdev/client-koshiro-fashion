@@ -119,6 +119,9 @@ export default function CategoryForm({
     ...initialData
   });
 
+  // Track if slug was manually edited
+  const [isSlugManuallyEdited, setIsSlugManuallyEdited] = useState(false);
+
   const translations = {
     en: {
       title: mode === 'create' ? 'Create New Category' : 'Edit Category',
@@ -273,11 +276,19 @@ export default function CategoryForm({
   };
 
   const generateSlug = (name: string) => {
+    if (!name || !name.trim()) {
+      return '';
+    }
     return name
       .toLowerCase()
-      .replace(/[^a-z0-9 -]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/-+/g, '-')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '') // Remove Vietnamese diacritics
+      .replace(/đ/g, 'd')
+      .replace(/Đ/g, 'd')
+      .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
+      .replace(/\s+/g, '-') // Replace spaces with hyphens
+      .replace(/-+/g, '-') // Replace multiple hyphens with single hyphen
+      .replace(/^-|-$/g, '') // Remove leading/trailing hyphens
       .trim();
   };
 
@@ -318,10 +329,14 @@ export default function CategoryForm({
                 value={formData.name}
                 onChange={(e) => {
                   const name = e.target.value;
+                  // Auto-generate slug only if it wasn't manually edited or if we're creating new
+                  const newSlug = mode === 'create' || !isSlugManuallyEdited 
+                    ? generateSlug(name) 
+                    : formData.slug;
                   setFormData(prev => ({ 
                     ...prev, 
                     name,
-                    slug: generateSlug(name)
+                    slug: newSlug
                   }));
                 }}
                 required
@@ -348,7 +363,10 @@ export default function CategoryForm({
               <Input
                 id="slug"
                 value={formData.slug}
-                onChange={(e) => setFormData(prev => ({ ...prev, slug: e.target.value }))}
+                onChange={(e) => {
+                  setIsSlugManuallyEdited(true);
+                  setFormData(prev => ({ ...prev, slug: e.target.value }));
+                }}
                 required
               />
             </div>
@@ -502,16 +520,6 @@ export default function CategoryForm({
                   <SelectItem value="carousel">Carousel</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="color">Color</Label>
-              <Input
-                id="color"
-                type="color"
-                value={formData.color}
-                onChange={(e) => setFormData(prev => ({ ...prev, color: e.target.value }))}
-                className="w-20 h-10"
-              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="icon">Icon</Label>

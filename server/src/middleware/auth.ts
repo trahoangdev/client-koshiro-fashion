@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { logger } from '../lib/logger';
 
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
@@ -20,12 +21,11 @@ export const authenticateToken = (req: AuthRequest, res: Response, next: NextFun
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 
-  console.log('Auth middleware - Headers:', req.headers);
-  console.log('Auth middleware - Auth header:', authHeader);
-  console.log('Auth middleware - Token:', token ? `${token.substring(0, 20)}...` : 'No token');
+  logger.debug('Auth middleware - Headers', { hasAuth: !!authHeader });
+  logger.debug('Auth middleware - Token', { hasToken: !!token });
 
   if (!token) {
-    console.log('Auth middleware - No token provided');
+    logger.debug('Auth middleware - No token provided');
     return res.status(401).json({ message: 'Access token required' });
   }
 
@@ -36,7 +36,7 @@ export const authenticateToken = (req: AuthRequest, res: Response, next: NextFun
       role: string;
       name?: string;
     };
-    console.log('Auth middleware - Decoded token:', { userId: decoded.userId, email: decoded.email, role: decoded.role });
+    logger.debug('Auth middleware - Decoded token', { userId: decoded.userId, email: decoded.email, role: decoded.role });
     
     req.user = {
       id: decoded.userId,
@@ -46,7 +46,7 @@ export const authenticateToken = (req: AuthRequest, res: Response, next: NextFun
     };
     next();
   } catch (error) {
-    console.log('Auth middleware - Token verification failed:', error);
+    logger.error('Auth middleware - Token verification failed', error);
     return res.status(403).json({ message: 'Invalid or expired token' });
   }
 };

@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts";
+import { useAuth, useSettings } from "@/contexts";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -29,7 +29,10 @@ export default function RegisterPage() {
   const { language } = useLanguage();
   const { toast } = useToast();
   const { register, isAuthenticated } = useAuth();
+  const { settings } = useSettings();
   const navigate = useNavigate();
+  
+  const passwordMinLength = settings?.passwordMinLength || 8;
 
   // Redirect if already authenticated
   if (isAuthenticated) {
@@ -63,7 +66,7 @@ export default function RegisterPage() {
       passwordsNotMatch: "Passwords do not match",
       invalidEmail: "Please enter a valid email",
       invalidPhone: "Please enter a valid phone number",
-      passwordTooShort: "Password must be at least 8 characters",
+      passwordTooShort: `Password must be at least ${passwordMinLength} characters`,
       termsRequired: "You must agree to the terms and conditions",
       registerSuccess: "Account created successfully!",
       registerError: "Failed to create account. Please try again."
@@ -93,7 +96,7 @@ export default function RegisterPage() {
       passwordsNotMatch: "Mật khẩu không khớp",
       invalidEmail: "Vui lòng nhập email hợp lệ",
       invalidPhone: "Vui lòng nhập số điện thoại hợp lệ",
-      passwordTooShort: "Mật khẩu phải có ít nhất 8 ký tự",
+      passwordTooShort: `Mật khẩu phải có ít nhất ${passwordMinLength} ký tự`,
       termsRequired: "Bạn phải đồng ý với điều khoản và điều kiện",
       registerSuccess: "Tạo tài khoản thành công!",
       registerError: "Không thể tạo tài khoản. Vui lòng thử lại."
@@ -214,10 +217,12 @@ export default function RegisterPage() {
       });
       return false;
     }
-    if (formData.password.length < 8) {
+    if (formData.password.length < passwordMinLength) {
       toast({
         title: "Error",
-        description: t.passwordTooShort,
+        description: language === 'vi' ? `Mật khẩu phải có ít nhất ${passwordMinLength} ký tự` :
+                     language === 'ja' ? `パスワードは少なくとも${passwordMinLength}文字である必要があります` :
+                     `Password must be at least ${passwordMinLength} characters`,
         variant: "destructive"
       });
       return false;
@@ -262,14 +267,14 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-zen">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       <Header cartItemsCount={0} onSearch={() => {}} />
       
-      <main className="py-16">
+      <main className="py-8">
         <div className="container mx-auto px-4">
           <div className="flex justify-center">
-            <Card className="w-full max-w-md">
-              <CardHeader className="text-center">
+            <Card className="w-full max-w-md rounded-xl border-2 shadow-xl bg-background/95 backdrop-blur-sm">
+              <CardHeader className="text-center pb-6">
                 {/* Logo */}
                 <div className="mb-6 flex justify-center">
                   <div className="relative">
@@ -277,51 +282,51 @@ export default function RegisterPage() {
                     <img
                       src="/koshino_logo_dark.png"
                       alt="Koshino Fashion Logo"
-                      className="h-12 w-auto opacity-90 hover:opacity-100 transition-all duration-300 dark:hidden"
+                      className="h-14 w-auto opacity-90 hover:opacity-100 transition-all duration-300 dark:hidden"
                       loading="lazy"
                     />
                     <img
                       src="/koshino_logo.png"
                       alt="Koshino Fashion Logo"
-                      className="h-12 w-auto opacity-90 hover:opacity-100 transition-all duration-300 hidden dark:block"
+                      className="h-14 w-auto opacity-90 hover:opacity-100 transition-all duration-300 hidden dark:block"
                       loading="lazy"
                     />
                   </div>
                 </div>
-                <CardTitle className="text-2xl font-bold">{t.title}</CardTitle>
-                <p className="text-muted-foreground">{t.subtitle}</p>
+                <CardTitle className="text-3xl font-bold mb-2">{t.title}</CardTitle>
+                <p className="text-muted-foreground text-lg">{t.subtitle}</p>
               </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-4">
+              <CardContent className="space-y-6">
+                <form onSubmit={handleSubmit} className="space-y-5">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="firstName">{t.firstName}</Label>
+                      <Label htmlFor="firstName" className="text-sm font-semibold">{t.firstName}</Label>
                       <div className="relative">
                         <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                         <Input
                           id="firstName"
                           name="firstName"
                           type="text"
-                          placeholder="First name"
+                          placeholder={language === 'vi' ? 'Tên' : language === 'ja' ? '名' : 'First name'}
                           value={formData.firstName}
                           onChange={handleInputChange}
-                          className="pl-10"
+                          className="pl-10 rounded-lg border-2 focus:border-primary transition-all"
                           disabled={isLoading}
                         />
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="lastName">{t.lastName}</Label>
+                      <Label htmlFor="lastName" className="text-sm font-semibold">{t.lastName}</Label>
                       <div className="relative">
                         <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                         <Input
                           id="lastName"
                           name="lastName"
                           type="text"
-                          placeholder="Last name"
+                          placeholder={language === 'vi' ? 'Họ' : language === 'ja' ? '姓' : 'Last name'}
                           value={formData.lastName}
                           onChange={handleInputChange}
-                          className="pl-10"
+                          className="pl-10 rounded-lg border-2 focus:border-primary transition-all"
                           disabled={isLoading}
                         />
                       </div>
@@ -329,58 +334,58 @@ export default function RegisterPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="email">{t.email}</Label>
+                    <Label htmlFor="email" className="text-sm font-semibold">{t.email}</Label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       <Input
                         id="email"
                         name="email"
                         type="email"
-                        placeholder="Enter your email"
+                        placeholder={language === 'vi' ? 'Nhập email của bạn' : language === 'ja' ? 'メールを入力' : 'Enter your email'}
                         value={formData.email}
                         onChange={handleInputChange}
-                        className="pl-10"
+                        className="pl-10 rounded-lg border-2 focus:border-primary transition-all"
                         disabled={isLoading}
                       />
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="phone">{t.phone}</Label>
+                    <Label htmlFor="phone" className="text-sm font-semibold">{t.phone}</Label>
                     <div className="relative">
                       <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       <Input
                         id="phone"
                         name="phone"
                         type="tel"
-                        placeholder="Enter your phone number"
+                        placeholder={language === 'vi' ? 'Nhập số điện thoại' : language === 'ja' ? '電話番号を入力' : 'Enter your phone number'}
                         value={formData.phone}
                         onChange={handleInputChange}
-                        className="pl-10"
+                        className="pl-10 rounded-lg border-2 focus:border-primary transition-all"
                         disabled={isLoading}
                       />
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="password">{t.password}</Label>
+                    <Label htmlFor="password" className="text-sm font-semibold">{t.password}</Label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       <Input
                         id="password"
                         name="password"
                         type={showPassword ? "text" : "password"}
-                        placeholder="Create a password"
+                        placeholder={language === 'vi' ? 'Tạo mật khẩu' : language === 'ja' ? 'パスワードを作成' : 'Create a password'}
                         value={formData.password}
                         onChange={handleInputChange}
-                        className="pl-10 pr-10"
+                        className="pl-10 pr-10 rounded-lg border-2 focus:border-primary transition-all"
                         disabled={isLoading}
                       />
                       <Button
                         type="button"
                         variant="ghost"
                         size="sm"
-                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent rounded-lg"
                         onClick={() => setShowPassword(!showPassword)}
                         disabled={isLoading}
                       >
@@ -394,24 +399,24 @@ export default function RegisterPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="confirmPassword">{t.confirmPassword}</Label>
+                    <Label htmlFor="confirmPassword" className="text-sm font-semibold">{t.confirmPassword}</Label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       <Input
                         id="confirmPassword"
                         name="confirmPassword"
                         type={showConfirmPassword ? "text" : "password"}
-                        placeholder="Confirm your password"
+                        placeholder={language === 'vi' ? 'Xác nhận mật khẩu' : language === 'ja' ? 'パスワードを確認' : 'Confirm your password'}
                         value={formData.confirmPassword}
                         onChange={handleInputChange}
-                        className="pl-10 pr-10"
+                        className="pl-10 pr-10 rounded-lg border-2 focus:border-primary transition-all"
                         disabled={isLoading}
                       />
                       <Button
                         type="button"
                         variant="ghost"
                         size="sm"
-                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent rounded-lg"
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                         disabled={isLoading}
                       >
@@ -424,24 +429,25 @@ export default function RegisterPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-start space-x-2 p-3 rounded-lg bg-muted/30">
                     <Checkbox
                       id="terms"
                       checked={agreeToTerms}
                       onCheckedChange={(checked) => setAgreeToTerms(checked as boolean)}
                       disabled={isLoading}
+                      className="mt-1"
                     />
-                    <Label htmlFor="terms" className="text-sm">
+                    <Label htmlFor="terms" className="text-sm leading-relaxed cursor-pointer">
                       {t.agreeToTerms}
                     </Label>
                   </div>
 
                   <Button
                     type="submit"
-                    className="w-full"
+                    className="w-full rounded-xl font-semibold h-11 shadow-lg hover:shadow-xl transition-all"
                     disabled={isLoading}
                   >
-                    {isLoading ? "Creating account..." : t.register}
+                    {isLoading ? (language === 'vi' ? "Đang tạo tài khoản..." : language === 'ja' ? "アカウント作成中..." : "Creating account...") : t.register}
                   </Button>
                 </form>
 
@@ -451,27 +457,35 @@ export default function RegisterPage() {
                       <Separator className="w-full" />
                     </div>
                     <div className="relative flex justify-center text-xs uppercase">
-                      <span className="bg-background px-2 text-muted-foreground">
+                      <span className="bg-background px-3 text-muted-foreground font-medium">
                         {t.or}
                       </span>
                     </div>
                   </div>
 
                   <div className="mt-6 space-y-3">
-                    <Button variant="outline" className="w-full" disabled={isLoading}>
+                    <Button 
+                      variant="outline" 
+                      className="w-full rounded-lg font-medium" 
+                      disabled={isLoading}
+                    >
                       <User className="mr-2 h-4 w-4" />
                       {t.continueWithGoogle}
                     </Button>
-                    <Button variant="outline" className="w-full" disabled={isLoading}>
+                    <Button 
+                      variant="outline" 
+                      className="w-full rounded-lg font-medium" 
+                      disabled={isLoading}
+                    >
                       <User className="mr-2 h-4 w-4" />
                       {t.continueWithFacebook}
                     </Button>
                   </div>
                 </div>
 
-                <div className="mt-6 text-center text-sm">
+                <div className="mt-6 text-center text-sm pt-4 border-t">
                   <span className="text-muted-foreground">{t.alreadyHaveAccount} </span>
-                  <Link to="/login" className="text-primary hover:underline font-medium">
+                  <Link to="/login" className="text-primary hover:underline font-semibold">
                     {t.signIn}
                   </Link>
                 </div>

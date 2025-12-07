@@ -68,12 +68,23 @@ export { useLanguage, LanguageProvider } from './LanguageContext';
 // ============================================================================
 // NOTIFICATIONS CONTEXT
 // ============================================================================
-
 /**
- * Notifications context hook and provider
+ * Notifications context hook and provider (Admin only)
  * @example
  * ```tsx
- * const { notifications, addNotification } = useNotifications();
+ * const { notifications, unreadCount, markAsRead } = useNotifications();
  * ```
  */
 export { useNotifications, NotificationsProvider } from './NotificationsContext';
+
+// ============================================================================
+// SETTINGS CONTEXT
+// ============================================================================
+/**
+ * Settings context hook and provider
+ * @example
+ * ```tsx
+ * const { settings, refreshSettings } = useSettings();
+ * ```
+ */
+export { useSettings, SettingsProvider } from './SettingsContext';

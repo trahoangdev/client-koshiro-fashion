@@ -251,58 +251,69 @@ const ReviewsPage = () => {
     : 0;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       <Header cartItemsCount={0} onSearch={() => {}} />
       
       <main className="py-8">
-        <div className="container mx-auto px-4">
-          {/* Header */}
-          <section className="relative overflow-hidden rounded-2xl mb-8">
-            {/* Banner Background */}
-            <div className="absolute inset-0">
-              <img 
-                src="/images/banners/banner-04.png" 
-                alt="Reviews Banner"
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-black/50"></div>
-            </div>
-            
-            {/* Content */}
-            <div className="relative z-10 p-8 text-center text-white">
-              <h1 className="text-3xl font-bold mb-2">{t.title}</h1>
-              <p className="text-white/90">{t.subtitle}</p>
+        <div className="container mx-auto px-4 space-y-8">
+          {/* Hero Section */}
+          <section className="text-center mb-12">
+            <div className="relative overflow-hidden rounded-2xl shadow-2xl">
+              {/* Banner Background */}
+              <div className="absolute inset-0">
+                <img 
+                  src="/images/banners/banner-04.png" 
+                  alt="Reviews Banner"
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/50 to-black/60"></div>
+              </div>
+              
+              {/* Content */}
+              <div className="relative z-10 p-12 md:p-16 text-white">
+                <div className="flex justify-center mb-6">
+                  <div className="p-4 rounded-full bg-white/10 backdrop-blur-sm">
+                    <Star className="h-12 w-12 md:h-16 md:w-16 text-white fill-white" />
+                  </div>
+                </div>
+                <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-4 bg-gradient-to-r from-white via-white to-white/80 bg-clip-text text-transparent">
+                  {t.title}
+                </h1>
+                <p className="text-xl md:text-2xl text-white/90 font-light leading-relaxed">
+                  {t.subtitle}
+                </p>
+              </div>
             </div>
           </section>
 
           {/* Overall Rating */}
-          <Card className="mb-8">
+          <Card className="rounded-xl border-2 shadow-lg bg-background/95 backdrop-blur-sm">
             <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="text-center">
-                  <div className="text-4xl font-bold text-primary mb-2">
+              <div className="flex flex-wrap items-center justify-between gap-6">
+                <div className="text-center p-4 rounded-lg bg-muted/30 border-l-4 border-primary">
+                  <div className="text-5xl font-bold text-primary mb-2">
                     {averageRating.toFixed(1)}
                   </div>
                   <div className="flex justify-center mb-2">
                     {renderStars(Math.round(averageRating))}
                   </div>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm font-semibold text-muted-foreground">
                     {t.averageRating}
                   </p>
                 </div>
                 
-                <div className="text-center">
-                  <div className="text-2xl font-bold mb-2">
+                <div className="text-center p-4 rounded-lg bg-muted/30 border-l-4 border-primary">
+                  <div className="text-3xl font-bold mb-2">
                     {reviews.length}
                   </div>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm font-semibold text-muted-foreground">
                     {t.totalReviews}
                   </p>
                 </div>
 
                 <Button 
                   onClick={() => setShowReviewForm(!showReviewForm)}
-                  className="hidden md:block"
+                  className="rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all px-8"
                 >
                   <MessageCircle className="mr-2 h-4 w-4" />
                   {t.writeReview}
@@ -313,26 +324,26 @@ const ReviewsPage = () => {
 
           {/* Review Form */}
           {showReviewForm && (
-            <Card className="mb-8">
-              <CardHeader>
-                <CardTitle>{t.writeReview}</CardTitle>
+            <Card className="rounded-xl border-2 shadow-lg bg-background/95 backdrop-blur-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-2xl font-bold">{t.writeReview}</CardTitle>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleSubmitReview} className="space-y-4">
+                <form onSubmit={handleSubmitReview} className="space-y-5">
                   <div>
-                    <label className="text-sm font-medium mb-2 block">
+                    <label className="text-sm font-semibold mb-2 block">
                       {t.rating}
                     </label>
-                    <div className="flex gap-1">
+                    <div className="flex gap-2 p-4 rounded-lg bg-muted/30 border-l-4 border-primary">
                       {Array.from({ length: 5 }, (_, i) => (
                         <button
                           key={i}
                           type="button"
                           onClick={() => setNewReview(prev => ({ ...prev, rating: i + 1 }))}
-                          className="focus:outline-none"
+                          className="focus:outline-none rounded-lg hover:bg-primary/10 transition-all p-2"
                         >
                           <Star
-                            className={`h-6 w-6 ${
+                            className={`h-8 w-8 transition-all ${
                               i < newReview.rating 
                                 ? 'fill-yellow-400 text-yellow-400' 
                                 : 'text-gray-300'
@@ -344,18 +355,19 @@ const ReviewsPage = () => {
                   </div>
 
                   <div>
-                    <label className="text-sm font-medium mb-2 block">
+                    <label className="text-sm font-semibold mb-2 block">
                       {t.titleLabel}
                     </label>
                     <Input
                       value={newReview.title}
                       onChange={(e) => setNewReview(prev => ({ ...prev, title: e.target.value }))}
                       placeholder={t.titlePlaceholder}
+                      className="rounded-lg border-2 focus:border-primary transition-all"
                     />
                   </div>
 
                   <div>
-                    <label className="text-sm font-medium mb-2 block">
+                    <label className="text-sm font-semibold mb-2 block">
                       {t.commentLabel}
                     </label>
                     <Textarea
@@ -363,11 +375,15 @@ const ReviewsPage = () => {
                       onChange={(e) => setNewReview(prev => ({ ...prev, comment: e.target.value }))}
                       placeholder={t.commentPlaceholder}
                       rows={4}
+                      className="rounded-lg border-2 focus:border-primary transition-all"
                     />
                   </div>
 
-                  <div className="flex gap-2">
-                    <Button type="submit">
+                  <div className="flex gap-2 pt-4">
+                    <Button 
+                      type="submit"
+                      className="rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all flex-1"
+                    >
                       <Send className="mr-2 h-4 w-4" />
                       {t.submit}
                     </Button>
@@ -375,6 +391,7 @@ const ReviewsPage = () => {
                       type="button" 
                       variant="outline"
                       onClick={() => setShowReviewForm(false)}
+                      className="rounded-xl font-semibold border-2"
                     >
                       {t.cancel}
                     </Button>
@@ -386,41 +403,48 @@ const ReviewsPage = () => {
 
           {/* Reviews List */}
           {isLoading ? (
-            <div className="text-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-              <p className="text-muted-foreground">{t.loading}</p>
-            </div>
+            <Card className="rounded-xl border-2 shadow-lg bg-background/95 backdrop-blur-sm">
+              <CardContent className="p-12 text-center">
+                <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+                <p className="text-muted-foreground font-medium text-lg">{t.loading}</p>
+              </CardContent>
+            </Card>
           ) : reviews.length === 0 ? (
-            <div className="text-center py-12">
-              <MessageCircle className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-              <h2 className="text-2xl font-semibold mb-2">{t.noReviews}</h2>
-              <p className="text-muted-foreground mb-8">{t.noReviewsDesc}</p>
-              <Button onClick={() => setShowReviewForm(true)}>
-                {t.writeReview}
-              </Button>
-            </div>
+            <Card className="rounded-xl border-2 shadow-lg bg-background/95 backdrop-blur-sm">
+              <CardContent className="p-12 text-center">
+                <MessageCircle className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                <h2 className="text-2xl font-bold mb-2">{t.noReviews}</h2>
+                <p className="text-muted-foreground mb-8 font-medium text-lg">{t.noReviewsDesc}</p>
+                <Button 
+                  onClick={() => setShowReviewForm(true)}
+                  className="rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all px-8"
+                >
+                  {t.writeReview}
+                </Button>
+              </CardContent>
+            </Card>
           ) : (
             <div className="space-y-6">
               {reviews.map((review) => (
-                <Card key={review._id}>
+                <Card key={review._id} className="rounded-xl border-2 shadow-lg hover:shadow-xl transition-all overflow-hidden">
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                          <User className="h-5 w-5 text-primary" />
+                        <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center border-2 border-primary/20">
+                          <User className="h-6 w-6 text-primary" />
                         </div>
                         <div>
-                          <h3 className="font-semibold">{review.userId?.name || 'Anonymous User'}</h3>
-                          <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                          <h3 className="font-bold text-lg mb-1">{review.userId?.name || 'Anonymous User'}</h3>
+                          <div className="flex items-center space-x-2 text-sm">
                             <div className="flex">
                               {renderStars(review.rating)}
                             </div>
-                            <span>•</span>
-                            <span>{formatDate(review.createdAt)}</span>
+                            <span className="text-muted-foreground">•</span>
+                            <span className="text-muted-foreground font-medium">{formatDate(review.createdAt)}</span>
                             {review.verified && (
                               <>
-                                <span>•</span>
-                                <Badge variant="secondary" className="text-xs">
+                                <span className="text-muted-foreground">•</span>
+                                <Badge variant="secondary" className="text-xs font-semibold rounded-lg border-2">
                                   {t.verified}
                                 </Badge>
                               </>
@@ -430,13 +454,13 @@ const ReviewsPage = () => {
                       </div>
                     </div>
 
-                    <div className="space-y-3">
-                      <h4 className="font-medium">{review.title}</h4>
-                      <p className="text-muted-foreground">{review.comment}</p>
+                    <div className="space-y-3 p-4 rounded-lg bg-muted/30 border-l-4 border-primary">
+                      <h4 className="font-bold text-lg">{review.title}</h4>
+                      <p className="text-muted-foreground leading-relaxed font-medium">{review.comment}</p>
                       
                       {review.productId && (
-                        <p className="text-sm text-muted-foreground">
-                          <span className="font-medium">Product:</span> {review.productId?.name || 'Unknown Product'}
+                        <p className="text-sm text-muted-foreground font-medium">
+                          <span className="font-bold">Product:</span> {review.productId?.name || 'Unknown Product'}
                         </p>
                       )}
                     </div>
@@ -448,6 +472,7 @@ const ReviewsPage = () => {
                         variant="ghost"
                         size="sm"
                         onClick={() => handleHelpful(review._id)}
+                        className="rounded-lg hover:bg-primary/10 hover:text-primary transition-all"
                       >
                         <ThumbsUp className="mr-2 h-4 w-4" />
                         {t.helpful} ({review.helpful})
