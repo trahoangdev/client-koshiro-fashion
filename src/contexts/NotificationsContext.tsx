@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { api, Notification } from '@/lib/api';
+import { useAuth } from './useAuth';
 
 interface NotificationsContextType {
   notifications: Notification[];
@@ -49,11 +50,20 @@ interface NotificationsProviderProps {
 }
 
 export const NotificationsProvider = ({ children }: NotificationsProviderProps) => {
+  const { isAuthenticated } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
   const loadNotifications = async () => {
+    // Only load notifications if user is authenticated
+    if (!isAuthenticated) {
+      setNotifications([]);
+      setUnreadCount(0);
+      setIsLoading(false);
+      return;
+    }
+
     try {
       setIsLoading(true);
       
@@ -63,10 +73,14 @@ export const NotificationsProvider = ({ children }: NotificationsProviderProps) 
         limit: 100 
       });
 
-      setNotifications(response.data);
-      setUnreadCount(response.unreadCount);
+      setNotifications(response.data || []);
+      setUnreadCount(response.unreadCount || 0);
     } catch (error) {
-      console.error('Error loading notifications:', error);
+      // Silently fail for unauthenticated users or 401 errors
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (!errorMessage.includes('token') && !errorMessage.includes('401') && !errorMessage.includes('Unauthorized')) {
+        console.error('Error loading notifications:', error);
+      }
       setNotifications([]);
       setUnreadCount(0);
     } finally {
@@ -75,6 +89,7 @@ export const NotificationsProvider = ({ children }: NotificationsProviderProps) 
   };
 
   const markAsRead = async (id: string) => {
+    if (!isAuthenticated) return;
     try {
       await api.markNotificationAsRead(id);
       setNotifications(prev => 
@@ -91,6 +106,7 @@ export const NotificationsProvider = ({ children }: NotificationsProviderProps) 
   };
 
   const markAllAsRead = async () => {
+    if (!isAuthenticated) return;
     try {
       await api.markAllNotificationsAsRead();
       setNotifications(prev => 
@@ -103,6 +119,7 @@ export const NotificationsProvider = ({ children }: NotificationsProviderProps) 
   };
 
   const archiveNotification = async (id: string) => {
+    if (!isAuthenticated) return;
     try {
       // For now, we'll just mark as read since we don't have archive functionality in backend
       await api.markNotificationAsRead(id);
@@ -120,6 +137,7 @@ export const NotificationsProvider = ({ children }: NotificationsProviderProps) 
   };
 
   const deleteNotification = async (id: string) => {
+    if (!isAuthenticated) return;
     try {
       await api.deleteNotification(id);
       setNotifications(prev => prev.filter(notification => notification._id !== id));
@@ -130,6 +148,7 @@ export const NotificationsProvider = ({ children }: NotificationsProviderProps) 
   };
 
   const clearAll = async () => {
+    if (!isAuthenticated) return;
     try {
       // Delete all notifications
       const unreadIds = notifications.filter(n => !n.read).map(n => n._id);
@@ -152,6 +171,9 @@ export const NotificationsProvider = ({ children }: NotificationsProviderProps) 
     actionUrl?: string;
     expiresAt?: string;
   }) => {
+    if (!isAuthenticated) {
+      throw new Error('Must be authenticated to create notifications');
+    }
     try {
       const response = await api.createNotification(data);
       setNotifications(prev => [response.data, ...prev]);
@@ -171,6 +193,9 @@ export const NotificationsProvider = ({ children }: NotificationsProviderProps) 
     expiresAt?: string;
     read?: boolean;
   }) => {
+    if (!isAuthenticated) {
+      throw new Error('Must be authenticated to update notifications');
+    }
     try {
       const response = await api.updateNotification(id, data);
       setNotifications(prev => 
@@ -185,6 +210,7 @@ export const NotificationsProvider = ({ children }: NotificationsProviderProps) 
   };
 
   const bulkMarkAsRead = async (ids: string[]) => {
+    if (!isAuthenticated) return;
     try {
       await api.bulkMarkAsRead(ids);
       setNotifications(prev => 
@@ -201,6 +227,7 @@ export const NotificationsProvider = ({ children }: NotificationsProviderProps) 
   };
 
   const bulkDelete = async (ids: string[]) => {
+    if (!isAuthenticated) return;
     try {
       await api.bulkDelete(ids);
       setNotifications(prev => prev.filter(notification => !ids.includes(notification._id)));
@@ -216,15 +243,27 @@ export const NotificationsProvider = ({ children }: NotificationsProviderProps) 
     loadNotifications();
   };
 
+  // Load notifications when authentication status changes
   useEffect(() => {
     loadNotifications();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated]);
 
-  // Set up real-time updates every 30 seconds
+  // Set up real-time updates every 30 seconds (only when authenticated)
   useEffect(() => {
-    const interval = setInterval(loadNotifications, 30000);
+    if (!isAuthenticated) {
+      // Clear notifications when user logs out
+      setNotifications([]);
+      setUnreadCount(0);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      loadNotifications();
+    }, 30000);
     return () => clearInterval(interval);
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated]);
 
   const value: NotificationsContextType = {
     notifications,

@@ -3,6 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
 import { connectDB } from './config/database';
+import { validateCloudinaryConfig } from './config/cloudinary';
 
 // Import routes
 import authRoutes from './routes/auth';
@@ -24,6 +25,8 @@ import adminPaymentsRoutes from './routes/adminPayments';
 import flashSaleRoutes from './routes/flashSale';
 import roleRoutes from './routes/roles';
 import permissionRoutes from './routes/permissions';
+import apiKeyRoutes from './routes/apiKeys';
+import uploadRoutes from './routes/upload';
 
 // Load environment variables
 dotenv.config();
@@ -135,6 +138,8 @@ app.use('/api/admin/payments', adminPaymentsRoutes);
 app.use('/api/flash-sales', flashSaleRoutes);
 app.use('/api/roles', roleRoutes);
 app.use('/api/permissions', permissionRoutes);
+app.use('/api/admin/api-keys', apiKeyRoutes);
+app.use('/api/upload', uploadRoutes);
 
 // Error handling middleware
 interface CustomError extends Error {
@@ -220,6 +225,15 @@ const startServer = async () => {
     console.log('📡 Connecting to database...');
     await connectDB();
     console.log('✅ Database connected successfully');
+    
+    // Validate Cloudinary configuration
+    console.log('☁️ Validating Cloudinary configuration...');
+    if (!validateCloudinaryConfig()) {
+      console.error('❌ Cloudinary configuration validation failed');
+      console.error('💡 Please check your Cloudinary environment variables');
+      process.exit(1);
+    }
+    console.log('✅ Cloudinary configuration validated');
     
     // Try to start server with automatic port handling
     await startServerWithPortHandling();

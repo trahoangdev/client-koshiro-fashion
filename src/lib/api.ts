@@ -36,12 +36,90 @@ export interface AuthResponse {
   user: User;
 }
 
+// API Key Management types
+export interface ApiKey {
+  _id: string;
+  name: string;
+  key: string;
+  description: string;
+  permissions: string[];
+  isActive: boolean;
+  lastUsed?: string;
+  usageCount: number;
+  rateLimit: number;
+  expiresAt?: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Integration {
+  _id: string;
+  name: string;
+  nameEn?: string;
+  nameJa?: string;
+  type: 'payment' | 'shipping' | 'email' | 'sms' | 'analytics' | 'social' | 'other';
+  provider: string;
+  status: 'active' | 'inactive' | 'error' | 'pending';
+  description: string;
+  descriptionEn?: string;
+  descriptionJa?: string;
+  config: Record<string, unknown>;
+  webhookUrl?: string;
+  webhookSecret?: string;
+  lastSync?: string;
+  errorCount: number;
+  successCount: number;
+  lastError?: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ApiLog {
+  _id: string;
+  apiKey: string;
+  endpoint: string;
+  method: string;
+  statusCode: number;
+  responseTime: number;
+  ipAddress: string;
+  userAgent?: string;
+  requestBody?: unknown;
+  responseBody?: unknown;
+  error?: string;
+  timestamp: string;
+}
+
+export interface ApiStats {
+  totalRequests: number;
+  successRequests: number;
+  errorRequests: number;
+  successRate: number;
+  avgResponseTime: number;
+  uniqueApiKeys: number;
+  uniqueEndpoints: number;
+}
+
+export interface ApiKeyStats {
+  totalKeys: number;
+  activeKeys: number;
+  expiredKeys: number;
+}
+
+export interface IntegrationStats {
+  totalIntegrations: number;
+  activeIntegrations: number;
+  errorIntegrations: number;
+}
+
 // Product types
 export interface ProductVideo {
-  url: string;
-  thumbnail?: string;
-  title?: string;
+  publicId: string;
+  secureUrl: string;
   duration?: number;
+  format: string;
+  bytes: number;
 }
 
 export interface CloudinaryImage {
@@ -79,6 +157,7 @@ export interface Product {
   };
   images: string[]; // Legacy field for backward compatibility
   cloudinaryImages?: CloudinaryImage[]; // New Cloudinary images
+  galleryImages?: CloudinaryImage[]; // Additional gallery images for product detail page
   videos?: ProductVideo[];
   sizes: string[];
   colors: string[];
@@ -353,6 +432,34 @@ class ApiClient {
     }
   }
 
+  // Method to get current token
+  getToken(): string | null {
+    return this.token;
+  }
+
+  // Method to check if user is authenticated
+  isAuthenticated(): boolean {
+    return !!this.token;
+  }
+
+  // Method to clear authentication
+  clearAuth(): void {
+    this.token = null;
+    localStorage.removeItem('token');
+  }
+
+  // Method to refresh token (placeholder for future implementation)
+  async refreshToken(): Promise<boolean> {
+    try {
+      // This would typically call a refresh endpoint
+      // For now, just return false as we don't have refresh logic
+      return false;
+    } catch (error) {
+      console.error('Token refresh failed:', error);
+      return false;
+    }
+  }
+
   private async request<T>(
     endpoint: string,
     options: RequestInit = {}
@@ -366,9 +473,15 @@ class ApiClient {
 
     if (this.token) {
       (headers as Record<string, string>).Authorization = `Bearer ${this.token}`;
-      console.log(`API Request to ${endpoint} with token: ${this.token.substring(0, 20)}...`);
+      // Only log in development mode
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`API Request to ${endpoint} with token: ${this.token.substring(0, 20)}...`);
+      }
     } else {
-      console.log(`API Request to ${endpoint} without token`);
+      // Only log in development mode
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`API Request to ${endpoint} without token`);
+      }
     }
 
     const config: RequestInit = {
@@ -380,17 +493,34 @@ class ApiClient {
       const response = await fetch(url, config);
       
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+        let errorMessage = `HTTP error! status: ${response.status}`;
+        let errorData: Record<string, unknown> = {};
+        
+        try {
+          errorData = await response.json();
+          errorMessage = (errorData.message as string) || errorMessage;
+        } catch {
+          // If response is not JSON, use status text
+          errorMessage = response.statusText || errorMessage;
+        }
+        
         console.error(`API Error for ${endpoint}:`, errorData);
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
-      console.log(`API Success for ${endpoint}:`, data);
+      // Only log in development mode
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`API Success for ${endpoint}:`, data);
+      }
       return data;
     } catch (error) {
       console.error('API request failed:', error);
-      throw error;
+      // Re-throw with more context
+      if (error instanceof Error) {
+        throw new Error(`API request to ${endpoint} failed: ${error.message}`);
+      }
+      throw new Error(`API request to ${endpoint} failed: Unknown error`);
     }
   }
 
@@ -461,11 +591,58 @@ class ApiClient {
     }
   }
 
+  // OAuth methods
+  async googleLogin(token: string): Promise<AuthResponse> {
+    try {
+      const response = await this.request<{ message: string; token: string; user: User }>('/auth/google', {
+        method: 'POST',
+        body: JSON.stringify({ token }),
+      });
+      
+      if (response.token) {
+        this.token = response.token;
+        localStorage.setItem('token', response.token);
+      }
+      
+      return {
+        token: response.token,
+        user: response.user
+      };
+    } catch (error) {
+      console.error('Google login API error:', error);
+      throw error;
+    }
+  }
+
+  async facebookLogin(token: string): Promise<AuthResponse> {
+    try {
+      const response = await this.request<{ message: string; token: string; user: User }>('/auth/facebook', {
+        method: 'POST',
+        body: JSON.stringify({ token }),
+      });
+      
+      if (response.token) {
+        this.token = response.token;
+        localStorage.setItem('token', response.token);
+      }
+      
+      return {
+        token: response.token,
+        user: response.user
+      };
+    } catch (error) {
+      console.error('Facebook login API error:', error);
+      throw error;
+    }
+  }
+
   async getProfile(): Promise<{ user: User }> {
     try {
       return await this.request<{ user: User }>('/auth/profile');
     } catch (error) {
       console.error('Get profile API error:', error);
+      // If profile fetch fails, user might not be authenticated
+      this.clearAuth();
       throw error;
     }
   }
@@ -597,8 +774,7 @@ class ApiClient {
   }
 
   logout(): void {
-    this.token = null;
-    localStorage.removeItem('token');
+    this.clearAuth();
   }
 
   // Address methods
@@ -689,7 +865,7 @@ class ApiClient {
     isFeatured?: boolean;
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
-  }): Promise<{ products: Product[] }> {
+  }): Promise<{ products: Product[]; pagination?: { page: number; limit: number; total: number; pages: number } }> {
     const searchParams = new URLSearchParams();
     
     if (params) {
@@ -703,19 +879,65 @@ class ApiClient {
     const queryString = searchParams.toString();
     const endpoint = `/products${queryString ? `?${queryString}` : ''}`;
     
-    return this.request<{ products: Product[] }>(endpoint);
+    const response = await this.request<{ success: boolean; data: { products: Product[]; pagination: { page: number; limit: number; total: number; pages: number } } } | { products: Product[] } | Product[]>(endpoint);
+    
+    // Handle both old and new response formats for backward compatibility
+    if ('success' in response && response.success && response.data) {
+      return {
+        products: response.data.products,
+        pagination: response.data.pagination
+      };
+    } else if (Array.isArray(response)) {
+      // Handle old format where response is directly an array
+      return { products: response as Product[] };
+    } else if ('products' in response && response.products) {
+      // Handle old format where response has products property
+      return { products: response.products };
+    } else {
+      return { products: [] };
+    }
   }
 
   async getProduct(id: string): Promise<{ product: Product }> {
-    return this.request<{ product: Product }>(`/products/${id}`);
+    const response = await this.request<{ success: boolean; data: { product: Product } } | { product: Product }>(`/products/${id}`);
+    
+    // Handle both old and new response formats for backward compatibility
+    if ('success' in response && response.success && response.data) {
+      return { product: response.data.product };
+    } else if ('product' in response && response.product) {
+      // Handle old format where response has product property
+      return { product: response.product };
+    } else {
+      throw new Error('Product not found');
+    }
   }
 
   async getFeaturedProducts(limit: number = 6): Promise<{ products: Product[] }> {
-    return this.request<{ products: Product[] }>(`/products/featured?limit=${limit}`);
+    const response = await this.request<{ success: boolean; data: { products: Product[] } } | { products: Product[] }>(`/products/featured?limit=${limit}`);
+    
+    // Handle both old and new response formats for backward compatibility
+    if ('success' in response && response.success && response.data) {
+      return { products: response.data.products };
+    } else if ('products' in response && response.products) {
+      // Handle old format where response has products property
+      return { products: response.products };
+    } else {
+      return { products: [] };
+    }
   }
 
   async searchProducts(query: string, limit: number = 10): Promise<{ products: Product[] }> {
-    return this.request<{ products: Product[] }>(`/products/search?q=${encodeURIComponent(query)}&limit=${limit}`);
+    const response = await this.request<{ success: boolean; data: { products: Product[] } } | { products: Product[] }>(`/products/search?q=${encodeURIComponent(query)}&limit=${limit}`);
+    
+    // Handle both old and new response formats for backward compatibility
+    if ('success' in response && response.success && response.data) {
+      return { products: response.data.products };
+    } else if ('products' in response && response.products) {
+      // Handle old format where response has products property
+      return { products: response.products };
+    } else {
+      return { products: [] };
+    }
   }
 
   // Category methods
@@ -818,6 +1040,7 @@ class ApiClient {
 
   async createOrder(orderData: {
     userId?: string;
+    email?: string; // For guest orders
     items: Array<{
       productId: string;
       quantity: number;
@@ -850,6 +1073,45 @@ class ApiClient {
       method: 'POST',
       body: JSON.stringify(orderData),
     });
+  }
+
+  // Create guest order (no authentication required)
+  async createGuestOrder(orderData: {
+    email: string;
+    items: Array<{
+      productId: string;
+      quantity: number;
+      size?: string;
+      color?: string;
+    }>;
+    shippingAddress: {
+      name: string;
+      phone: string;
+      address: string;
+      city: string;
+      district: string;
+    };
+    billingAddress?: {
+      name: string;
+      phone: string;
+      address: string;
+      city: string;
+      district: string;
+    };
+    paymentMethod: string;
+    notes?: string;
+  }): Promise<{ message: string; order: Order }> {
+    // Try guest order endpoint first (if backend supports it)
+    try {
+      return await this.request<{ message: string; order: Order }>('/orders/guest', {
+        method: 'POST',
+        body: JSON.stringify(orderData),
+      });
+    } catch (error) {
+      // If guest endpoint doesn't exist, this will be handled by backend
+      // For now, we'll throw the error - backend needs to support guest orders
+      throw error;
+    }
   }
 
   async cancelOrder(id: string): Promise<{ message: string; order: Order }> {
@@ -886,7 +1148,12 @@ class ApiClient {
 
   // Health check
   async healthCheck(): Promise<{ status: string; message: string; timestamp: string }> {
-    return this.request<{ status: string; message: string; timestamp: string }>('/health');
+    try {
+      return await this.request<{ status: string; message: string; timestamp: string }>('/health');
+    } catch (error) {
+      console.error('Health check failed:', error);
+      throw new Error('Service is currently unavailable');
+    }
   }
 
   // Admin Dashboard methods
@@ -1214,10 +1481,10 @@ class ApiClient {
     }>; total: number }>('/cart');
   }
 
-  async addToCart(productId: string, quantity: number = 1): Promise<{ message: string }> {
+  async addToCart(productId: string, quantity: number = 1, size?: string, color?: string): Promise<{ message: string }> {
     return this.request<{ message: string }>('/cart', {
       method: 'POST',
-      body: JSON.stringify({ productId, quantity }),
+      body: JSON.stringify({ productId, quantity, size, color }),
     });
   }
 
@@ -2190,12 +2457,22 @@ class ApiClient {
     nextFlashSale?: FlashSale;
     message?: string;
   }> {
-    return this.request<{ 
-      success: boolean; 
-      flashSale: FlashSale | null; 
-      nextFlashSale?: FlashSale;
-      message?: string;
-    }>('/flash-sales/current');
+    try {
+      return await this.request<{ 
+        success: boolean; 
+        flashSale: FlashSale | null; 
+        nextFlashSale?: FlashSale;
+        message?: string;
+      }>('/flash-sales/current');
+    } catch (error) {
+      console.error('Get current flash sale failed:', error);
+      // Return empty state instead of throwing
+      return {
+        success: false,
+        flashSale: null,
+        message: 'Failed to load flash sale data'
+      };
+    }
   }
 
   async getFlashSaleById(id: string): Promise<{ success: boolean; flashSale: FlashSale }> {
@@ -2347,6 +2624,208 @@ class ApiClient {
       method: 'POST',
       body: JSON.stringify({ permissions }),
     });
+  }
+
+  // API Key Management methods
+  async getApiKeys(params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    status?: string;
+  }): Promise<{ success: boolean; data: { apiKeys: ApiKey[]; pagination: { page: number; limit: number; total: number; pages: number } } }> {
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+    if (params?.search) queryParams.append('search', params.search);
+    if (params?.status) queryParams.append('status', params.status);
+    
+    const endpoint = `/admin/api-keys/keys${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
+    return this.request(endpoint);
+  }
+
+  async getApiKey(id: string): Promise<{ success: boolean; data: ApiKey }> {
+    return this.request(`/admin/api-keys/keys/${id}`);
+  }
+
+  async createApiKey(data: {
+    name: string;
+    description: string;
+    permissions: string[];
+    rateLimit?: number;
+    expiresAt?: string;
+  }): Promise<{ success: boolean; data: ApiKey; message: string }> {
+    return this.request('/admin/api-keys/keys', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateApiKey(id: string, data: Partial<ApiKey>): Promise<{ success: boolean; data: ApiKey; message: string }> {
+    return this.request(`/admin/api-keys/keys/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteApiKey(id: string): Promise<{ success: boolean; message: string }> {
+    return this.request(`/admin/api-keys/keys/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async regenerateApiKey(id: string): Promise<{ success: boolean; data: ApiKey; message: string }> {
+    return this.request(`/admin/api-keys/keys/${id}/regenerate`, {
+      method: 'POST',
+    });
+  }
+
+  // Integration Management methods
+  async getIntegrations(params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    type?: string;
+    status?: string;
+  }): Promise<{ success: boolean; data: { integrations: Integration[]; pagination: { page: number; limit: number; total: number; pages: number } } }> {
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+    if (params?.search) queryParams.append('search', params.search);
+    if (params?.type) queryParams.append('type', params.type);
+    if (params?.status) queryParams.append('status', params.status);
+    
+    const endpoint = `/admin/api-keys/integrations${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
+    return this.request(endpoint);
+  }
+
+  async createIntegration(data: {
+    name: string;
+    nameEn?: string;
+    nameJa?: string;
+    type: string;
+    provider: string;
+    description: string;
+    descriptionEn?: string;
+    descriptionJa?: string;
+    config: Record<string, unknown>;
+    webhookUrl?: string;
+    webhookSecret?: string;
+  }): Promise<{ success: boolean; data: Integration; message: string }> {
+    return this.request('/admin/api-keys/integrations', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateIntegration(id: string, data: Partial<Integration>): Promise<{ success: boolean; data: Integration; message: string }> {
+    return this.request(`/admin/api-keys/integrations/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteIntegration(id: string): Promise<{ success: boolean; message: string }> {
+    return this.request(`/admin/api-keys/integrations/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async testIntegration(id: string): Promise<{ success: boolean; data: { success: boolean }; message: string }> {
+    return this.request(`/admin/api-keys/integrations/${id}/test`, {
+      method: 'POST',
+    });
+  }
+
+  async syncIntegration(id: string): Promise<{ success: boolean; data: { success: boolean }; message: string }> {
+    return this.request(`/admin/api-keys/integrations/${id}/sync`, {
+      method: 'POST',
+    });
+  }
+
+  // API Logs methods
+  async getApiLogs(params?: {
+    page?: number;
+    limit?: number;
+    apiKey?: string;
+    endpoint?: string;
+    statusCode?: number;
+    startDate?: string;
+    endDate?: string;
+  }): Promise<{ success: boolean; data: { logs: ApiLog[]; pagination: { page: number; limit: number; total: number; pages: number } } }> {
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+    if (params?.apiKey) queryParams.append('apiKey', params.apiKey);
+    if (params?.endpoint) queryParams.append('endpoint', params.endpoint);
+    if (params?.statusCode) queryParams.append('statusCode', params.statusCode.toString());
+    if (params?.startDate) queryParams.append('startDate', params.startDate);
+    if (params?.endDate) queryParams.append('endDate', params.endDate);
+    
+    const endpoint = `/admin/api-keys/logs${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
+    return this.request(endpoint);
+  }
+
+  async getApiStats(params?: {
+    startDate?: string;
+    endDate?: string;
+  }): Promise<{ 
+    success: boolean; 
+    data: { 
+      apiStats: ApiStats; 
+      apiKeyStats: ApiKeyStats; 
+      integrationStats: IntegrationStats; 
+    } 
+  }> {
+    const queryParams = new URLSearchParams();
+    if (params?.startDate) queryParams.append('startDate', params.startDate);
+    if (params?.endDate) queryParams.append('endDate', params.endDate);
+    
+    const endpoint = `/admin/api-keys/stats${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
+    return this.request(endpoint);
+  }
+
+  async clearApiLogs(olderThan?: string): Promise<{ success: boolean; data: { deletedCount: number }; message: string }> {
+    return this.request('/admin/api-keys/logs', {
+      method: 'DELETE',
+      body: JSON.stringify({ olderThan }),
+    });
+  }
+
+  // Export/Import methods
+  async exportApiKeys(format: 'json' | 'csv' = 'json', includeInactive: boolean = false): Promise<Blob> {
+    const queryParams = new URLSearchParams();
+    queryParams.append('format', format);
+    if (includeInactive) queryParams.append('includeInactive', 'true');
+    
+    try {
+      const response = await fetch(`${this.baseURL}/admin/api-keys/export?${queryParams.toString()}`, {
+        headers: {
+          'Authorization': `Bearer ${this.token}`,
+        },
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => 'Unknown error');
+        throw new Error(`Export failed: ${response.status} ${errorText}`);
+      }
+      
+      return response.blob();
+    } catch (error) {
+      console.error('Export API keys failed:', error);
+      throw new Error(`Failed to export API keys: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  async importApiKeys(data: Record<string, unknown>, overwrite: boolean = false): Promise<{ success: boolean; data: Record<string, unknown>; message: string }> {
+    try {
+      return await this.request('/admin/api-keys/import', {
+        method: 'POST',
+        body: JSON.stringify({ data, overwrite }),
+      });
+    } catch (error) {
+      console.error('Import API keys failed:', error);
+      throw new Error(`Failed to import API keys: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   }
 }
 

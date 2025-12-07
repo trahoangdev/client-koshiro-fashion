@@ -1,13 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts';
+import { useMiniCart } from '@/contexts/MiniCartContext';
 import { api, Product, ProductVideo } from '@/lib/api';
+import { recentlyViewedService } from '@/lib/recentlyViewedService';
 import { formatCurrency } from '@/lib/currency';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ProductMediaGallery, { MediaItem } from '@/components/ProductMediaGallery';
+import RecentlyViewedProducts from '@/components/RecentlyViewedProducts';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -44,25 +47,65 @@ import {
 } from 'lucide-react';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
 
+// Type definitions for better type safety
+interface Review {
+  id: number;
+  user: string;
+  avatar: string;
+  rating: number;
+  comment: string;
+  date: string;
+  helpful: number;
+  verified: boolean;
+}
+
+interface ProductDetailState {
+  product: Product | null;
+  loading: boolean;
+  selectedSize: string;
+  selectedColor: string;
+  quantity: number;
+  mediaItems: MediaItem[];
+  refreshWishlistTrigger: number;
+  relatedProducts: Product[];
+  loadingRelatedProducts: boolean;
+  isInWishlist: boolean;
+  shareMenuOpen: boolean;
+}
+
+interface Translations {
+  [key: string]: {
+    [key: string]: string;
+  };
+}
 
 
-const ProductDetail: React.FC = () => {
+
+const ProductDetail: React.FC = memo(() => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { language } = useLanguage();
   const { isAuthenticated } = useAuth();
-  const [product, setProduct] = useState<Product | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [selectedSize, setSelectedSize] = useState<string>('');
-  const [selectedColor, setSelectedColor] = useState<string>('');
-  const [quantity, setQuantity] = useState(1);
-  const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
-  const [refreshWishlistTrigger, setRefreshWishlistTrigger] = useState(0);
-  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
-  const [isInWishlist, setIsInWishlist] = useState(false);
-  const [shareMenuOpen, setShareMenuOpen] = useState(false);
-  const [reviews] = useState([
+  const { openMiniCart } = useMiniCart();
+  
+  // State management with better organization
+  const [state, setState] = useState<ProductDetailState>({
+    product: null,
+    loading: true,
+    selectedSize: '',
+    selectedColor: '',
+    quantity: 1,
+    mediaItems: [],
+    refreshWishlistTrigger: 0,
+    relatedProducts: [],
+    loadingRelatedProducts: false,
+    isInWishlist: false,
+    shareMenuOpen: false,
+  });
+
+  // Memoized reviews data
+  const reviews: Review[] = useMemo(() => [
     {
       id: 1,
       user: 'Anh Nguyen',
@@ -103,13 +146,30 @@ const ProductDetail: React.FC = () => {
       helpful: 12,
       verified: true
     }
-  ]);
+  ], []);
 
-  const handleSearch = (query: string) => {
-    navigate(`/search?q=${encodeURIComponent(query)}`);
-  };
+  // Destructure state for easier access
+  const {
+    product,
+    loading,
+    selectedSize,
+    selectedColor,
+    quantity,
+    mediaItems,
+    refreshWishlistTrigger,
+    relatedProducts,
+    loadingRelatedProducts,
+    isInWishlist,
+    shareMenuOpen
+  } = state;
 
-  const translations = {
+  // State update helper
+  const updateState = useCallback((updates: Partial<ProductDetailState>) => {
+    setState(prev => ({ ...prev, ...updates }));
+  }, []);
+
+  // Memoized translations
+  const translations: Translations = useMemo(() => ({
     vi: {
       addToCart: 'Thêm vào giỏ hàng',
       buyNow: 'Mua ngay',
@@ -176,116 +236,166 @@ const ProductDetail: React.FC = () => {
       selectColor: '色を選択',
       continueShopping: '買い物を続ける'
     }
-  };
+  }), []);
 
-  const t = translations[language as keyof typeof translations] || translations.vi;
+  const t = translations[language] || translations.vi;
 
-  // Helper functions for multilingual support
-  const getProductName = () => {
+  // Memoized handlers
+  const handleSearch = useCallback((query: string) => {
+    navigate(`/search?q=${encodeURIComponent(query)}`);
+  }, [navigate]);
+
+  // Memoized helper functions for multilingual support
+  const getProductName = useCallback(() => {
     if (!product) return '';
     switch (language) {
       case 'vi': return product.name;
       case 'ja': return product.nameJa || product.name;
       default: return product.nameEn || product.name;
     }
-  };
+  }, [product, language]);
 
-  const getProductDescription = () => {
+  const getProductDescription = useCallback(() => {
     if (!product) return '';
     switch (language) {
       case 'vi': return product.description;
       case 'ja': return product.descriptionJa || product.description;
       default: return product.descriptionEn || product.description;
     }
-  };
+  }, [product, language]);
 
-  const getCategoryName = () => {
+  const getCategoryName = useCallback(() => {
     if (!product || typeof product.categoryId === 'string') return 'Category';
     switch (language) {
       case 'vi': return product.categoryId.name;
       case 'ja': return product.categoryId.nameJa || product.categoryId.name;
       default: return product.categoryId.nameEn || product.categoryId.name;
     }
-  };
+  }, [product, language]);
 
+  // Memoized media creation function
+  const createMediaItems = useCallback((product: Product): MediaItem[] => {
+    const media: MediaItem[] = [];
+    
+    // Add Cloudinary images first (priority)
+    if (product.cloudinaryImages && product.cloudinaryImages.length > 0) {
+      product.cloudinaryImages.forEach((cloudinaryImage, index) => {
+        media.push({
+          id: `cloudinary-image-${index}`,
+          type: 'image',
+          url: cloudinaryImage.responsiveUrls.large,
+          alt: `${product.name} ${index + 1}`
+        });
+      });
+    } else if (product.images && product.images.length > 0) {
+      // Fallback to legacy images
+      product.images.forEach((image, index) => {
+        media.push({
+          id: `image-${index}`,
+          type: 'image',
+          url: image,
+          alt: `${product.name} ${index + 1}`
+        });
+      });
+    }
+    
+    // Add gallery images (additional images for gallery)
+    if (product.galleryImages && product.galleryImages.length > 0) {
+      product.galleryImages.forEach((galleryImage, index) => {
+        media.push({
+          id: `gallery-image-${index}`,
+          type: 'image',
+          url: galleryImage.responsiveUrls.large,
+          alt: `${product.name} gallery ${index + 1}`
+        });
+      });
+    }
+    
+    // Add videos (if product has videos property)
+    if (product.videos && Array.isArray(product.videos)) {
+      product.videos.forEach((video, index) => {
+        // Get thumbnail from first available image
+        let thumbnail = '';
+        if (product.cloudinaryImages && product.cloudinaryImages.length > 0) {
+          thumbnail = product.cloudinaryImages[0].responsiveUrls.medium;
+        } else if (product.galleryImages && product.galleryImages.length > 0) {
+          thumbnail = product.galleryImages[0].responsiveUrls.medium;
+        } else if (product.images && product.images.length > 0) {
+          thumbnail = product.images[0];
+        } else {
+          thumbnail = '/placeholder.svg';
+        }
+        
+        media.push({
+          id: `video-${video.publicId || index}`,
+          type: 'video',
+          url: video.secureUrl, // Use secureUrl instead of url
+          thumbnail: thumbnail,
+          alt: `${product.name} video ${index + 1}`
+        });
+      });
+    }
+    
+    return media;
+  }, []);
+
+  // Optimized product loading effect
   useEffect(() => {
     const loadProduct = async () => {
       if (!id) return;
       
       try {
-        setLoading(true);
+        updateState({ loading: true });
         const response = await api.getProduct(id);
-        setProduct(response.product);
+        const productData = response.product;
         
-        // Create media items from images and videos
-        const media: MediaItem[] = [];
-        
-        // Add Cloudinary images first (priority)
-        if (response.product.cloudinaryImages && response.product.cloudinaryImages.length > 0) {
-          response.product.cloudinaryImages.forEach((cloudinaryImage, index) => {
-            media.push({
-              id: `cloudinary-image-${index}`,
-              type: 'image',
-              url: cloudinaryImage.responsiveUrls.large,
-              alt: `${response.product.name} ${index + 1}`
-            });
-          });
-        } else {
-          // Fallback to legacy images
-          response.product.images.forEach((image, index) => {
-            media.push({
-              id: `image-${index}`,
-              type: 'image',
-              url: image,
-              alt: `${response.product.name} ${index + 1}`
-            });
-          });
-        }
-        
-        // Add videos (if product has videos property)
-        if (response.product.videos && Array.isArray(response.product.videos)) {
-          response.product.videos.forEach((video, index) => {
-            media.push({
-              id: `video-${index}`,
-              type: 'video',
-              url: video.url,
-              thumbnail: video.thumbnail || response.product.images[0],
-              alt: `${response.product.name} video ${index + 1}`
-            });
-          });
-        }
-        
-        setMediaItems(media);
+        // Create media items
+        const media = createMediaItems(productData);
         
         // Set default selections
-        if (response.product.sizes.length > 0) {
-          setSelectedSize(response.product.sizes[0]);
-        }
-        if (response.product.colors.length > 0) {
-          setSelectedColor(response.product.colors[0]);
+        const defaultSize = productData.sizes.length > 0 ? productData.sizes[0] : '';
+        const defaultColor = productData.colors.length > 0 ? productData.colors[0] : '';
+        
+        updateState({
+          product: productData,
+          mediaItems: media,
+          selectedSize: defaultSize,
+          selectedColor: defaultColor,
+          loading: false
+        });
+
+        // Save to recently viewed
+        if (productData) {
+          recentlyViewedService.addProduct(productData);
         }
 
-        // Load related products
+        // Load related products in parallel
+        updateState({ loadingRelatedProducts: true });
         try {
           const relatedResponse = await api.getProducts({ 
-            category: typeof response.product.categoryId === 'string' 
-              ? response.product.categoryId 
-              : response.product.categoryId._id,
+            category: typeof productData.categoryId === 'string' 
+              ? productData.categoryId 
+              : productData.categoryId._id,
             limit: 8
           });
-          setRelatedProducts(relatedResponse.products.filter(p => p._id !== response.product._id));
+          updateState({
+            relatedProducts: relatedResponse.products.filter(p => p._id !== productData._id),
+            loadingRelatedProducts: false
+          });
         } catch (error) {
           console.error('Error loading related products:', error);
+          updateState({ loadingRelatedProducts: false });
         }
 
-        // Check if product is in wishlist
+        // Check wishlist status
         if (isAuthenticated) {
           try {
             const wishlistResponse = await api.getWishlist();
             const wishlistProducts = Array.isArray(wishlistResponse) ? wishlistResponse : [];
-            setIsInWishlist(wishlistProducts.some((item: Product | string) => 
-              (typeof item === 'string' ? item : item._id) === response.product._id
-            ));
+            const inWishlist = wishlistProducts.some((item: Product | string) => 
+              (typeof item === 'string' ? item : item._id) === productData._id
+            );
+            updateState({ isInWishlist: inWishlist });
           } catch (error) {
             console.error('Error checking wishlist:', error);
           }
@@ -297,32 +407,33 @@ const ProductDetail: React.FC = () => {
           description: t.errorLoadingDesc,
           variant: "destructive",
         });
-      } finally {
-        setLoading(false);
+        updateState({ loading: false });
       }
     };
 
     loadProduct();
-  }, [id, toast, t.errorLoading, t.errorLoadingDesc, isAuthenticated]);
+  }, [id, toast, t.errorLoading, t.errorLoadingDesc, isAuthenticated, createMediaItems, updateState]);
 
-  const handleAddToCart = async () => {
+  // Memoized cart handler
+  const handleAddToCart = useCallback(async () => {
     if (!product) return;
-    
-    if (!isAuthenticated) {
-      toast({
-        title: language === 'vi' ? "Cần đăng nhập" : 
-               language === 'ja' ? "ログインが必要です" : 
-               "Login Required",
-        description: language === 'vi' ? "Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng" :
-                     language === 'ja' ? "商品をカートに追加するにはログインしてください" :
-                     "Please login to add products to cart",
-        variant: "destructive",
-      });
-      return;
-    }
 
     try {
-      await api.addToCart(product._id, quantity);
+      if (isAuthenticated) {
+        // Add via API for authenticated users
+        await api.addToCart(product._id, quantity);
+      } else {
+        // Save to localStorage for guest users
+        const { cartService } = await import('@/lib/cartService');
+        // Use empty string if size/color not selected
+        const size = selectedSize || undefined;
+        const color = selectedColor || undefined;
+        cartService.addToCart(product, quantity, size, color);
+      }
+      
+      // Open mini cart to show the added product
+      openMiniCart(product, quantity, selectedSize || undefined, selectedColor || undefined);
+      
       toast({
         title: language === 'vi' ? "Đã thêm vào giỏ hàng" : 
                language === 'ja' ? "カートに追加されました" : 
@@ -343,9 +454,10 @@ const ProductDetail: React.FC = () => {
         variant: "destructive"
       });
     }
-  };
+  }, [product, isAuthenticated, quantity, selectedSize, selectedColor, language, toast, openMiniCart]);
 
-  const handleAddToWishlist = async () => {
+  // Memoized wishlist handler
+  const handleAddToWishlist = useCallback(async () => {
     if (!product) return;
     
     if (!isAuthenticated) {
@@ -364,7 +476,10 @@ const ProductDetail: React.FC = () => {
     try {
       if (isInWishlist) {
         await api.removeFromWishlist(product._id);
-        setIsInWishlist(false);
+        updateState({ 
+          isInWishlist: false,
+          refreshWishlistTrigger: refreshWishlistTrigger + 1
+        });
         toast({
           title: language === 'vi' ? "Đã xóa khỏi yêu thích" : 
                  language === 'ja' ? "お気に入りから削除されました" : 
@@ -375,7 +490,10 @@ const ProductDetail: React.FC = () => {
         });
       } else {
         await api.addToWishlist(product._id);
-        setIsInWishlist(true);
+        updateState({ 
+          isInWishlist: true,
+          refreshWishlistTrigger: refreshWishlistTrigger + 1
+        });
         toast({
           title: language === 'vi' ? "Đã thêm vào yêu thích" : 
                  language === 'ja' ? "お気に入りに追加されました" : 
@@ -385,7 +503,6 @@ const ProductDetail: React.FC = () => {
                        "Product has been added to wishlist",
         });
       }
-      setRefreshWishlistTrigger(prev => prev + 1);
     } catch (error) {
       console.error('Failed to update wishlist:', error);
       toast({
@@ -398,9 +515,10 @@ const ProductDetail: React.FC = () => {
         variant: "destructive"
       });
     }
-  };
+  }, [product, isAuthenticated, isInWishlist, refreshWishlistTrigger, language, toast, updateState]);
 
-  const handleShare = (platform: string) => {
+  // Memoized share handler
+  const handleShare = useCallback((platform: string) => {
     const url = window.location.href;
     const title = `Check out ${product?.name}`;
     
@@ -422,16 +540,17 @@ const ProductDetail: React.FC = () => {
         window.location.href = `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(url)}`;
         break;
     }
-    setShareMenuOpen(false);
-  };
+    updateState({ shareMenuOpen: false });
+  }, [product, toast, updateState]);
 
-  const calculateAverageRating = () => {
+  // Memoized rating calculations
+  const averageRating = useMemo(() => {
     if (reviews.length === 0) return 0;
     const sum = reviews.reduce((acc, review) => acc + review.rating, 0);
     return sum / reviews.length;
-  };
+  }, [reviews]);
 
-  const getRatingDistribution = () => {
+  const ratingDistribution = useMemo(() => {
     const distribution = [0, 0, 0, 0, 0]; // 1-5 stars
     reviews.forEach(review => {
       if (review.rating >= 1 && review.rating <= 5) {
@@ -439,35 +558,39 @@ const ProductDetail: React.FC = () => {
       }
     });
     return distribution;
-  };
+  }, [reviews]);
 
-  const handleBuyNow = async () => {
+  // Memoized buy now handler
+  const handleBuyNow = useCallback(async () => {
     if (!product) return;
-    
-    if (!isAuthenticated) {
-      toast({
-        title: language === 'vi' ? "Cần đăng nhập" : 
-               language === 'ja' ? "ログインが必要です" : 
-               "Login Required",
-        description: language === 'vi' ? "Vui lòng đăng nhập để mua sản phẩm" :
-                     language === 'ja' ? "商品を購入するにはログインしてください" :
-                     "Please login to purchase products",
-        variant: "destructive",
-      });
-      return;
-    }
 
     try {
-      // Add to cart first, then navigate to checkout
-      await api.addToCart(product._id, quantity);
-      toast({
-        title: language === 'vi' ? "Đã thêm vào giỏ hàng" : 
-               language === 'ja' ? "カートに追加されました" : 
-               "Added to Cart",
-        description: language === 'vi' ? "Sản phẩm đã được thêm vào giỏ hàng" :
-                     language === 'ja' ? "商品がカートに追加されました" :
-                     "Product has been added to cart",
-      });
+      // Add to cart first (for authenticated users) or save to local storage (for guests)
+      if (isAuthenticated) {
+        await api.addToCart(product._id, quantity);
+        toast({
+          title: language === 'vi' ? "Đã thêm vào giỏ hàng" : 
+                 language === 'ja' ? "カートに追加されました" : 
+                 "Added to Cart",
+          description: language === 'vi' ? "Sản phẩm đã được thêm vào giỏ hàng" :
+                       language === 'ja' ? "商品がカートに追加されました" :
+                       "Product has been added to cart",
+        });
+      } else {
+        // For guest users, add to local storage cart
+        const { cartService } = await import('@/lib/cartService');
+        const size = selectedSize || undefined;
+        const color = selectedColor || undefined;
+        cartService.addToCart(product, quantity, size, color);
+        toast({
+          title: language === 'vi' ? "Đã thêm vào giỏ hàng" : 
+                 language === 'ja' ? "カートに追加されました" : 
+                 "Added to Cart",
+          description: language === 'vi' ? "Sản phẩm đã được thêm vào giỏ hàng" :
+                       language === 'ja' ? "商品がカートに追加されました" :
+                       "Product has been added to cart",
+        });
+      }
       navigate('/checkout');
     } catch (error) {
       console.error('Failed to add to cart:', error);
@@ -481,7 +604,39 @@ const ProductDetail: React.FC = () => {
         variant: "destructive"
       });
     }
-  };
+  }, [product, isAuthenticated, quantity, selectedSize, selectedColor, language, toast, navigate]);
+
+  // Memoized quantity handlers
+  const handleQuantityChange = useCallback((newQuantity: number) => {
+    if (product && newQuantity >= 1 && newQuantity <= product.stock) {
+      updateState({ quantity: newQuantity });
+    }
+  }, [product, updateState]);
+
+  const handleSizeChange = useCallback((size: string) => {
+    updateState({ selectedSize: size });
+  }, [updateState]);
+
+  const handleColorChange = useCallback((color: string) => {
+    updateState({ selectedColor: color });
+  }, [updateState]);
+
+  const toggleShareMenu = useCallback(() => {
+    updateState({ shareMenuOpen: !shareMenuOpen });
+  }, [shareMenuOpen, updateState]);
+
+  // Memoized computed values
+  const isOutOfStock = useMemo(() => !product || product.stock <= 0, [product]);
+  const isOnSale = useMemo(() => product && product.onSale && product.originalPrice && product.originalPrice > product.price, [product]);
+  const displayPrice = useMemo(() => {
+    if (!product) return 0;
+    return product.salePrice && product.salePrice < product.price ? product.salePrice : product.price;
+  }, [product]);
+
+  const discountPercentage = useMemo(() => {
+    if (!product || !isOnSale) return 0;
+    return Math.round(((product.originalPrice! - product.price) / product.originalPrice!) * 100);
+  }, [product, isOnSale]);
 
   if (loading) {
     return (
@@ -517,8 +672,7 @@ const ProductDetail: React.FC = () => {
     );
   }
 
-  const averageRating = calculateAverageRating();
-  const ratingDistribution = getRatingDistribution();
+  // Remove these lines as they're now memoized above
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
@@ -564,7 +718,7 @@ const ProductDetail: React.FC = () => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setShareMenuOpen(!shareMenuOpen)}
+              onClick={toggleShareMenu}
             >
               <Share2 className="h-4 w-4 mr-2" />
               Share
@@ -618,8 +772,8 @@ const ProductDetail: React.FC = () => {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 pb-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+      <div className="container mx-auto px-4 sm:px-6 pb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-12">
           {/* Product Media Gallery */}
           <ProductMediaGallery
             mediaItems={mediaItems}
@@ -656,42 +810,42 @@ const ProductDetail: React.FC = () => {
               {/* Product Badges */}
               <div className="flex flex-wrap gap-2 mb-4">
                 {/* Stock Status - Highest priority */}
-                {product.stock <= 0 && (
+                {isOutOfStock && (
                   <Badge variant="secondary" className="bg-stone-500/90 text-white">
                     {language === 'vi' ? 'Hết hàng' : language === 'ja' ? '在庫切れ' : 'Out of Stock'}
                   </Badge>
                 )}
                 
                 {/* Sale Badge - Show when on sale and in stock */}
-                {product.stock > 0 && product.onSale && product.originalPrice && product.originalPrice > product.price && (
+                {!isOutOfStock && isOnSale && (
                   <Badge variant="destructive" className="bg-red-500/90 text-white">
-                    -{Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% {language === 'vi' ? 'GIẢM' : language === 'ja' ? 'セール' : 'OFF'}
+                    -{discountPercentage}% {language === 'vi' ? 'GIẢM' : language === 'ja' ? 'セール' : 'OFF'}
                   </Badge>
                 )}
                 
                 {/* Limited Edition Badge - Show when in stock */}
-                {product.stock > 0 && product.isLimitedEdition && (
+                {!isOutOfStock && product.isLimitedEdition && (
                   <Badge className="bg-purple-500/90 text-white">
                     {language === 'vi' ? 'Phiên bản giới hạn' : language === 'ja' ? '限定版' : 'Limited Edition'}
                   </Badge>
                 )}
                 
                 {/* Featured Badge - Show when in stock */}
-                {product.stock > 0 && product.isFeatured && (
+                {!isOutOfStock && product.isFeatured && (
                   <Badge variant="default" className="bg-stone-800/90 dark:bg-stone-200/90 text-white dark:text-stone-800">
                     {language === 'vi' ? 'Nổi bật' : language === 'ja' ? 'おすすめ' : 'Featured'}
                   </Badge>
                 )}
                 
                 {/* New Badge - Show when in stock */}
-                {product.stock > 0 && product.isNew && (
+                {!isOutOfStock && product.isNew && (
                   <Badge className="bg-green-500/90 text-white">
                     {language === 'vi' ? 'MỚI' : language === 'ja' ? '新着' : 'NEW'}
                   </Badge>
                 )}
                 
                 {/* Best Seller Badge - Show when in stock */}
-                {product.stock > 0 && product.isBestSeller && (
+                {!isOutOfStock && product.isBestSeller && (
                   <Badge className="bg-orange-500/90 text-white">
                     {language === 'vi' ? 'Bán chạy' : language === 'ja' ? 'ベストセラー' : 'Best Seller'}
                   </Badge>
@@ -723,26 +877,15 @@ const ProductDetail: React.FC = () => {
               <div className="space-y-2">
                 <div className="flex items-center space-x-4">
                   <span className="text-4xl font-bold text-primary">
-                    {product.salePrice && product.salePrice < product.price ? formatCurrency(product.salePrice, language) : formatCurrency(product.price, language)}
+                    {formatCurrency(displayPrice, language)}
                   </span>
-                  {product.salePrice && product.salePrice < product.price && (
+                  {isOnSale && (
                     <>
                       <span className="text-2xl text-muted-foreground line-through">
-                        {formatCurrency(product.price, language)}
+                        {formatCurrency(product.originalPrice!, language)}
                       </span>
                       <Badge variant="destructive" className="text-sm">
-                        -{Math.round(((product.price - product.salePrice) / product.price) * 100)}% 
-                        {language === 'vi' ? ' GIẢM' : language === 'ja' ? ' セール' : ' OFF'}
-                      </Badge>
-                    </>
-                  )}
-                  {product.originalPrice && product.originalPrice > product.price && !product.salePrice && (
-                    <>
-                      <span className="text-2xl text-muted-foreground line-through">
-                        {formatCurrency(product.originalPrice, language)}
-                      </span>
-                      <Badge variant="destructive" className="text-sm">
-                        -{Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% 
+                        -{discountPercentage}% 
                         {language === 'vi' ? ' GIẢM' : language === 'ja' ? ' セール' : ' OFF'}
                       </Badge>
                     </>
@@ -784,8 +927,8 @@ const ProductDetail: React.FC = () => {
                         key={size}
                         variant={selectedSize === size ? "default" : "outline"}
                         size="sm"
-                        onClick={() => setSelectedSize(size)}
-                        className="min-w-[3rem] h-10"
+                        onClick={() => handleSizeChange(size)}
+                        className="min-w-[3.5rem] h-11 text-base touch-manipulation" // Larger touch target
                       >
                         {size}
                       </Button>
@@ -804,8 +947,8 @@ const ProductDetail: React.FC = () => {
                         key={color}
                         variant={selectedColor === color ? "default" : "outline"}
                         size="sm"
-                        onClick={() => setSelectedColor(color)}
-                        className="min-w-[4rem] h-10"
+                        onClick={() => handleColorChange(color)}
+                        className="min-w-[4rem] h-11 text-base touch-manipulation" // Larger touch target
                       >
                         {color}
                       </Button>
@@ -822,23 +965,23 @@ const ProductDetail: React.FC = () => {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                      onClick={() => handleQuantityChange(quantity - 1)}
                       disabled={quantity <= 1}
-                      className="px-3 py-2 h-10 rounded-l-lg rounded-r-none"
+                      className="px-4 py-2 h-11 min-w-[3rem] rounded-l-lg rounded-r-none touch-manipulation" // Larger touch target
                     >
-                      <Minus className="h-4 w-4" />
+                      <Minus className="h-5 w-5" />
                     </Button>
-                    <div className="px-4 py-2 min-w-[3rem] text-center font-medium border-x">
+                    <div className="px-4 py-2 min-w-[4rem] text-center font-medium border-x text-base flex items-center justify-center">
                       {quantity}
                     </div>
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
+                      onClick={() => handleQuantityChange(quantity + 1)}
                       disabled={quantity >= product.stock}
-                      className="px-3 py-2 h-10 rounded-r-lg rounded-l-none"
+                      className="px-4 py-2 h-11 min-w-[3rem] rounded-r-lg rounded-l-none touch-manipulation" // Larger touch target
                     >
-                      <Plus className="h-4 w-4" />
+                      <Plus className="h-5 w-5" />
                     </Button>
                   </div>
                   <span className="text-sm text-muted-foreground">
@@ -852,7 +995,7 @@ const ProductDetail: React.FC = () => {
             <div className="space-y-4">
               <div className="flex flex-col sm:flex-row gap-3">
                 <Button 
-                  className="flex-1 h-12 text-base font-semibold" 
+                  className="flex-1 h-12 sm:h-11 text-base font-semibold touch-manipulation" 
                   size="lg"
                   onClick={handleAddToCart}
                   disabled={!product.isActive}
@@ -863,7 +1006,7 @@ const ProductDetail: React.FC = () => {
                 
                 <Button 
                   variant="outline" 
-                  className="h-12 text-base font-semibold"
+                  className="h-12 sm:h-11 text-base font-semibold touch-manipulation"
                   size="lg"
                   onClick={handleBuyNow}
                   disabled={!product.isActive}
@@ -1089,12 +1232,40 @@ const ProductDetail: React.FC = () => {
         {/* Related Products Section */}
         <div className="mt-16">
           <h2 className="text-2xl font-bold mb-8">You might also like</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {relatedProducts.slice(0, 4).map((relatedProduct) => (
+          {loadingRelatedProducts ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {[...Array(4)].map((_, index) => (
+                <Card key={index} className="group cursor-pointer hover:shadow-lg transition-shadow rounded-md">
+                  <div className="aspect-square bg-muted rounded-t-md overflow-hidden">
+                    <div className="w-full h-full bg-muted animate-pulse flex items-center justify-center">
+                      <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                    </div>
+                  </div>
+                  <CardContent className="pt-4">
+                    <div className="h-4 bg-muted rounded animate-pulse mb-2"></div>
+                    <div className="flex items-center justify-between">
+                      <div className="h-4 w-16 bg-muted rounded animate-pulse"></div>
+                      <div className="h-3 w-8 bg-muted rounded animate-pulse"></div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : relatedProducts.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {relatedProducts.slice(0, 4).map((relatedProduct) => (
               <Card key={relatedProduct._id} className="group cursor-pointer hover:shadow-lg transition-shadow rounded-md">
                 <div className="aspect-square bg-muted rounded-t-md overflow-hidden">
                   <img
-                    src={relatedProduct.images[0] || '/placeholder.svg'}
+                    src={
+                      relatedProduct.cloudinaryImages && relatedProduct.cloudinaryImages.length > 0
+                        ? relatedProduct.cloudinaryImages[0].responsiveUrls.medium
+                        : relatedProduct.galleryImages && relatedProduct.galleryImages.length > 0
+                        ? relatedProduct.galleryImages[0].responsiveUrls.medium
+                        : relatedProduct.images && relatedProduct.images.length > 0
+                        ? relatedProduct.images[0]
+                        : '/placeholder.svg'
+                    }
                     alt={language === 'vi' ? relatedProduct.name : 
                           language === 'ja' ? (relatedProduct.nameJa || relatedProduct.name) : 
                           (relatedProduct.nameEn || relatedProduct.name)}
@@ -1126,14 +1297,24 @@ const ProductDetail: React.FC = () => {
                   )}
                 </CardContent>
               </Card>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground">No related products found</p>
+            </div>
+          )}
         </div>
+      </div>
+
+      {/* Recently Viewed Products */}
+      <div className="container mx-auto px-4 py-12">
+        <RecentlyViewedProducts maxItems={8} />
       </div>
       
       <Footer />
     </div>
   );
-};
+});
 
 export default ProductDetail;

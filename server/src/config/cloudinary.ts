@@ -133,6 +133,24 @@ export const validateCloudinaryConfig = (): boolean => {
     console.error('❌ Missing Cloudinary configuration:', missing.join(', '));
     return false;
   }
+
+  // Validate cloud_name format
+  if (cloudinaryConfig.cloud_name && !/^[a-z0-9_-]+$/i.test(cloudinaryConfig.cloud_name)) {
+    console.error('❌ Invalid cloud_name format. Must contain only letters, numbers, hyphens, and underscores.');
+    return false;
+  }
+
+  // Test URL generation with a dummy publicId
+  try {
+    const testUrl = cloudinary.url('test', { secure: true });
+    if (!testUrl || !testUrl.includes('cloudinary.com')) {
+      console.error('❌ Cloudinary URL generation test failed');
+      return false;
+    }
+  } catch (error) {
+    console.error('❌ Cloudinary configuration test failed:', error);
+    return false;
+  }
   
   console.log('✅ Cloudinary configuration validated');
   return true;
@@ -156,28 +174,76 @@ export const generateOptimizedUrl = (
     format?: string;
   } = {}
 ) => {
-  const defaultOptions = {
-    quality: 'auto',
-    fetch_format: 'auto',
-    ...options,
-  };
-  
-  return cloudinary.url(publicId, {
-    ...defaultOptions,
-    secure: true,
-  });
+  try {
+    // Validate publicId
+    if (!publicId || typeof publicId !== 'string') {
+      console.error('Invalid publicId provided to generateOptimizedUrl:', publicId);
+      return '';
+    }
+
+    const defaultOptions = {
+      quality: 'auto',
+      fetch_format: 'auto',
+      ...options,
+    };
+    
+    const url = cloudinary.url(publicId, {
+      ...defaultOptions,
+      secure: true,
+    });
+
+    // Validate generated URL
+    if (!url || !url.includes('cloudinary.com')) {
+      console.error('Invalid URL generated for publicId:', publicId, 'URL:', url);
+      return '';
+    }
+
+    return url;
+  } catch (error) {
+    console.error('Error generating optimized URL for publicId:', publicId, error);
+    return '';
+  }
 };
 
 /**
  * Generate responsive image URLs
  */
 export const generateResponsiveUrls = (publicId: string) => {
-  return {
-    thumbnail: generateOptimizedUrl(publicId, thumbnailOptions),
-    medium: generateOptimizedUrl(publicId, mediumImageOptions),
-    large: generateOptimizedUrl(publicId, largeImageOptions),
-    original: generateOptimizedUrl(publicId),
-  };
+  try {
+    // Validate publicId
+    if (!publicId || typeof publicId !== 'string') {
+      console.error('Invalid publicId provided to generateResponsiveUrls:', publicId);
+      return {
+        thumbnail: '',
+        medium: '',
+        large: '',
+        original: '',
+      };
+    }
+
+    const thumbnail = generateOptimizedUrl(publicId, thumbnailOptions);
+    const medium = generateOptimizedUrl(publicId, mediumImageOptions);
+    const large = generateOptimizedUrl(publicId, largeImageOptions);
+    const original = generateOptimizedUrl(publicId);
+
+    // Validate all URLs are generated successfully
+    const urls = { thumbnail, medium, large, original };
+    const invalidUrls = Object.entries(urls).filter(([key, url]) => !url);
+    
+    if (invalidUrls.length > 0) {
+      console.warn('Some responsive URLs failed to generate:', invalidUrls.map(([key]) => key));
+    }
+
+    return urls;
+  } catch (error) {
+    console.error('Error generating responsive URLs for publicId:', publicId, error);
+    return {
+      thumbnail: '',
+      medium: '',
+      large: '',
+      original: '',
+    };
+  }
 };
 
 export default cloudinary;

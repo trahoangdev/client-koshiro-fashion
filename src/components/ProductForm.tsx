@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { 
   Save,
   X,
@@ -37,6 +37,7 @@ import MDEditor from '@uiw/react-md-editor';
 import '@uiw/react-md-editor/markdown-editor.css';
 import '@/styles/markdown-editor.css';
 import CloudinaryImageUpload from './CloudinaryImageUpload';
+import CloudinaryVideoUpload from './CloudinaryVideoUpload';
 
 interface CloudinaryImage {
   publicId: string;
@@ -53,6 +54,14 @@ interface CloudinaryImage {
   };
 }
 
+interface CloudinaryVideo {
+  publicId: string;
+  secureUrl: string;
+  duration?: number;
+  format: string;
+  bytes: number;
+}
+
 interface ProductFormData {
   name: string;
   nameEn: string;
@@ -65,6 +74,8 @@ interface ProductFormData {
   categoryId: string;
   images: string[]; // Legacy field for backward compatibility
   cloudinaryImages: CloudinaryImage[]; // New Cloudinary images
+  galleryImages: CloudinaryImage[]; // Additional gallery images for product detail page
+  videos: CloudinaryVideo[]; // Video support
   sizes: string[];
   colors: Array<string | { name: string; value: string }>;
   stock: number;
@@ -211,6 +222,8 @@ export default function ProductForm({
       categoryId: '',
       images: [], // Legacy field
       cloudinaryImages: [], // New Cloudinary images
+      galleryImages: [], // Additional gallery images for product detail page
+      videos: [], // Video support
       sizes: [],
       colors: [],
       stock: 0,
@@ -250,6 +263,11 @@ export default function ProductForm({
   const [newColor, setNewColor] = useState('#000000');
   const [newColorName, setNewColorName] = useState('');
   const [displayValue, setDisplayValue] = useState('');
+  
+  // Refs to prevent unnecessary re-renders
+  const cloudinaryImagesRef = useRef<CloudinaryImage[]>([]);
+  const videosRef = useRef<CloudinaryVideo[]>([]);
+  const galleryImagesRef = useRef<CloudinaryImage[]>([]);
 
   // Auto-detect badge statuses from tags
   const detectBadgeFromTags = (tags: string[]) => {
@@ -312,7 +330,8 @@ export default function ProductForm({
       setFormData(prev => ({
         ...prev,
         ...initialData,
-        colors: initialData.colors ? convertColorsToObjects(initialData.colors as string[]) : prev.colors
+        colors: initialData.colors ? convertColorsToObjects(initialData.colors as string[]) : prev.colors,
+        videos: initialData.videos || []
       }));
     }
   }, [initialData, convertColorsToObjects]);
@@ -322,9 +341,17 @@ export default function ProductForm({
     if (onFormChange && formData) {
       onFormChange(formData);
     }
-  }, [formData, onFormChange]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData]); // Remove onFormChange from dependencies to prevent infinite loops
 
-  const translations = {
+  // Sync refs with formData to prevent unnecessary re-renders
+  useEffect(() => {
+    cloudinaryImagesRef.current = formData.cloudinaryImages;
+    videosRef.current = formData.videos;
+    galleryImagesRef.current = formData.galleryImages;
+  }, [formData.cloudinaryImages, formData.videos, formData.galleryImages]);
+
+  const translations = useMemo(() => ({
     en: {
       title: mode === 'create' ? 'Create New Product' : 'Edit Product',
       name: 'Product Name',
@@ -475,9 +502,12 @@ export default function ProductForm({
       error: 'エラー',
       success: '商品が正常に保存されました'
     }
-  };
+  }), [mode]);
 
-  const t = translations[language as keyof typeof translations] || translations.en;
+  const t = useMemo(() => 
+    translations[language as keyof typeof translations] || translations.en, 
+    [language, translations]
+  );
 
   // Function to get color name from hex value
   const getColorName = (hex: string): string => {
@@ -712,7 +742,7 @@ export default function ProductForm({
     }));
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
       // In a real app, you would upload to a server and get URLs
@@ -722,29 +752,124 @@ export default function ProductForm({
         images: [...prev.images, ...imageUrls]
       }));
     }
-  };
+  }, []);
 
-  const removeImage = (index: number) => {
+  const removeImage = useCallback((index: number) => {
     setFormData(prev => ({
       ...prev,
       images: prev.images.filter((_, i) => i !== index)
     }));
-  };
+  }, []);
 
-  // Cloudinary image handlers
-  const handleCloudinaryImagesUploaded = (newImages: CloudinaryImage[]) => {
-    setFormData(prev => ({
-      ...prev,
-      cloudinaryImages: [...prev.cloudinaryImages, ...newImages]
-    }));
-  };
+  // Cloudinary image handlers - memoized to prevent re-renders
+  const handleCloudinaryImagesUploaded = useCallback((newImages: CloudinaryImage[]) => {
+    setFormData(prev => {
+      const updatedImages = [...prev.cloudinaryImages, ...newImages];
+      cloudinaryImagesRef.current = updatedImages;
+      return {
+        ...prev,
+        cloudinaryImages: updatedImages
+      };
+    });
+  }, []);
 
-  const handleCloudinaryImagesRemoved = (publicIds: string[]) => {
-    setFormData(prev => ({
-      ...prev,
-      cloudinaryImages: prev.cloudinaryImages.filter(img => !publicIds.includes(img.publicId))
-    }));
-  };
+  const handleCloudinaryImagesRemoved = useCallback((publicIds: string[]) => {
+    setFormData(prev => {
+      const updatedImages = prev.cloudinaryImages.filter(img => !publicIds.includes(img.publicId));
+      cloudinaryImagesRef.current = updatedImages;
+      return {
+        ...prev,
+        cloudinaryImages: updatedImages
+      };
+    });
+  }, []);
+
+  // Cloudinary video handlers - memoized to prevent re-renders
+  const handleCloudinaryVideosUploaded = useCallback((newVideos: CloudinaryVideo[]) => {
+    setFormData(prev => {
+      const updatedVideos = [...prev.videos, ...newVideos];
+      videosRef.current = updatedVideos;
+      return {
+        ...prev,
+        videos: updatedVideos
+      };
+    });
+  }, []);
+
+  const handleCloudinaryVideosRemoved = useCallback((publicIds: string[]) => {
+    setFormData(prev => {
+      const updatedVideos = prev.videos.filter(video => !publicIds.includes(video.publicId));
+      videosRef.current = updatedVideos;
+      return {
+        ...prev,
+        videos: updatedVideos
+      };
+    });
+  }, []);
+
+  // Gallery image handlers - memoized to prevent re-renders
+  const handleGalleryImagesUploaded = useCallback((newImages: CloudinaryImage[]) => {
+    setFormData(prev => {
+      const updatedImages = [...prev.galleryImages, ...newImages];
+      galleryImagesRef.current = updatedImages;
+      return {
+        ...prev,
+        galleryImages: updatedImages
+      };
+    });
+    
+    // Call callback after state update to prevent immediate re-render
+    setTimeout(() => {
+      // Additional processing if needed
+    }, 0);
+  }, []);
+
+  const handleGalleryImagesRemoved = useCallback((publicIds: string[]) => {
+    setFormData(prev => {
+      const updatedImages = prev.galleryImages.filter(img => !publicIds.includes(img.publicId));
+      galleryImagesRef.current = updatedImages;
+      return {
+        ...prev,
+        galleryImages: updatedImages
+      };
+    });
+    
+    // Call callback after state update to prevent immediate re-render
+    setTimeout(() => {
+      // Additional processing if needed
+    }, 0);
+  }, []);
+
+  // Memoize props to prevent unnecessary re-renders
+  const cloudinaryImagesKey = useMemo(() => 
+    `${formData.cloudinaryImages.length}-${formData.cloudinaryImages.map(img => img.publicId).join(',')}`, 
+    [formData.cloudinaryImages]
+  );
+  
+  const videosKey = useMemo(() => 
+    `${formData.videos.length}-${formData.videos.map(video => video.publicId).join(',')}`, 
+    [formData.videos]
+  );
+  
+  const galleryImagesKey = useMemo(() => 
+    `${formData.galleryImages.length}-${formData.galleryImages.map(img => img.publicId).join(',')}`, 
+    [formData.galleryImages]
+  );
+  
+  const memoizedCloudinaryImages = useMemo(() => {
+    // Use ref if available, otherwise fallback to formData
+    return cloudinaryImagesRef.current.length > 0 ? cloudinaryImagesRef.current : formData.cloudinaryImages;
+  }, [formData.cloudinaryImages]);
+  
+  const memoizedVideos = useMemo(() => {
+    // Use ref if available, otherwise fallback to formData
+    return videosRef.current.length > 0 ? videosRef.current : formData.videos;
+  }, [formData.videos]);
+
+  const memoizedGalleryImages = useMemo(() => {
+    // Use ref if available, otherwise fallback to formData
+    return galleryImagesRef.current.length > 0 ? galleryImagesRef.current : formData.galleryImages;
+  }, [formData.galleryImages]);
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -1225,8 +1350,39 @@ export default function ProductForm({
               <CloudinaryImageUpload
                 onImagesUploaded={handleCloudinaryImagesUploaded}
                 onImagesRemoved={handleCloudinaryImagesRemoved}
-                existingImages={formData.cloudinaryImages}
+                existingImages={memoizedCloudinaryImages}
                 maxFiles={10}
+                maxSize={10 * 1024 * 1024} // 10MB
+                acceptedTypes={['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']}
+              />
+            </div>
+            
+            <Separator />
+            
+            <div className="space-y-2">
+              <Label>Product Videos</Label>
+              <CloudinaryVideoUpload
+                onVideosUploaded={handleCloudinaryVideosUploaded}
+                onVideosRemoved={handleCloudinaryVideosRemoved}
+                existingVideos={memoizedVideos}
+                maxFiles={5}
+                maxSize={100 * 1024 * 1024} // 100MB
+                acceptedTypes={['video/mp4', 'video/webm', 'video/ogg', 'video/avi', 'video/mov', 'video/wmv']}
+              />
+            </div>
+            
+            <Separator />
+            
+            <div className="space-y-2">
+              <Label>Gallery Images (Additional)</Label>
+              <p className="text-sm text-muted-foreground">
+                Additional images for product detail page gallery. These will be displayed in the product gallery section.
+              </p>
+              <CloudinaryImageUpload
+                onImagesUploaded={handleGalleryImagesUploaded}
+                onImagesRemoved={handleGalleryImagesRemoved}
+                existingImages={memoizedGalleryImages}
+                maxFiles={20}
                 maxSize={10 * 1024 * 1024} // 10MB
                 acceptedTypes={['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']}
               />

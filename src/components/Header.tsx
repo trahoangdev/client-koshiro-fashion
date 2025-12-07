@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Search, ShoppingBag, Menu, X, User, Globe, Heart, LogOut, Settings, Package, CreditCard, MapPin, Bell, LogIn, UserPlus, GitCompare, ChevronDown } from "lucide-react";
 import EnhancedMobileMenu from "./EnhancedMobileMenu";
+import AutocompleteSearch from "./AutocompleteSearch";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -27,7 +28,6 @@ interface HeaderProps {
 
 const Header = ({ cartItemsCount, onSearch, refreshWishlistTrigger }: HeaderProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
   const [wishlistCount, setWishlistCount] = useState(0);
   const [categories, setCategories] = useState<Category[]>([]);
   const { language, setLanguage } = useLanguage();
@@ -90,13 +90,6 @@ const Header = ({ cartItemsCount, onSearch, refreshWishlistTrigger }: HeaderProp
 
     loadCategories();
   }, []);
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-    }
-  };
 
   const handleLogout = () => {
     logout();
@@ -275,18 +268,14 @@ const Header = ({ cartItemsCount, onSearch, refreshWishlistTrigger }: HeaderProp
         </nav>
 
         {/* Search - Better positioning */}
-        <form onSubmit={handleSearch} className="hidden lg:flex flex-1 max-w-[360px] mx-6">
-          <div className="relative w-full">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
-            <Input
-              type="search"
-              placeholder={t.search}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-12 pr-4 py-3 text-base rounded-full border-2 focus:border-primary transition-all duration-300"
-            />
-          </div>
-        </form>
+        <div className="hidden lg:flex flex-1 max-w-[360px] mx-6">
+          <AutocompleteSearch
+            onSearch={onSearch}
+            placeholder={t.search}
+            showHistory={true}
+            showSuggestions={true}
+          />
+        </div>
 
         {/* Right section - Better spacing */}
         <div className="flex items-center space-x-4 lg:space-x-5 min-w-[220px] lg:min-w-[240px] justify-end">
@@ -482,18 +471,14 @@ const Header = ({ cartItemsCount, onSearch, refreshWishlistTrigger }: HeaderProp
           </nav>
           
           {/* Mobile Search */}
-          <form onSubmit={handleSearch} className="mt-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-              <Input
-                type="search"
-                placeholder={t.search}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 rounded-full"
-              />
-            </div>
-          </form>
+          <div className="mt-4">
+            <AutocompleteSearch
+              onSearch={onSearch}
+              placeholder={t.search}
+              showHistory={true}
+              showSuggestions={true}
+            />
+          </div>
         </div>
       </div>
 

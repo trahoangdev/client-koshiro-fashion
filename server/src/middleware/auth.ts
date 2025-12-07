@@ -130,4 +130,8 @@ export const authorizeRoles = (roles: string[]) => (req: AuthRequest, res: Respo
 // Async handler wrapper to catch errors
 export const asyncHandler = (fn: (req: Request, res: Response, next: NextFunction) => Promise<unknown>) => (req: Request, res: Response, next: NextFunction) => {
   Promise.resolve(fn(req, res, next)).catch(next);
-}; 
+};
+
+// Export AuthRequest type for use in controllers
+export type { AuthRequest };
+

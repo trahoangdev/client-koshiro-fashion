@@ -38,43 +38,52 @@ const CartPage: React.FC = () => {
     console.log('Search query:', query);
   };
 
-  // Load cart from API if authenticated, otherwise show empty
+  // Load cart from API if authenticated, or from localStorage if guest
   useEffect(() => {
     const loadCart = async () => {
-      if (!isAuthenticated) {
-        setCartItems([]);
-        setLoading(false);
-        return;
-      }
-
       try {
         setLoading(true);
-        const response = await api.getCart();
-        if (response && response.items && Array.isArray(response.items)) {
-          const cartItemsData = response.items
-            .filter((item: { 
-              productId: string; 
-              quantity: number; 
-              size?: string; 
-              color?: string; 
-              product: Product; 
-            }) => item && item.product && item.product._id && item.product.images && Array.isArray(item.product.images)) // Filter out items with missing product data
-            .map((item: { 
-              productId: string; 
-              quantity: number; 
-              size?: string; 
-              color?: string; 
-              product: Product; 
-            }) => ({
-              productId: item.productId,
-              product: item.product,
-              quantity: item.quantity,
-              selectedSize: item.size,
-              selectedColor: item.color
-            }));
-          setCartItems(cartItemsData);
+        
+        if (isAuthenticated) {
+          // Load from API for authenticated users
+          const response = await api.getCart();
+          if (response && response.items && Array.isArray(response.items)) {
+            const cartItemsData = response.items
+              .filter((item: { 
+                productId: string; 
+                quantity: number; 
+                size?: string; 
+                color?: string; 
+                product: Product; 
+              }) => item && item.product && item.product._id && item.product.images && Array.isArray(item.product.images)) // Filter out items with missing product data
+              .map((item: { 
+                productId: string; 
+                quantity: number; 
+                size?: string; 
+                color?: string; 
+                product: Product; 
+              }) => ({
+                productId: item.productId,
+                product: item.product,
+                quantity: item.quantity,
+                selectedSize: item.size,
+                selectedColor: item.color
+              }));
+            setCartItems(cartItemsData);
+          } else {
+            setCartItems([]);
+          }
         } else {
-          setCartItems([]);
+          // Load from localStorage for guest users
+          const { cartService } = await import('@/lib/cartService');
+          const localCart = cartService.getCart();
+          setCartItems(localCart.map(item => ({
+            productId: item.productId,
+            product: item.product,
+            quantity: item.quantity,
+            selectedSize: item.selectedSize,
+            selectedColor: item.selectedColor
+          })));
         }
       } catch (error) {
         console.error('Error loading cart:', error);
@@ -87,6 +96,23 @@ const CartPage: React.FC = () => {
                        "Unable to load cart information",
           variant: "destructive",
         });
+        // Fallback to localStorage for guest users
+        if (!isAuthenticated) {
+          try {
+            const { cartService } = await import('@/lib/cartService');
+            const localCart = cartService.getCart();
+            setCartItems(localCart.map(item => ({
+              productId: item.productId,
+              product: item.product,
+              quantity: item.quantity,
+              selectedSize: item.selectedSize,
+              selectedColor: item.selectedColor
+            })));
+          } catch (fallbackError) {
+            console.error('Fallback cart load error:', fallbackError);
+            setCartItems([]);
+          }
+        }
       } finally {
         setLoading(false);
       }
@@ -96,28 +122,33 @@ const CartPage: React.FC = () => {
   }, [isAuthenticated, toast, language]);
 
   const updateQuantity = async (productId: string, newQuantity: number, selectedSize?: string, selectedColor?: string) => {
-    if (!isAuthenticated) {
-      toast({
-        title: language === 'vi' ? "Cần đăng nhập" : 
-               language === 'ja' ? "ログインが必要です" : 
-               "Login Required",
-        description: language === 'vi' ? "Vui lòng đăng nhập để quản lý giỏ hàng" :
-                     language === 'ja' ? "カートを管理するにはログインしてください" :
-                     "Please login to manage cart",
-        variant: "destructive",
-      });
-      return;
-    }
-
     try {
       setUpdating(productId);
-      await api.updateCartItem(productId, newQuantity);
       
-      setCartItems(prev => prev.map(item => 
-        item.productId === productId 
-          ? { ...item, quantity: newQuantity }
-          : item
-      ));
+      if (isAuthenticated) {
+        // Update via API for authenticated users
+        await api.updateCartItem(productId, newQuantity);
+        
+        setCartItems(prev => prev.map(item => 
+          item.productId === productId 
+            ? { ...item, quantity: newQuantity }
+            : item
+        ));
+      } else {
+        // Update localStorage for guest users
+        const { cartService } = await import('@/lib/cartService');
+        cartService.updateQuantity(productId, newQuantity, selectedSize, selectedColor);
+        
+        // Reload cart from localStorage
+        const localCart = cartService.getCart();
+        setCartItems(localCart.map(item => ({
+          productId: item.productId,
+          product: item.product,
+          quantity: item.quantity,
+          selectedSize: item.selectedSize,
+          selectedColor: item.selectedColor
+        })));
+      }
 
       toast({
         title: language === 'vi' ? "Cập nhật số lượng" : 
@@ -144,23 +175,33 @@ const CartPage: React.FC = () => {
   };
 
   const removeItem = async (productId: string, selectedSize?: string, selectedColor?: string) => {
-    if (!isAuthenticated) {
-      toast({
-        title: language === 'vi' ? "Cần đăng nhập" : 
-               language === 'ja' ? "ログインが必要です" : 
-               "Login Required",
-        description: language === 'vi' ? "Vui lòng đăng nhập để quản lý giỏ hàng" :
-                     language === 'ja' ? "カートを管理するにはログインしてください" :
-                     "Please login to manage cart",
-        variant: "destructive",
-      });
-      return;
-    }
-
     try {
-      await api.removeFromCart(productId);
+      setUpdating(productId);
       
-      setCartItems(prev => prev.filter(item => item.productId !== productId));
+      if (isAuthenticated) {
+        // Remove via API for authenticated users
+        await api.removeFromCart(productId);
+        
+        setCartItems(prev => prev.filter(item => 
+          !(item.productId === productId && 
+            item.selectedSize === selectedSize && 
+            item.selectedColor === selectedColor)
+        ));
+      } else {
+        // Remove from localStorage for guest users
+        const { cartService } = await import('@/lib/cartService');
+        cartService.removeFromCart(productId, selectedSize, selectedColor);
+        
+        // Reload cart from localStorage
+        const localCart = cartService.getCart();
+        setCartItems(localCart.map(item => ({
+          productId: item.productId,
+          product: item.product,
+          quantity: item.quantity,
+          selectedSize: item.selectedSize,
+          selectedColor: item.selectedColor
+        })));
+      }
 
       toast({
         title: language === 'vi' ? "Xóa sản phẩm" : 
@@ -181,6 +222,8 @@ const CartPage: React.FC = () => {
                      "Could not remove item",
         variant: "destructive",
       });
+    } finally {
+      setUpdating(null);
     }
   };
 

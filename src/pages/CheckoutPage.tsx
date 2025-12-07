@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts";
 import { useToast } from "@/hooks/use-toast";
 import { api, Product } from "@/lib/api";
 import { formatCurrency } from "@/lib/currency";
+import { cartService } from "@/lib/cartService";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -75,71 +76,79 @@ const CheckoutPage = () => {
   const { language } = useLanguage();
   const { toast } = useToast();
 
-  // Load cart items from API if authenticated
+  // Load cart items from API if authenticated, or from localStorage if guest
   useEffect(() => {
     const loadCart = async () => {
-      if (!isAuthenticated) {
-        setCartItems([]);
-        setLoading(false);
-        return;
-      }
-
       try {
         setLoading(true);
-        const response = await api.getCart();
-        if (response && response.items && Array.isArray(response.items)) {
-          const cartItemsData = response.items
-            .filter((item: { 
-              productId: string; 
-              quantity: number; 
-              size?: string; 
-              color?: string; 
-              product: Product; 
-            }) => {
-              // More lenient filtering - just check essential fields
-              if (!item || !item.product) {
-                console.warn('Cart item missing product:', item);
-                return false;
-              }
-              if (!item.product._id) {
-                console.warn('Cart item product missing ID:', item.product);
-                return false;
-              }
-              return true;
-            })
-            .map((item: { 
-              productId: string; 
-              quantity: number; 
-              size?: string; 
-              color?: string; 
-              product: Product; 
-            }) => ({
-              productId: item.productId,
-              product: {
-                ...item.product,
-                images: item.product.images || [] // Ensure images is always an array
-              },
-              quantity: item.quantity,
-              selectedSize: item.size,
-              selectedColor: item.color
-            }));
-          console.log('Loaded cart items:', cartItemsData);
-          setCartItems(cartItemsData);
-        } else {
-          console.warn('Invalid cart response:', response);
-          setCartItems([]);
-        }
         
-        // Pre-fill form with user data if authenticated
-        if (isAuthenticated && user) {
-          setFormData(prev => ({
-            ...prev,
-            firstName: user.name.split(' ')[0] || '',
-            lastName: user.name.split(' ').slice(1).join(' ') || '',
-            email: user.email || '',
-            phone: user.phone || '',
-            address: user.address || ''
-          }));
+        if (isAuthenticated) {
+          // Load from API for authenticated users
+          const response = await api.getCart();
+          if (response && response.items && Array.isArray(response.items)) {
+            const cartItemsData = response.items
+              .filter((item: { 
+                productId: string; 
+                quantity: number; 
+                size?: string; 
+                color?: string; 
+                product: Product; 
+              }) => {
+                // More lenient filtering - just check essential fields
+                if (!item || !item.product) {
+                  console.warn('Cart item missing product:', item);
+                  return false;
+                }
+                if (!item.product._id) {
+                  console.warn('Cart item product missing ID:', item.product);
+                  return false;
+                }
+                return true;
+              })
+              .map((item: { 
+                productId: string; 
+                quantity: number; 
+                size?: string; 
+                color?: string; 
+                product: Product; 
+              }) => ({
+                productId: item.productId,
+                product: {
+                  ...item.product,
+                  images: item.product.images || [] // Ensure images is always an array
+                },
+                quantity: item.quantity,
+                selectedSize: item.size,
+                selectedColor: item.color
+              }));
+            console.log('Loaded cart items:', cartItemsData);
+            setCartItems(cartItemsData);
+          } else {
+            console.warn('Invalid cart response:', response);
+            setCartItems([]);
+          }
+          
+          // Pre-fill form with user data if authenticated
+          if (user) {
+            setFormData(prev => ({
+              ...prev,
+              firstName: user.name.split(' ')[0] || '',
+              lastName: user.name.split(' ').slice(1).join(' ') || '',
+              email: user.email || '',
+              phone: user.phone || '',
+              address: user.address || ''
+            }));
+          }
+        } else {
+          // Load from localStorage for guest users
+          const localCart = cartService.getCart();
+          setCartItems(localCart.map(item => ({
+            productId: item.productId,
+            product: item.product,
+            quantity: item.quantity,
+            selectedSize: item.selectedSize,
+            selectedColor: item.selectedColor
+          })));
         }
       } catch (error) {
         console.error('Error loading cart:', error);
@@ -160,20 +169,29 @@ const CheckoutPage = () => {
     loadCart();
   }, [isAuthenticated, user, toast, language]);
 
-  // Redirect if cart is empty or user not authenticated
+  // Require login for checkout - redirect guest users to login
   useEffect(() => {
-    if (!loading) {
-      if (!isAuthenticated) {
-        navigate('/login');
-        return;
-      }
-      if (cartItems.length === 0) {
-        navigate('/cart');
-      }
+    if (!loading && !isAuthenticated) {
+      // Save current path for redirect after login
+      const returnUrl = '/checkout';
+      navigate(`/login?returnUrl=${encodeURIComponent(returnUrl)}`);
     }
-  }, [loading, cartItems.length, navigate, isAuthenticated]);
+  }, [loading, isAuthenticated, navigate]);
 
-  const subtotal = cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+  // Redirect if cart is empty
+  useEffect(() => {
+    if (!loading && isAuthenticated && cartItems.length === 0) {
+      navigate('/cart');
+    }
+  }, [loading, isAuthenticated, cartItems.length, navigate]);
+
+  // Calculate subtotal with sale price support
+  const subtotal = cartItems.reduce((sum, item) => {
+    const itemPrice = item.product.salePrice && item.product.salePrice < item.product.price 
+      ? item.product.salePrice 
+      : item.product.price;
+    return sum + (itemPrice * item.quantity);
+  }, 0);
   const shipping = subtotal > 2000000 ? 0 : 50000; // Free shipping over 2M VND
   const tax = subtotal * 0.1; // 10% tax
   const total = subtotal + shipping + tax;
@@ -346,15 +364,6 @@ const CheckoutPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!isAuthenticated) {
-      toast({
-        title: "Cần đăng nhập",
-        description: "Vui lòng đăng nhập để tiếp tục thanh toán",
-        variant: "destructive",
-      });
-      return;
-    }
 
     setIsProcessing(true);
 
@@ -375,8 +384,14 @@ const CheckoutPage = () => {
       }
 
       // Validate form data
-      if (!formData.firstName || !formData.lastName || !formData.phone || !formData.address || !formData.city || !formData.state) {
+      if (!formData.firstName || !formData.lastName || !formData.email || !formData.phone || !formData.address || !formData.city || !formData.state) {
         throw new Error('Please fill in all required fields');
+      }
+
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        throw new Error('Please enter a valid email address');
       }
 
       // Validate payment method specific fields
@@ -387,28 +402,25 @@ const CheckoutPage = () => {
       }
 
       // Prepare order data
+      const orderItems = cartItems.map(item => ({
+        productId: item.productId || item.product._id, // Fallback to product._id
+        quantity: item.quantity,
+        size: item.selectedSize,
+        color: item.selectedColor
+      }));
+
+      const shippingAddress = {
+        name: `${formData.firstName} ${formData.lastName}`,
+        phone: formData.phone,
+        address: formData.address,
+        city: formData.city,
+        district: formData.state
+      };
+
       const orderData = {
-        items: cartItems.map(item => ({
-          productId: item.productId || item.product._id, // Fallback to product._id
-          quantity: item.quantity,
-          price: item.product.price, // Include price for validation
-          size: item.selectedSize,
-          color: item.selectedColor
-        })),
-        shippingAddress: {
-          name: `${formData.firstName} ${formData.lastName}`,
-          phone: formData.phone,
-          address: formData.address,
-          city: formData.city,
-          district: formData.state
-        },
-        billingAddress: {
-          name: `${formData.firstName} ${formData.lastName}`,
-          phone: formData.phone,
-          address: formData.address,
-          city: formData.city,
-          district: formData.state
-        },
+        items: orderItems,
+        shippingAddress,
+        billingAddress: shippingAddress, // Use same address for billing
         paymentMethod: paymentMethod === 'cod' ? 'Cash on Delivery' : 'Online Payment',
         notes: formData.notes
       };
@@ -417,8 +429,19 @@ const CheckoutPage = () => {
       console.log('Creating order with data:', orderData);
       console.log('Cart items before order:', cartItems);
       
-      // Create order via API
-      const response = await api.createOrder(orderData);
+      // Create order via API (different method for guest vs authenticated)
+      let response;
+      if (isAuthenticated) {
+        // Authenticated user order
+        response = await api.createOrder(orderData);
+      } else {
+        // Guest order - include email
+        response = await api.createGuestOrder({
+          ...orderData,
+          email: formData.email
+        });
+      }
+      
       console.log('Order created successfully:', response);
       
       setIsProcessing(false);
@@ -426,8 +449,14 @@ const CheckoutPage = () => {
       
       // Clear cart after successful order (with error handling)
       try {
-        await api.clearCart();
-        console.log('Cart cleared successfully');
+        if (isAuthenticated) {
+          await api.clearCart();
+          console.log('Cart cleared successfully');
+        } else {
+          // Clear local storage cart for guest
+          cartService.clearCart();
+          console.log('Guest cart cleared successfully');
+        }
       } catch (clearError) {
         console.warn('Failed to clear cart automatically:', clearError);
         // Don't fail the checkout if cart clearing fails
@@ -539,13 +568,15 @@ const CheckoutPage = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
+                    {/* Mobile: Single column, Desktop: 2 columns */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label className="text-sm font-medium mb-2 block">{t.firstName}</label>
                         <Input
                           value={formData.firstName}
                           onChange={(e) => handleInputChange('firstName', e.target.value)}
                           required
+                          className="h-11 text-base" // Larger touch target on mobile
                         />
                       </div>
                       <div>
@@ -554,10 +585,11 @@ const CheckoutPage = () => {
                           value={formData.lastName}
                           onChange={(e) => handleInputChange('lastName', e.target.value)}
                           required
+                          className="h-11 text-base"
                         />
                       </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label className="text-sm font-medium mb-2 block">{t.email}</label>
                         <Input
@@ -565,14 +597,17 @@ const CheckoutPage = () => {
                           value={formData.email}
                           onChange={(e) => handleInputChange('email', e.target.value)}
                           required
+                          className="h-11 text-base"
                         />
                       </div>
                       <div>
                         <label className="text-sm font-medium mb-2 block">{t.phone}</label>
                         <Input
+                          type="tel"
                           value={formData.phone}
                           onChange={(e) => handleInputChange('phone', e.target.value)}
                           required
+                          className="h-11 text-base"
                         />
                       </div>
                     </div>
@@ -582,15 +617,18 @@ const CheckoutPage = () => {
                         value={formData.address}
                         onChange={(e) => handleInputChange('address', e.target.value)}
                         required
+                        className="h-11 text-base"
                       />
                     </div>
-                    <div className="grid grid-cols-3 gap-4">
+                    {/* Mobile: Single column, Tablet+: 3 columns */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       <div>
                         <label className="text-sm font-medium mb-2 block">{t.city}</label>
                         <Input
                           value={formData.city}
                           onChange={(e) => handleInputChange('city', e.target.value)}
                           required
+                          className="h-11 text-base"
                         />
                       </div>
                       <div>
@@ -599,6 +637,7 @@ const CheckoutPage = () => {
                           value={formData.state}
                           onChange={(e) => handleInputChange('state', e.target.value)}
                           required
+                          className="h-11 text-base"
                         />
                       </div>
                       <div>
@@ -607,13 +646,14 @@ const CheckoutPage = () => {
                           value={formData.zipCode}
                           onChange={(e) => handleInputChange('zipCode', e.target.value)}
                           required
+                          className="h-11 text-base"
                         />
                       </div>
                     </div>
                     <div>
                       <label className="text-sm font-medium mb-2 block">{t.country}</label>
                       <Select value={formData.country} onValueChange={(value) => handleInputChange('country', value)}>
-                        <SelectTrigger>
+                        <SelectTrigger className="h-11 text-base">
                           <SelectValue placeholder="Select country" />
                         </SelectTrigger>
                         <SelectContent>
@@ -719,10 +759,13 @@ const CheckoutPage = () => {
                           <div>
                             <label className="text-sm font-medium mb-2 block">{t.cardNumber}</label>
                             <Input
+                              type="tel"
+                              inputMode="numeric"
                               value={formData.cardNumber}
                               onChange={(e) => handleInputChange('cardNumber', e.target.value)}
                               placeholder="1234 5678 9012 3456"
                               required={paymentMethod === 'online'}
+                              className="h-11 text-base"
                             />
                           </div>
                           <div>
@@ -732,13 +775,15 @@ const CheckoutPage = () => {
                               onChange={(e) => handleInputChange('cardName', e.target.value)}
                               placeholder="John Doe"
                               required={paymentMethod === 'online'}
+                              className="h-11 text-base"
                             />
                           </div>
-                          <div className="grid grid-cols-3 gap-4">
+                          {/* Mobile: Single column, Desktop: 3 columns */}
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                             <div>
                               <label className="text-sm font-medium mb-2 block">{t.expiryMonth}</label>
                               <Select value={formData.expiryMonth} onValueChange={(value) => handleInputChange('expiryMonth', value)}>
-                                <SelectTrigger>
+                                <SelectTrigger className="h-11 text-base">
                                   <SelectValue placeholder="MM" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -753,7 +798,7 @@ const CheckoutPage = () => {
                             <div>
                               <label className="text-sm font-medium mb-2 block">{t.expiryYear}</label>
                               <Select value={formData.expiryYear} onValueChange={(value) => handleInputChange('expiryYear', value)}>
-                                <SelectTrigger>
+                                <SelectTrigger className="h-11 text-base">
                                   <SelectValue placeholder="YYYY" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -773,6 +818,7 @@ const CheckoutPage = () => {
                                 placeholder="123"
                                 maxLength={4}
                                 required={paymentMethod === 'online'}
+                                className="h-11 text-base"
                               />
                             </div>
                           </div>
@@ -880,7 +926,14 @@ const CheckoutPage = () => {
                             {item.selectedSize} • {item.selectedColor} • Qty: {item.quantity}
                           </p>
                         </div>
-                        <p className="font-medium">{formatCurrency(item.product.price * item.quantity, language)}</p>
+                        <p className="font-medium">
+                          {formatCurrency(
+                            ((item.product.salePrice && item.product.salePrice < item.product.price 
+                              ? item.product.salePrice 
+                              : item.product.price) * item.quantity), 
+                            language
+                          )}
+                        </p>
                       </div>
                     ))}
                   </div>

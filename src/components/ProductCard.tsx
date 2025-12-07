@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Product } from "@/lib/api";
-import { ShoppingBag, Heart, Star, GitCompare, Link as LinkIcon } from "lucide-react";
+import { ShoppingBag, Heart, Star, GitCompare, Link as LinkIcon, Play } from "lucide-react";
 import { formatCurrency } from "@/lib/currency";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
@@ -17,6 +17,34 @@ interface ProductCardProps {
   onAddToWishlist?: (product: Product) => void;
   onAddToCompare?: (product: Product) => void;
 }
+
+// Helper function to check if product has videos
+const hasVideo = (product: Product): boolean => {
+  return !!(product.videos && Array.isArray(product.videos) && product.videos.length > 0);
+};
+
+// Helper function to get first video
+const getFirstVideo = (product: Product) => {
+  if (hasVideo(product) && product.videos && product.videos.length > 0) {
+    return product.videos[0];
+  }
+  return null;
+};
+
+// Helper function to get video thumbnail (from first image or video poster)
+const getVideoThumbnail = (product: Product): string => {
+  // Try to use first product image as thumbnail
+  if (product.cloudinaryImages && product.cloudinaryImages.length > 0) {
+    return product.cloudinaryImages[0].responsiveUrls.medium;
+  }
+  if (product.galleryImages && product.galleryImages.length > 0) {
+    return product.galleryImages[0].responsiveUrls.medium;
+  }
+  if (product.images && product.images.length > 0) {
+    return product.images[0];
+  }
+  return '/placeholder.svg';
+};
 
 // Helper function to get image source (Cloudinary or legacy)
 const getImageSource = (product: Product, index: number = 0): string => {
@@ -418,23 +446,63 @@ const ProductCard = ({ product, viewMode = 'grid', onAddToCart, onAddToWishlist,
 
   return (
     <Card className="group overflow-hidden border-stone-200/60 dark:border-stone-700/60 hover:shadow-lg hover:border-stone-300/80 dark:hover:border-stone-600/80 transition-all duration-500 cursor-pointer rounded-xl h-[520px] flex flex-col bg-white/80 dark:bg-stone-800/80 backdrop-blur-sm" onClick={handleCardClick}>
-      {/* Image Section - Fixed height for consistency */}
+      {/* Image/Video Section - Fixed height for consistency */}
       <div className="relative overflow-hidden rounded-t-md h-[280px] flex-shrink-0">
-        {/* Primary Image - Default */}
-        {renderProductImage(product, 0, getName(), "w-full h-full object-cover transition-all duration-500 group-hover:opacity-0")}
-        
-        {/* Secondary Image - On Hover */}
-        {getImageSource(product, 1) !== '/placeholder.svg' && (
-          <div className="absolute inset-0 w-full h-full transition-all duration-500 opacity-0 group-hover:opacity-100">
-            {renderProductImage(product, 1, getName(), "w-full h-full object-cover")}
-          </div>
-        )}
-        
-        {/* Fallback: If no second image, show zoom effect on first image */}
-        {getImageSource(product, 1) === '/placeholder.svg' && (
-          <div className="absolute inset-0 w-full h-full transition-all duration-500 opacity-0 group-hover:opacity-100 group-hover:scale-110">
-            {renderProductImage(product, 0, getName(), "w-full h-full object-cover")}
-          </div>
+        {/* Video Section - Show if product has videos */}
+        {hasVideo(product) && getFirstVideo(product) ? (
+          <>
+            {/* Video thumbnail with play overlay */}
+            <div className="absolute inset-0 w-full h-full">
+              <img
+                src={getVideoThumbnail(product)}
+                alt={getName()}
+                className="w-full h-full object-cover transition-all duration-500"
+              />
+              {/* Play button overlay - visible on hover */}
+              <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/30 transition-all duration-300">
+                <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <Button
+                    size="icon"
+                    variant="secondary"
+                    className="h-16 w-16 rounded-full shadow-xl bg-white/90 hover:bg-white backdrop-blur-sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      // Navigate to product detail where video can be played
+                      navigate(`/product/${product._id}`);
+                    }}
+                  >
+                    <Play className="h-8 w-8 ml-1 text-stone-900" />
+                  </Button>
+                </div>
+              </div>
+              {/* Video indicator badge */}
+              <div className="absolute bottom-2 left-2">
+                <Badge className="bg-black/70 text-white backdrop-blur-sm text-xs px-2 py-1">
+                  <Play className="h-3 w-3 mr-1" />
+                  {language === 'vi' ? 'Video' : language === 'ja' ? 'ビデオ' : 'Video'}
+                </Badge>
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
+            {/* Primary Image - Default */}
+            {renderProductImage(product, 0, getName(), "w-full h-full object-cover transition-all duration-500 group-hover:opacity-0")}
+            
+            {/* Secondary Image - On Hover */}
+            {getImageSource(product, 1) !== '/placeholder.svg' && (
+              <div className="absolute inset-0 w-full h-full transition-all duration-500 opacity-0 group-hover:opacity-100">
+                {renderProductImage(product, 1, getName(), "w-full h-full object-cover")}
+              </div>
+            )}
+            
+            {/* Fallback: If no second image, show zoom effect on first image */}
+            {getImageSource(product, 1) === '/placeholder.svg' && (
+              <div className="absolute inset-0 w-full h-full transition-all duration-500 opacity-0 group-hover:opacity-100 group-hover:scale-110">
+                {renderProductImage(product, 0, getName(), "w-full h-full object-cover")}
+              </div>
+            )}
+          </>
         )}
         
         {/* Badges Container - Left side only to avoid covering action buttons */}

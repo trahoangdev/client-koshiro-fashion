@@ -7,8 +7,10 @@ import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { NotificationsProvider } from "@/contexts/NotificationsContext";
+import { MiniCartProvider } from "@/contexts/MiniCartContext";
 import ProtectedAdminRoute from "./components/ProtectedAdminRoute";
 import ScrollToTop from "./components/ScrollToTop";
+import MiniCartWrapper from "./components/MiniCartWrapper";
 import Index from "./pages/Index";
 import Profile from "./pages/Profile";
 import ProductDetail from "./pages/ProductDetail";
@@ -80,10 +82,12 @@ function App() {
       >
         <LanguageProvider>
           <AuthProvider>
-            <NotificationsProvider>
-              <TooltipProvider>
+            <MiniCartProvider>
+              <NotificationsProvider>
+                <TooltipProvider>
                 <Router>
                   <ScrollToTop />
+                  <MiniCartWrapper />
                   <Routes>
                       {/* Public Routes */}
                       <Route path="/" element={<Index />} />
@@ -303,6 +307,7 @@ function App() {
                 </Router>
               </TooltipProvider>
             </NotificationsProvider>
+            </MiniCartProvider>
           </AuthProvider>
         </LanguageProvider>
       </ThemeProvider>

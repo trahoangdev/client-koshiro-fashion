@@ -4,6 +4,7 @@ import {
   getUserOrders,
   getOrder,
   createOrder,
+  createGuestOrder,
   updateOrder,
   updateOrderStatus,
   cancelOrder,
@@ -18,6 +19,7 @@ const router = express.Router();
 // Public routes
 router.get('/track/:orderNumber', trackOrder);
 router.get('/track-email/:email', trackOrderByEmail);
+router.post('/guest', createGuestOrder); // Guest order (no authentication)
 
 // Customer routes (protected)
 router.get('/my-orders', authenticateToken, requireCustomer, getUserOrders);

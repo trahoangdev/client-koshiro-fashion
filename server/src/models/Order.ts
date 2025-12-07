@@ -12,7 +12,9 @@ export interface IOrderItem {
 
 export interface IOrder extends Document {
   orderNumber: string;
-  userId: mongoose.Types.ObjectId;
+  userId?: mongoose.Types.ObjectId; // Optional for guest orders
+  guestEmail?: string; // Email for guest orders
+  isGuestOrder?: boolean; // Flag to identify guest orders
   status: 'pending' | 'processing' | 'completed' | 'cancelled';
   items: IOrderItem[];
   totalAmount: number;
@@ -100,7 +102,17 @@ const orderSchema = new Schema<IOrder>({
   userId: {
     type: Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+    required: false // Optional for guest orders
+  },
+  guestEmail: {
+    type: String,
+    required: false,
+    lowercase: true,
+    trim: true
+  },
+  isGuestOrder: {
+    type: Boolean,
+    default: false
   },
   status: {
     type: String,
@@ -136,11 +148,29 @@ const orderSchema = new Schema<IOrder>({
   timestamps: true
 });
 
+// Validation: Either userId or guestEmail must be provided
+orderSchema.pre('validate', function(next) {
+  const doc = this as unknown as IOrder;
+  if (!doc.userId && !doc.guestEmail) {
+    const error = new Error('Either userId or guestEmail is required');
+    next(error);
+  } else {
+    if (!doc.userId && doc.guestEmail) {
+      doc.isGuestOrder = true;
+    }
+    next();
+  }
+});
+
 // Indexes for better performance
 orderSchema.index({ userId: 1 });
+orderSchema.index({ guestEmail: 1 }); // Index for guest orders lookup
 orderSchema.index({ status: 1 });
 orderSchema.index({ orderNumber: 1 }, { unique: true });
 orderSchema.index({ createdAt: -1 });
+
+// Compound index for guest orders
+orderSchema.index({ guestEmail: 1, createdAt: -1 });
 
 // Helper function to generate order number
 export const generateOrderNumber = async (): Promise<string> => {

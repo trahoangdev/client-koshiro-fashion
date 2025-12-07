@@ -159,17 +159,37 @@ export const trackOrderByEmail = async (req: Request, res: Response) => {
   try {
     const { email } = req.params;
 
-    const orders = await Order.find({ 'userId.email': email })
-      .populate('userId', 'name email phone')
+    // Find orders by both userId (populated email) and guestEmail
+    const userOrders = await Order.find({ userId: { $exists: true } })
+      .populate({
+        path: 'userId',
+        match: { email: email },
+        select: 'name email phone'
+      })
       .populate('items.productId', 'name nameEn nameJa images')
-      .sort({ createdAt: -1 })
-      .limit(5); // Limit to last 5 orders
+      .sort({ createdAt: -1 });
 
-    if (!orders || orders.length === 0) {
+    // Filter out orders where userId didn't match
+    const matchedUserOrders = userOrders.filter(order => order.userId && (order.userId as any).email === email);
+
+    // Find guest orders by guestEmail
+    const guestOrders = await Order.find({ 
+      guestEmail: email.toLowerCase().trim(),
+      isGuestOrder: true
+    })
+      .populate('items.productId', 'name nameEn nameJa images')
+      .sort({ createdAt: -1 });
+
+    // Combine and sort
+    const allOrders = [...matchedUserOrders, ...guestOrders]
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, 5); // Limit to last 5 orders
+
+    if (!allOrders || allOrders.length === 0) {
       return res.status(404).json({ message: 'No orders found for this email' });
     }
 
-    res.json(orders);
+    res.json(allOrders);
   } catch (error) {
     console.error('Track order by email error:', error);
     return res.status(500).json({ message: 'Internal server error' });
@@ -305,6 +325,111 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
     });
   } catch (error) {
     console.error('Create order error:', error);
+    console.error('Error details:', {
+      name: error instanceof Error ? error.name : 'Unknown',
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : 'No stack trace'
+    });
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+// Create guest order (no authentication required)
+export const createGuestOrder = async (req: Request, res: Response) => {
+  try {
+    const {
+      email,
+      items,
+      shippingAddress,
+      billingAddress,
+      paymentMethod,
+      notes
+    } = req.body;
+
+    // Validate email
+    if (!email || !email.includes('@')) {
+      return res.status(400).json({ message: 'Valid email is required for guest orders' });
+    }
+
+    // Validate items
+    if (!items || items.length === 0) {
+      return res.status(400).json({ message: 'Order must have at least one item' });
+    }
+
+    // Validate shipping address
+    if (!shippingAddress || !shippingAddress.name || !shippingAddress.phone || !shippingAddress.address || !shippingAddress.city || !shippingAddress.district) {
+      return res.status(400).json({ message: 'Complete shipping address is required' });
+    }
+
+    // Validate payment method
+    if (!paymentMethod) {
+      return res.status(400).json({ message: 'Payment method is required' });
+    }
+
+    // Calculate total and validate products
+    let totalAmount = 0;
+    const orderItems = [];
+
+    for (const item of items) {
+      const product = await Product.findById(item.productId);
+      if (!product) {
+        return res.status(400).json({ message: `Product ${item.productId} not found` });
+      }
+
+      if (!product.isActive) {
+        return res.status(400).json({ message: `Product ${product.name} is not available` });
+      }
+
+      if (product.stock < item.quantity) {
+        return res.status(400).json({ 
+          message: `Insufficient stock for ${product.name}. Available: ${product.stock}` 
+        });
+      }
+
+      const itemTotal = product.price * item.quantity;
+      totalAmount += itemTotal;
+
+      orderItems.push({
+        productId: product._id,
+        name: product.nameEn || product.name,
+        nameVi: product.name,
+        quantity: item.quantity,
+        price: product.price,
+        size: item.size,
+        color: item.color
+      });
+
+      // Update product stock
+      await Product.findByIdAndUpdate(product._id, {
+        $inc: { stock: -item.quantity }
+      });
+    }
+
+    // Generate unique order number
+    const orderNumber = await generateOrderNumber();
+    
+    // Prepare order data for guest
+    const orderData: any = {
+      orderNumber,
+      guestEmail: email.toLowerCase().trim(),
+      isGuestOrder: true,
+      items: orderItems,
+      totalAmount,
+      shippingAddress,
+      billingAddress: billingAddress || shippingAddress,
+      paymentMethod,
+      notes
+    };
+    
+    const order = new Order(orderData);
+    await order.save();
+
+    res.status(201).json({
+      message: 'Guest order created successfully',
+      order
+    });
+  } catch (error) {
+    console.error('Create guest order error:', error);
     console.error('Error details:', {
       name: error instanceof Error ? error.name : 'Unknown',
       message: error instanceof Error ? error.message : 'Unknown error',

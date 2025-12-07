@@ -19,6 +19,55 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const isAuthenticated = !!user;
   const isAdmin = isAdminUser(user);
 
+  // Sync cart from localStorage to server after login
+  const syncCartFromLocalStorage = async () => {
+    try {
+      const { cartService } = await import('@/lib/cartService');
+      const localCart = cartService.getCart();
+      
+      if (localCart.length === 0) {
+        return; // No items to sync
+      }
+
+      // Get current server cart to merge
+      const serverCart = await api.getCart();
+      const serverItems = serverCart?.items || [];
+
+      // Create a map of server cart items for quick lookup
+      const serverCartMap = new Map<string, { quantity: number; size?: string; color?: string }>();
+      serverItems.forEach((item: { productId: string; quantity: number; size?: string; color?: string }) => {
+        const key = `${item.productId}-${item.size || ''}-${item.color || ''}`;
+        serverCartMap.set(key, { quantity: item.quantity, size: item.size, color: item.color });
+      });
+
+      // Merge local cart items into server cart
+      for (const localItem of localCart) {
+        const key = `${localItem.productId}-${localItem.selectedSize || ''}-${localItem.selectedColor || ''}`;
+        const serverItem = serverCartMap.get(key);
+
+        if (serverItem) {
+          // Item exists in server cart, update quantity (merge)
+          const newQuantity = serverItem.quantity + localItem.quantity;
+          await api.updateCartItem(localItem.productId, newQuantity);
+        } else {
+          // Item doesn't exist in server cart, add it with size and color
+          await api.addToCart(
+            localItem.productId, 
+            localItem.quantity,
+            localItem.selectedSize,
+            localItem.selectedColor
+          );
+        }
+      }
+
+      // Clear localStorage cart after successful sync
+      cartService.clearCart();
+    } catch (error) {
+      console.error('Error syncing cart from localStorage:', error);
+      // Don't throw error - cart sync failure shouldn't block login
+    }
+  };
+
   const login = async (email: string, password: string) => {
     try {
       setIsLoading(true);
@@ -33,6 +82,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Normalize user data
       const normalizedUser = normalizeUser(response.user);
       setUser(normalizedUser);
+      
+      // Sync cart from localStorage to server
+      await syncCartFromLocalStorage();
       
       toast({
         title: "Đăng nhập thành công",
@@ -112,6 +164,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const normalizedUser = normalizeUser(response.user);
       setUser(normalizedUser);
       
+      // Sync cart from localStorage to server
+      await syncCartFromLocalStorage();
+      
       toast({
         title: "Đăng ký thành công",
         description: `Chào mừng bạn đến với Koshiro Fashion, ${normalizedUser.name}!`,
@@ -179,6 +234,79 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  // OAuth login methods
+  const googleLogin = async (token: string) => {
+    try {
+      setIsLoading(true);
+      const response = await api.googleLogin(token);
+      
+      // Store token in localStorage
+      localStorage.setItem('token', response.token);
+      
+      // Update API client token
+      api.updateToken(response.token);
+      
+      // Normalize user data
+      const normalizedUser = normalizeUser(response.user);
+      setUser(normalizedUser);
+      
+      // Sync cart from localStorage to server
+      await syncCartFromLocalStorage();
+      
+      toast({
+        title: "Đăng nhập thành công",
+        description: `Chào mừng bạn trở lại, ${normalizedUser.name}!`,
+      });
+    } catch (error) {
+      console.error('Google login error:', error);
+      const errorMessage = error instanceof Error ? error.message : "Có lỗi xảy ra khi đăng nhập";
+      toast({
+        title: "Đăng nhập thất bại",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const facebookLogin = async (token: string) => {
+    try {
+      setIsLoading(true);
+      const response = await api.facebookLogin(token);
+      
+      // Store token in localStorage
+      localStorage.setItem('token', response.token);
+      
+      // Update API client token
+      api.updateToken(response.token);
+      
+      // Normalize user data
+      const normalizedUser = normalizeUser(response.user);
+      setUser(normalizedUser);
+      
+      // Sync cart from localStorage to server
+      await syncCartFromLocalStorage();
+      
+      toast({
+        title: "Đăng nhập thành công",
+        description: `Chào mừng bạn trở lại, ${normalizedUser.name}!`,
+      });
+    } catch (error) {
+      console.error('Facebook login error:', error);
+      const errorMessage = error instanceof Error ? error.message : "Có lỗi xảy ra khi đăng nhập";
+      toast({
+        title: "Đăng nhập thất bại",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
     const initializeAuth = async () => {
       try {
@@ -219,6 +347,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     register,
     logout,
     refreshUser,
+    googleLogin,
+    facebookLogin,
     getUserRoleName: () => getUserRoleName(user),
     isAdminUser: () => isAdminUser(user),
   };

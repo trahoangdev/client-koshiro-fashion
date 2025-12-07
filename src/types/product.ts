@@ -1,8 +1,24 @@
 export interface ProductVideo {
-  url: string;
-  thumbnail?: string;
-  title?: string;
+  publicId: string;
+  secureUrl: string;
   duration?: number;
+  format: string;
+  bytes: number;
+}
+
+export interface CloudinaryImage {
+  publicId: string;
+  secureUrl: string;
+  width: number;
+  height: number;
+  format: string;
+  bytes: number;
+  responsiveUrls: {
+    thumbnail: string;
+    medium: string;
+    large: string;
+    original: string;
+  };
 }
 
 export interface Product {
@@ -15,7 +31,8 @@ export interface Product {
   descriptionJa?: string;
   price: number;
   originalPrice?: number;
-  images: string[];
+  images: string[]; // Legacy field for backward compatibility
+  cloudinaryImages?: CloudinaryImage[]; // New Cloudinary images
   videos?: ProductVideo[];
   categoryId: string;
   category?: {
@@ -42,7 +59,8 @@ export interface CreateProductRequest {
   descriptionJa?: string;
   price: number;
   originalPrice?: number;
-  images: string[];
+  images: string[]; // Legacy field for backward compatibility
+  cloudinaryImages?: CloudinaryImage[]; // New Cloudinary images
   videos?: ProductVideo[];
   categoryId: string;
   sizes: string[];

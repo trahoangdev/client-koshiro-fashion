@@ -5,9 +5,13 @@ import Hero from "@/components/Hero";
 import EnhancedProductGrid from "@/components/EnhancedProductGrid";
 import ProductCard from "@/components/ProductCard";
 import FilterBar from "@/components/FilterBar";
+import QuickFilters from "@/components/QuickFilters";
 import Cart from "@/components/Cart";
 import ThemeToggle from "@/components/ThemeToggle";
 import Footer from "@/components/Footer";
+import ProductGridSkeleton from "@/components/ProductGridSkeleton";
+import RecentlyViewedProducts from "@/components/RecentlyViewedProducts";
+import { recentlyViewedService } from "@/lib/recentlyViewedService";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { api, Product, Category } from "@/lib/api";
@@ -15,6 +19,7 @@ import { formatCurrency } from "@/lib/currency";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useMiniCart } from "@/contexts/MiniCartContext";
 import { ShoppingBag } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { CartItem } from "@/types/cart";
@@ -76,6 +81,7 @@ const Index = () => {
   const [selectedPriceRange, setSelectedPriceRange] = useState('all');
   const [selectedColor, setSelectedColor] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [quickFilters, setQuickFilters] = useState<string[]>([]);
   
   // View state
   const [showCart, setShowCart] = useState(false);
@@ -83,6 +89,7 @@ const Index = () => {
   const { toast } = useToast();
   const { isAuthenticated } = useAuth();
   const { language } = useLanguage();
+  const { openMiniCart } = useMiniCart();
 
   // Load data from API
   useEffect(() => {
@@ -122,33 +129,57 @@ const Index = () => {
     loadData();
   }, [toast, language]);
 
-  // Load cart from API if authenticated
+  // Load cart from API if authenticated, or from localStorage if guest
   useEffect(() => {
     const loadCart = async () => {
-      if (!isAuthenticated) {
-        setCartItems([]);
-        return;
-      }
-
       try {
-        const response = await api.getCart();
-        if (response && response.items) {
-          const cartItemsData = response.items.map((item: { 
-            productId: string; 
-            quantity: number; 
-            size?: string; 
-            color?: string; 
-            product: Product; 
-          }) => ({
+        if (isAuthenticated) {
+          // Load from API for authenticated users
+          const response = await api.getCart();
+          if (response && response.items) {
+            const cartItemsData = response.items.map((item: { 
+              productId: string; 
+              quantity: number; 
+              size?: string; 
+              color?: string; 
+              product: Product; 
+            }) => ({
+              product: item.product,
+              quantity: item.quantity,
+              selectedColor: item.color || item.product.colors[0],
+              selectedSize: item.size || item.product.sizes[0]
+            }));
+            setCartItems(cartItemsData);
+          }
+        } else {
+          // Load from localStorage for guest users
+          const { cartService } = await import('@/lib/cartService');
+          const localCart = cartService.getCart();
+          setCartItems(localCart.map(item => ({
             product: item.product,
             quantity: item.quantity,
-            selectedColor: item.color || item.product.colors[0],
-            selectedSize: item.size || item.product.sizes[0]
-          }));
-          setCartItems(cartItemsData);
+            selectedColor: item.selectedColor,
+            selectedSize: item.selectedSize
+          })));
         }
       } catch (error) {
         console.error('Error loading cart:', error);
+        // Fallback to localStorage for guest users on error
+        if (!isAuthenticated) {
+          try {
+            const { cartService } = await import('@/lib/cartService');
+            const localCart = cartService.getCart();
+            setCartItems(localCart.map(item => ({
+              product: item.product,
+              quantity: item.quantity,
+              selectedColor: item.selectedColor,
+              selectedSize: item.selectedSize
+            })));
+          } catch (fallbackError) {
+            console.error('Fallback cart load error:', fallbackError);
+            setCartItems([]);
+          }
+        }
         // Don't show error toast for cart loading as it's not critical
       }
     };
@@ -203,47 +234,94 @@ const Index = () => {
           product.descriptionEn,
           product.descriptionJa
         ].filter(Boolean);
-        return searchFields.some(field => field.toLowerCase().includes(query));
+        if (!searchFields.some(field => field.toLowerCase().includes(query))) {
+          return false;
+        }
+      }
+
+      // Quick filters
+      if (quickFilters.length > 0) {
+        let matchesQuickFilter = false;
+
+        if (quickFilters.includes('onSale') && product.onSale) {
+          matchesQuickFilter = true;
+        }
+        if (quickFilters.includes('isNew') && product.isNew) {
+          matchesQuickFilter = true;
+        }
+        if (quickFilters.includes('isBestSeller') && product.isBestSeller) {
+          matchesQuickFilter = true;
+        }
+        if (quickFilters.includes('isFeatured') && product.isFeatured) {
+          matchesQuickFilter = true;
+        }
+        if (quickFilters.includes('inStock') && product.stock > 0) {
+          matchesQuickFilter = true;
+        }
+        if (quickFilters.includes('isLimitedEdition') && product.isLimitedEdition) {
+          matchesQuickFilter = true;
+        }
+
+        // If quick filters are selected, product must match at least one
+        if (!matchesQuickFilter) {
+          return false;
+        }
       }
       
       return true;
     });
-  }, [products, selectedCategory, selectedPriceRange, selectedColor, searchQuery]);
+  }, [products, selectedCategory, selectedPriceRange, selectedColor, searchQuery, quickFilters]);
 
   const addToCart = async (product: Product) => {
     try {
       // For demo purposes, use default color and size
-      const selectedColor = product.colors[0];
-      const selectedSize = product.sizes[0];
+      const selectedColor = product.colors && product.colors.length > 0 ? product.colors[0] : undefined;
+      const selectedSize = product.sizes && product.sizes.length > 0 ? product.sizes[0] : undefined;
       
-      // Add to cart via API if authenticated
       if (isAuthenticated) {
+        // Add to cart via API for authenticated users
         await api.addToCart(product._id, 1);
-      }
-      
-      const existingItem = cartItems.find(item => 
-        item.product._id === product._id && 
-        item.selectedColor === selectedColor && 
-        item.selectedSize === selectedSize
-      );
-
-      if (existingItem) {
-        setCartItems(items => 
-          items.map(item => 
-            item === existingItem 
-              ? { ...item, quantity: item.quantity + 1 }
-              : item
-          )
+        
+        const existingItem = cartItems.find(item => 
+          item.product._id === product._id && 
+          item.selectedColor === selectedColor && 
+          item.selectedSize === selectedSize
         );
+
+        if (existingItem) {
+          setCartItems(items => 
+            items.map(item => 
+              item === existingItem 
+                ? { ...item, quantity: item.quantity + 1 }
+                : item
+            )
+          );
+        } else {
+          setCartItems(items => [...items, {
+            product,
+            quantity: 1,
+            selectedColor,
+            selectedSize
+          }]);
+        }
       } else {
-        setCartItems(items => [...items, {
-          product,
-          quantity: 1,
-          selectedColor,
-          selectedSize
-        }]);
+        // Save to localStorage for guest users
+        const { cartService } = await import('@/lib/cartService');
+        cartService.addToCart(product, 1, selectedSize, selectedColor);
+        
+        // Reload cart from localStorage
+        const localCart = cartService.getCart();
+        setCartItems(localCart.map(item => ({
+          product: item.product,
+          quantity: item.quantity,
+          selectedColor: item.selectedColor,
+          selectedSize: item.selectedSize
+        })));
       }
 
+      // Open mini cart
+      openMiniCart(product, 1, selectedSize, selectedColor);
+      
       toast({
         title: language === 'vi' ? "Đã thêm vào giỏ hàng" : 
                language === 'ja' ? "カートに追加されました" : 
@@ -273,23 +351,39 @@ const Index = () => {
     }
     
     try {
-      // Update cart via API if authenticated
+      const item = cartItems.find(item => 
+        `${item.product._id}-${item.selectedColor}-${item.selectedSize}` === itemId
+      );
+      
       if (isAuthenticated) {
-        const item = cartItems.find(item => 
-          `${item.product._id}-${item.selectedColor}-${item.selectedSize}` === itemId
-        );
+        // Update cart via API for authenticated users
         if (item) {
           await api.updateCartItem(item.product._id, quantity);
         }
+        
+        setCartItems(items =>
+          items.map(item =>
+            `${item.product._id}-${item.selectedColor}-${item.selectedSize}` === itemId
+              ? { ...item, quantity }
+              : item
+          )
+        );
+      } else {
+        // Update localStorage for guest users
+        if (item) {
+          const { cartService } = await import('@/lib/cartService');
+          cartService.updateQuantity(item.product._id, quantity, item.selectedSize, item.selectedColor);
+          
+          // Reload cart from localStorage
+          const localCart = cartService.getCart();
+          setCartItems(localCart.map(item => ({
+            product: item.product,
+            quantity: item.quantity,
+            selectedColor: item.selectedColor,
+            selectedSize: item.selectedSize
+          })));
+        }
       }
-      
-      setCartItems(items =>
-        items.map(item =>
-          `${item.product._id}-${item.selectedColor}-${item.selectedSize}` === itemId
-            ? { ...item, quantity }
-            : item
-        )
-      );
     } catch (error) {
       console.error('Error updating cart quantity:', error);
       toast({
@@ -306,21 +400,37 @@ const Index = () => {
 
   const removeFromCart = async (itemId: string) => {
     try {
-      // Remove from cart via API if authenticated
+      const item = cartItems.find(item => 
+        `${item.product._id}-${item.selectedColor}-${item.selectedSize}` === itemId
+      );
+      
       if (isAuthenticated) {
-        const item = cartItems.find(item => 
-          `${item.product._id}-${item.selectedColor}-${item.selectedSize}` === itemId
-        );
+        // Remove from cart via API for authenticated users
         if (item) {
           await api.removeFromCart(item.product._id);
         }
+        
+        setCartItems(items =>
+          items.filter(item => 
+            `${item.product._id}-${item.selectedColor}-${item.selectedSize}` !== itemId
+          )
+        );
+      } else {
+        // Remove from localStorage for guest users
+        if (item) {
+          const { cartService } = await import('@/lib/cartService');
+          cartService.removeFromCart(item.product._id, item.selectedSize, item.selectedColor);
+          
+          // Reload cart from localStorage
+          const localCart = cartService.getCart();
+          setCartItems(localCart.map(item => ({
+            product: item.product,
+            quantity: item.quantity,
+            selectedColor: item.selectedColor,
+            selectedSize: item.selectedSize
+          })));
+        }
       }
-      
-      setCartItems(items =>
-        items.filter(item => 
-          `${item.product._id}-${item.selectedColor}-${item.selectedSize}` !== itemId
-        )
-      );
     } catch (error) {
       console.error('Error removing from cart:', error);
       toast({
@@ -349,23 +459,10 @@ const Index = () => {
       return;
     }
 
-    if (!isAuthenticated) {
-      toast({
-        title: language === 'vi' ? "Cần đăng nhập" : 
-               language === 'ja' ? "ログインが必要です" : 
-               "Login Required",
-        description: language === 'vi' ? "Vui lòng đăng nhập để tiếp tục thanh toán" :
-                     language === 'ja' ? "チェックアウトを続行するにはログインしてください" :
-                     "Please login to continue checkout",
-        variant: "destructive",
-      });
-      return;
-    }
-
     // Close cart sidebar
     setShowCart(false);
     
-    // Navigate to checkout page
+    // Navigate to checkout page (guest checkout is now allowed)
     navigate('/checkout');
   };
 
@@ -374,6 +471,7 @@ const Index = () => {
     setSelectedPriceRange('all');
     setSelectedColor('all');
     setSearchQuery('');
+    setQuickFilters([]);
   };
 
   const cartItemsCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
@@ -662,19 +760,7 @@ const Index = () => {
               }).slice(0, 4);
               
               if (isLoading) {
-                return (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                    {[...Array(4)].map((_, index) => (
-                      <div key={index} className="animate-pulse">
-                        <div className="bg-stone-200 dark:bg-stone-700 aspect-square rounded-lg mb-4"></div>
-                        <div className="space-y-2">
-                          <div className="h-4 bg-stone-200 dark:bg-stone-700 rounded w-3/4"></div>
-                          <div className="h-3 bg-stone-200 dark:bg-stone-700 rounded w-1/2"></div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                );
+                return <ProductGridSkeleton count={4} columns={4} />;
               }
               
               return newProducts.length > 0 ? (
@@ -730,11 +816,7 @@ const Index = () => {
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {isLoading ? (
-                [...Array(6)].map((_, index) => (
-                  <div key={index} className="animate-pulse">
-                    <div className="bg-stone-200 dark:bg-stone-700 aspect-[4/3] rounded-lg"></div>
-                  </div>
-                ))
+                <ProductGridSkeleton count={6} columns={3} className="col-span-full" />
               ) : (
                 categories.slice(0, 6).map((category, index) => (
                 <div 
@@ -799,6 +881,22 @@ const Index = () => {
               </p>
             </div>
 
+            {/* Quick Filters */}
+            <div className="mb-6">
+              <QuickFilters
+                selectedFilters={quickFilters}
+                onFilterToggle={(filterId) => {
+                  setQuickFilters(prev => 
+                    prev.includes(filterId)
+                      ? prev.filter(f => f !== filterId)
+                      : [...prev, filterId]
+                  );
+                }}
+                onClearAll={() => setQuickFilters([])}
+                showCounts={false}
+              />
+            </div>
+
             {/* Minimalist Filter Bar */}
             <div className="mb-12">
               <FilterBar
@@ -808,23 +906,17 @@ const Index = () => {
                 onCategoryChange={setSelectedCategory}
                 onPriceRangeChange={setSelectedPriceRange}
                 onColorChange={setSelectedColor}
-                onClearFilters={clearFilters}
+                onClearFilters={() => {
+                  clearFilters();
+                  setQuickFilters([]);
+                }}
               />
             </div>
 
             {/* Products Grid */}
             <div>
             {isLoading ? (
-              <div className="text-center py-20">
-                <div className="relative">
-                  <div className="w-12 h-12 border-2 border-stone-200 dark:border-stone-700 rounded-full mx-auto mb-6"></div>
-                  <div className="w-12 h-12 border-2 border-stone-400 dark:border-stone-500 border-t-transparent rounded-full animate-spin absolute top-0 left-1/2 transform -translate-x-1/2"></div>
-                </div>
-                <p className="text-stone-500 dark:text-stone-500 font-light animate-pulse">
-                  {language === 'vi' ? 'Đang tải sản phẩm...' :
-                   language === 'ja' ? '商品を読み込み中...' : 'Loading products...'}
-                </p>
-              </div>
+              <ProductGridSkeleton count={8} columns={4} />
               ) : filteredProducts.length === 0 ? (
                 <div className="text-center py-20">
                   <p className="text-stone-500 dark:text-stone-500 font-light">
@@ -844,9 +936,30 @@ const Index = () => {
             </div>
           </section>
 
+          {/* Recently Viewed Products */}
+          {recentlyViewedService.getCount() > 0 && (
+            <section className="relative py-20">
+              <div className="container mx-auto px-4">
+                <RecentlyViewedProducts maxItems={8} />
+              </div>
+            </section>
+          )}
+
           {/* Newsletter Section - Modern Zen Style */}
-          <section className="relative py-20 bg-stone-100 dark:modern-gradient-subtle">
-            <div className="max-w-2xl mx-auto text-center">
+          <section className="relative py-20 bg-stone-100 dark:modern-gradient-subtle overflow-hidden">
+            {/* Background Banner */}
+            <div 
+              className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-20 dark:opacity-30"
+              style={{
+                backgroundImage: "url('/images/banners/banner-01.png')"
+              }}
+            ></div>
+            
+            {/* Dark overlay for better text readability */}
+            <div className="absolute inset-0 bg-black/10 dark:bg-black/20"></div>
+            
+            {/* Content */}
+            <div className="relative max-w-2xl mx-auto text-center z-10">
               {/* Logo */}
               <div className="mb-8 flex justify-center">
                 <div className="relative animate-newsletter-logo-float">
@@ -869,13 +982,13 @@ const Index = () => {
               </div>
               
               <div className="mb-12">
-                <h2 className="text-3xl md:text-4xl font-light text-stone-900 dark:text-stone-100 mb-6 tracking-wide">
+                <h2 className="text-3xl md:text-4xl font-light text-stone-900 dark:text-white mb-6 tracking-wide drop-shadow-sm">
                   {language === 'vi' ? 'Kết Nối Với Chúng Tôi' : 
                    language === 'ja' ? '私たちとつながる' : 
                    'Connect With Us'}
                 </h2>
-                <div className="w-20 h-px bg-stone-300 dark:bg-stone-700 mx-auto mb-8"></div>
-                <p className="text-stone-600 dark:text-stone-400 font-light leading-relaxed">
+                <div className="w-20 h-px bg-stone-400 dark:bg-stone-300 mx-auto mb-8 drop-shadow-sm"></div>
+                <p className="text-stone-700 dark:text-stone-200 font-light leading-relaxed drop-shadow-sm">
                   {language === 'vi' ? 'Nhận thông tin về những thiết kế mới và câu chuyện đằng sau mỗi sản phẩm' :
                    language === 'ja' ? '新しいデザインと各商品の背景ストーリーについての情報を受け取る' :
                    'Receive updates on new designs and the stories behind each product'}
@@ -886,9 +999,9 @@ const Index = () => {
                 <input
                   type="email"
                   placeholder={language === 'vi' ? 'Email của bạn' : language === 'ja' ? 'あなたのメール' : 'Your email'}
-                  className="flex-1 px-4 py-3 bg-white dark:glassmorphism-dark border border-stone-300 dark:border-stone-600 text-stone-900 dark:text-stone-100 placeholder-stone-500 dark:placeholder-stone-400 focus:outline-none focus:border-stone-500 dark:focus:border-stone-400 transition-colors duration-300 font-light rounded-lg"
+                  className="flex-1 px-4 py-3 bg-white/90 dark:bg-white/10 backdrop-blur-sm border border-stone-300/50 dark:border-stone-600/50 text-stone-900 dark:text-white placeholder-stone-500 dark:placeholder-stone-300 focus:outline-none focus:border-stone-500 dark:focus:border-stone-400 transition-all duration-300 font-light rounded-lg shadow-lg"
                 />
-                <button className="px-6 py-3 modern-gradient text-white hover:opacity-90 transition-all duration-300 font-light tracking-wide rounded-lg modern-hover">
+                <button className="px-6 py-3 modern-gradient text-white hover:opacity-90 transition-all duration-300 font-light tracking-wide rounded-lg modern-hover shadow-lg backdrop-blur-sm">
                   {language === 'vi' ? 'Đăng Ký' : language === 'ja' ? '登録' : 'Subscribe'}
                 </button>
               </div>

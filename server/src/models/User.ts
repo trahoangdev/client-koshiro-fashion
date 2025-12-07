@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 
 export interface IUser extends Document {
   email: string;
-  password: string;
+  password?: string; // Optional for OAuth users
   name: string;
   phone?: string;
   address?: string;
@@ -14,6 +14,10 @@ export interface IUser extends Document {
   lastActive?: Date;
   resetPasswordToken?: string;
   resetPasswordExpires?: Date;
+  // OAuth fields
+  googleId?: string;
+  facebookId?: string;
+  oauthProvider?: 'google' | 'facebook';
   addresses?: Array<{
     type: 'shipping' | 'billing';
     fullName: string;
@@ -47,7 +51,10 @@ const userSchema = new Schema<IUser>({
   },
   password: {
     type: String,
-    required: true,
+    required: function(this: IUser) {
+      // Password not required for OAuth users
+      return !this.googleId && !this.facebookId;
+    },
     minlength: 6
   },
   name: {
@@ -151,14 +158,31 @@ const userSchema = new Schema<IUser>({
       type: String,
       default: 'USD'
     }
+  },
+  // OAuth fields
+  googleId: {
+    type: String,
+    sparse: true,
+    index: true
+  },
+  facebookId: {
+    type: String,
+    sparse: true,
+    index: true
+  },
+  oauthProvider: {
+    type: String,
+    enum: ['google', 'facebook'],
+    default: undefined
   }
 }, {
   timestamps: true
 });
 
-// Hash password before saving
+// Hash password before saving (only if password exists and is modified)
 userSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) return next();
+  // Skip password hashing for OAuth users or if password not modified
+  if (!this.password || !this.isModified('password')) return next();
   
   try {
     const salt = await bcrypt.genSalt(10);
