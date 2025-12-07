@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
+import { api, ApiKey, Integration, ApiLog } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -76,54 +77,6 @@ import {
 } from "lucide-react";
 import AdminLayout from "@/components/AdminLayout";
 
-interface ApiKey {
-  _id: string;
-  name: string;
-  key: string;
-  description: string;
-  permissions: string[];
-  isActive: boolean;
-  lastUsed?: string;
-  usageCount: number;
-  rateLimit: number;
-  expiresAt?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface Integration {
-  _id: string;
-  name: string;
-  nameEn?: string;
-  nameJa?: string;
-  type: 'payment' | 'shipping' | 'email' | 'sms' | 'analytics' | 'social' | 'other';
-  provider: string;
-  status: 'active' | 'inactive' | 'error' | 'pending';
-  description: string;
-  descriptionEn?: string;
-  descriptionJa?: string;
-  config: Record<string, any>;
-  lastSync?: string;
-  errorCount: number;
-  successCount: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface ApiLog {
-  _id: string;
-  apiKey: string;
-  endpoint: string;
-  method: string;
-  statusCode: number;
-  responseTime: number;
-  ipAddress: string;
-  userAgent: string;
-  requestBody?: any;
-  responseBody?: any;
-  error?: string;
-  timestamp: string;
-}
 
 export default function AdminApiPage() {
   const { language } = useLanguage();
@@ -140,10 +93,386 @@ export default function AdminApiPage() {
   const [isCreateIntegrationDialogOpen, setIsCreateIntegrationDialogOpen] = useState(false);
   const [isEditKeyDialogOpen, setIsEditKeyDialogOpen] = useState(false);
   const [editingKey, setEditingKey] = useState<ApiKey | null>(null);
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [exportFormat, setExportFormat] = useState<'json' | 'csv'>('json');
+  const [includeInactive, setIncludeInactive] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [keyToDelete, setKeyToDelete] = useState<ApiKey | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [newKeyData, setNewKeyData] = useState({
+    name: '',
+    description: '',
+    permissions: [] as string[],
+    rateLimit: 1000,
+    expiresAt: ''
+  });
+  const [newIntegrationData, setNewIntegrationData] = useState({
+    name: '',
+    provider: '',
+    type: 'payment' as 'payment' | 'shipping' | 'email' | 'sms' | 'analytics' | 'social' | 'other',
+    description: '',
+    webhookUrl: '',
+    config: '{}'
+  });
+
+  // Load data on component mount
+  useEffect(() => {
+    loadData();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const loadData = async () => {
+    try {
+      setIsLoading(true);
+      const [apiKeysResponse, integrationsResponse, logsResponse, statsResponse] = await Promise.all([
+        api.getApiKeys({ page: 1, limit: 10 }),
+        api.getIntegrations({ page: 1, limit: 10 }),
+        api.getApiLogs({ page: 1, limit: 50 }),
+        api.getApiStats()
+      ]);
+
+      if (apiKeysResponse.success) {
+        setApiKeys(apiKeysResponse.data.apiKeys);
+      }
+      if (integrationsResponse.success) {
+        setIntegrations(integrationsResponse.data.integrations);
+      }
+      if (logsResponse.success) {
+        setApiLogs(logsResponse.data.logs);
+        setFilteredLogs(logsResponse.data.logs);
+      }
+    } catch (error) {
+      console.error('Error loading data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load data",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCreateApiKey = async (data: {
+    name: string;
+    description: string;
+    permissions: string[];
+    rateLimit?: number;
+    expiresAt?: string;
+  }) => {
+    try {
+      setIsSubmitting(true);
+      const response = await api.createApiKey(data);
+      if (response.success) {
+        toast({ title: "Success", description: "API key created successfully" });
+        setIsCreateKeyDialogOpen(false);
+        loadData();
+      }
+    } catch (error) {
+      console.error('Error creating API key:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create API key",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleCreateKey = async () => {
+    try {
+      setIsSubmitting(true);
+      const response = await api.createApiKey({
+        name: newKeyData.name,
+        description: newKeyData.description,
+        permissions: newKeyData.permissions,
+        rateLimit: newKeyData.rateLimit,
+        expiresAt: newKeyData.expiresAt || undefined
+      });
+      if (response.success) {
+        toast({ title: "Success", description: "API key created successfully" });
+        setIsCreateKeyDialogOpen(false);
+        setNewKeyData({
+          name: '',
+          description: '',
+          permissions: [],
+          rateLimit: 1000,
+          expiresAt: ''
+        });
+        loadData();
+      }
+    } catch (error) {
+      console.error("Error creating API key:", error);
+      toast({ 
+        title: "Error", 
+        description: error instanceof Error ? error.message : "Failed to create API key" 
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleCreateIntegration = async () => {
+    try {
+      setIsSubmitting(true);
+      
+      // Parse config JSON
+      let parsedConfig = {};
+      try {
+        parsedConfig = JSON.parse(newIntegrationData.config);
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Invalid JSON configuration",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      const response = await api.createIntegration({
+        name: newIntegrationData.name,
+        provider: newIntegrationData.provider,
+        type: newIntegrationData.type,
+        description: newIntegrationData.description,
+        webhookUrl: newIntegrationData.webhookUrl || undefined,
+        config: parsedConfig
+      });
+      
+      if (response.success) {
+        toast({ title: "Success", description: "Integration created successfully" });
+        setIsCreateIntegrationDialogOpen(false);
+        setNewIntegrationData({
+          name: '',
+          provider: '',
+          type: 'payment',
+          description: '',
+          webhookUrl: '',
+          config: '{}'
+        });
+        loadData();
+      }
+    } catch (error) {
+      console.error("Error creating integration:", error);
+      toast({ 
+        title: "Error", 
+        description: error instanceof Error ? error.message : "Failed to create integration" 
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleUpdateApiKey = async (id: string, data: Partial<ApiKey>) => {
+    try {
+      setIsSubmitting(true);
+      const response = await api.updateApiKey(id, data);
+      if (response.success) {
+        toast({ title: "Success", description: "API key updated successfully" });
+        setIsEditKeyDialogOpen(false);
+        setEditingKey(null);
+        loadData();
+      }
+    } catch (error) {
+      console.error('Error updating API key:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update API key",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteApiKey = async (id: string) => {
+    try {
+      setIsSubmitting(true);
+      const response = await api.deleteApiKey(id);
+      if (response.success) {
+        toast({ title: "Success", description: "API key deleted successfully" });
+        setIsDeleteDialogOpen(false);
+        setKeyToDelete(null);
+        loadData();
+      }
+    } catch (error) {
+      console.error('Error deleting API key:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete API key",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleRegenerateApiKey = async (id: string) => {
+    try {
+      setIsSubmitting(true);
+      const response = await api.regenerateApiKey(id);
+      if (response.success) {
+        toast({ title: "Success", description: "API key regenerated successfully" });
+        loadData();
+      }
+    } catch (error) {
+      console.error('Error regenerating API key:', error);
+      toast({
+        title: "Error",
+        description: "Failed to regenerate API key",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleCopyApiKey = (key: string) => {
+    navigator.clipboard.writeText(key);
+    toast({ title: "Success", description: "API key copied to clipboard" });
+  };
+
+  const handleTestIntegration = async (id: string) => {
+    try {
+      setIsSubmitting(true);
+      const response = await api.testIntegration(id);
+      if (response.success) {
+        toast({ 
+          title: "Success", 
+          description: response.data.success ? "Connection test successful" : "Connection test failed" 
+        });
+        loadData();
+      }
+    } catch (error) {
+      console.error('Error testing integration:', error);
+      toast({
+        title: "Error",
+        description: "Failed to test integration",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSyncIntegration = async (id: string) => {
+    try {
+      setIsSubmitting(true);
+      const response = await api.syncIntegration(id);
+      if (response.success) {
+        toast({ 
+          title: "Success", 
+          description: response.data.success ? "Sync completed successfully" : "Sync failed" 
+        });
+        loadData();
+      }
+    } catch (error) {
+      console.error('Error syncing integration:', error);
+      toast({
+        title: "Error",
+        description: "Failed to sync integration",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleClearLogs = async () => {
+    try {
+      setIsSubmitting(true);
+      const response = await api.clearApiLogs();
+      if (response.success) {
+        toast({ 
+          title: "Success", 
+          description: `${response.data.deletedCount} logs deleted successfully` 
+        });
+        loadData();
+      }
+    } catch (error) {
+      console.error('Error clearing logs:', error);
+      toast({
+        title: "Error",
+        description: "Failed to clear logs",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Export/Import handlers
+  const handleExport = async () => {
+    try {
+      setIsSubmitting(true);
+      const blob = await api.exportApiKeys(exportFormat, includeInactive);
+      
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `api-export-${new Date().toISOString().split('T')[0]}.${exportFormat}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      toast({ title: "Success", description: "Export completed successfully" });
+      setIsExportDialogOpen(false);
+    } catch (error) {
+      console.error('Error exporting data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to export data",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleImport = async () => {
+    if (!importFile) {
+      toast({
+        title: "Error",
+        description: "Please select a file to import",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      const text = await importFile.text();
+      const data = JSON.parse(text);
+      
+      const response = await api.importApiKeys(data, false);
+      if (response.success) {
+        toast({ title: "Success", description: response.message });
+        setIsImportDialogOpen(false);
+        setImportFile(null);
+        loadData();
+      }
+    } catch (error) {
+      console.error('Error importing data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to import data. Please check file format.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setImportFile(file);
+    }
+  };
 
   const translations = {
     en: {
@@ -151,6 +480,8 @@ export default function AdminApiPage() {
       subtitle: "Manage API keys, integrations, and monitor API usage",
       createKey: "Create API Key",
       createIntegration: "Create Integration",
+      export: "Export",
+      import: "Import",
       search: "Search...",
       apiKeys: "API Keys",
       integrations: "Integrations",
@@ -211,6 +542,8 @@ export default function AdminApiPage() {
       subtitle: "Quản lý API keys, tích hợp và giám sát sử dụng API",
       createKey: "Tạo API Key",
       createIntegration: "Tạo Tích hợp",
+      export: "Xuất",
+      import: "Nhập",
       search: "Tìm kiếm...",
       apiKeys: "API Keys",
       integrations: "Tích hợp",
@@ -271,6 +604,8 @@ export default function AdminApiPage() {
       subtitle: "APIキー、統合の管理、API使用状況の監視",
       createKey: "APIキー作成",
       createIntegration: "統合作成",
+      export: "エクスポート",
+      import: "インポート",
       search: "検索...",
       apiKeys: "APIキー",
       integrations: "統合",
@@ -330,163 +665,6 @@ export default function AdminApiPage() {
 
   const t = translations[language as keyof typeof translations] || translations.en;
 
-  // Mock data for demonstration
-  useEffect(() => {
-    const mockApiKeys: ApiKey[] = [
-      {
-        _id: "1",
-        name: "Frontend App",
-        key: "ak_live_1234567890abcdef",
-        description: "API key for frontend application",
-        permissions: ["read:products", "read:orders", "create:orders"],
-        isActive: true,
-        lastUsed: "2024-01-22T10:30:00Z",
-        usageCount: 15420,
-        rateLimit: 1000,
-        createdAt: "2024-01-01T00:00:00Z",
-        updatedAt: "2024-01-22T10:30:00Z"
-      },
-      {
-        _id: "2",
-        name: "Mobile App",
-        key: "ak_live_abcdef1234567890",
-        description: "API key for mobile application",
-        permissions: ["read:products", "read:orders", "create:orders", "update:profile"],
-        isActive: true,
-        lastUsed: "2024-01-21T15:45:00Z",
-        usageCount: 8930,
-        rateLimit: 500,
-        createdAt: "2024-01-01T00:00:00Z",
-        updatedAt: "2024-01-21T15:45:00Z"
-      },
-      {
-        _id: "3",
-        name: "Webhook Integration",
-        key: "ak_live_webhook123456",
-        description: "API key for webhook integrations",
-        permissions: ["webhook:receive"],
-        isActive: false,
-        lastUsed: "2024-01-15T09:20:00Z",
-        usageCount: 2340,
-        rateLimit: 100,
-        expiresAt: "2024-02-01T00:00:00Z",
-        createdAt: "2024-01-01T00:00:00Z",
-        updatedAt: "2024-01-15T09:20:00Z"
-      }
-    ];
-
-    const mockIntegrations: Integration[] = [
-      {
-        _id: "1",
-        name: "VNPay Payment",
-        nameEn: "VNPay Payment",
-        nameJa: "VNPay支払い",
-        type: "payment",
-        provider: "VNPay",
-        status: "active",
-        description: "Tích hợp thanh toán VNPay",
-        descriptionEn: "VNPay payment integration",
-        descriptionJa: "VNPay支払い統合",
-        config: {
-          merchantId: "MERCHANT123",
-          secretKey: "SECRET456",
-          endpoint: "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"
-        },
-        lastSync: "2024-01-22T10:30:00Z",
-        errorCount: 5,
-        successCount: 1240,
-        createdAt: "2024-01-01T00:00:00Z",
-        updatedAt: "2024-01-22T10:30:00Z"
-      },
-      {
-        _id: "2",
-        name: "Giao Hàng Nhanh",
-        nameEn: "Fast Delivery",
-        nameJa: "高速配送",
-        type: "shipping",
-        provider: "GHN",
-        status: "active",
-        description: "Tích hợp vận chuyển GHN",
-        descriptionEn: "GHN shipping integration",
-        descriptionJa: "GHN配送統合",
-        config: {
-          apiKey: "GHN_API_KEY",
-          shopId: "SHOP123",
-          endpoint: "https://dev-online-gateway.ghn.vn/shiip/public-api"
-        },
-        lastSync: "2024-01-21T15:45:00Z",
-        errorCount: 2,
-        successCount: 890,
-        createdAt: "2024-01-01T00:00:00Z",
-        updatedAt: "2024-01-21T15:45:00Z"
-      },
-      {
-        _id: "3",
-        name: "SendGrid Email",
-        nameEn: "SendGrid Email",
-        nameJa: "SendGridメール",
-        type: "email",
-        provider: "SendGrid",
-        status: "error",
-        description: "Tích hợp gửi email SendGrid",
-        descriptionEn: "SendGrid email integration",
-        descriptionJa: "SendGridメール統合",
-        config: {
-          apiKey: "SG.API_KEY",
-          fromEmail: "noreply@koshiro.com",
-          templateId: "TEMPLATE123"
-        },
-        lastSync: "2024-01-20T08:15:00Z",
-        errorCount: 15,
-        successCount: 2340,
-        createdAt: "2024-01-01T00:00:00Z",
-        updatedAt: "2024-01-20T08:15:00Z"
-      }
-    ];
-
-    const mockApiLogs: ApiLog[] = [
-      {
-        _id: "1",
-        apiKey: "ak_live_1234567890abcdef",
-        endpoint: "/api/products",
-        method: "GET",
-        statusCode: 200,
-        responseTime: 150,
-        ipAddress: "192.168.1.100",
-        userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-        timestamp: "2024-01-22T10:30:00Z"
-      },
-      {
-        _id: "2",
-        apiKey: "ak_live_abcdef1234567890",
-        endpoint: "/api/orders",
-        method: "POST",
-        statusCode: 201,
-        responseTime: 320,
-        ipAddress: "192.168.1.101",
-        userAgent: "KoshiroApp/1.0.0 (iOS 17.0)",
-        timestamp: "2024-01-22T10:25:00Z"
-      },
-      {
-        _id: "3",
-        apiKey: "ak_live_1234567890abcdef",
-        endpoint: "/api/products/123",
-        method: "GET",
-        statusCode: 404,
-        responseTime: 45,
-        ipAddress: "192.168.1.102",
-        userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
-        error: "Product not found",
-        timestamp: "2024-01-22T10:20:00Z"
-      }
-    ];
-
-    setApiKeys(mockApiKeys);
-    setIntegrations(mockIntegrations);
-    setApiLogs(mockApiLogs);
-    setFilteredLogs(mockApiLogs);
-    setIsLoading(false);
-  }, []);
 
   // Filter logs
   useEffect(() => {
@@ -655,20 +833,20 @@ export default function AdminApiPage() {
             <p className="text-muted-foreground">{t.subtitle}</p>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm">
-              <Download className="h-4 w-4 mr-2" />
-              Export
-            </Button>
-            <Button variant="outline" size="sm">
-              <Upload className="h-4 w-4 mr-2" />
-              Import
-            </Button>
             <Button variant="outline" size="sm" onClick={() => window.location.reload()}>
               <RefreshCw className="h-4 w-4" />
             </Button>
             <Button variant="outline" onClick={() => setIsCreateIntegrationDialogOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
               {t.createIntegration}
+            </Button>
+            <Button variant="outline" onClick={() => setIsExportDialogOpen(true)}>
+              <Download className="h-4 w-4 mr-2" />
+              {t.export}
+            </Button>
+            <Button variant="outline" onClick={() => setIsImportDialogOpen(true)}>
+              <Upload className="h-4 w-4 mr-2" />
+              {t.import}
             </Button>
             <Button onClick={() => setIsCreateKeyDialogOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
@@ -1054,6 +1232,551 @@ export default function AdminApiPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Create API Key Dialog */}
+      <Dialog open={isCreateKeyDialogOpen} onOpenChange={setIsCreateKeyDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{t.createKey}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium">Name *</label>
+              <Input 
+                id="keyName"
+                placeholder="API key name" 
+                value={newKeyData.name}
+                onChange={(e) => setNewKeyData({...newKeyData, name: e.target.value})}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium">Description *</label>
+              <Input 
+                id="keyDescription"
+                placeholder="API key description" 
+                value={newKeyData.description}
+                onChange={(e) => setNewKeyData({...newKeyData, description: e.target.value})}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium">Permissions *</label>
+              <div className="grid grid-cols-2 gap-2 mt-2">
+                {[
+                  'products:read', 'products:write', 'orders:read', 'orders:write',
+                  'users:read', 'users:write', 'categories:read', 'categories:write'
+                ].map(permission => (
+                  <label key={permission} className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={newKeyData.permissions.includes(permission)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setNewKeyData({
+                            ...newKeyData,
+                            permissions: [...newKeyData.permissions, permission]
+                          });
+                        } else {
+                          setNewKeyData({
+                            ...newKeyData,
+                            permissions: newKeyData.permissions.filter(p => p !== permission)
+                          });
+                        }
+                      }}
+                    />
+                    <span className="text-sm">{permission}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium">Rate Limit (requests/hour)</label>
+                <Input 
+                  type="number"
+                  placeholder="1000" 
+                  value={newKeyData.rateLimit || ''}
+                  onChange={(e) => setNewKeyData({...newKeyData, rateLimit: parseInt(e.target.value) || 1000})}
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Expires At (optional)</label>
+                <Input 
+                  type="datetime-local"
+                  value={newKeyData.expiresAt || ''}
+                  onChange={(e) => setNewKeyData({...newKeyData, expiresAt: e.target.value})}
+                />
+              </div>
+            </div>
+          </div>
+          <div className="flex justify-end space-x-2">
+            <Button variant="outline" onClick={() => setIsCreateKeyDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleCreateKey} disabled={isSubmitting || !newKeyData.name || !newKeyData.description || newKeyData.permissions.length === 0}>
+              {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+              Create
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Integration Dialog */}
+        <Dialog open={isCreateIntegrationDialogOpen} onOpenChange={setIsCreateIntegrationDialogOpen}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>{t.createIntegration}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-6">
+              {/* Basic Information Section */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Basic Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium">Name *</label>
+                    <Input 
+                      placeholder="Integration name" 
+                      value={newIntegrationData.name}
+                      onChange={(e) => setNewIntegrationData({...newIntegrationData, name: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Provider *</label>
+                    <Input 
+                      placeholder="Provider name" 
+                      value={newIntegrationData.provider}
+                      onChange={(e) => setNewIntegrationData({...newIntegrationData, provider: e.target.value})}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Type *</label>
+                  <Select 
+                    value={newIntegrationData.type} 
+                    onValueChange={(value: 'payment' | 'shipping' | 'email' | 'sms' | 'analytics' | 'social' | 'other') => 
+                      setNewIntegrationData({...newIntegrationData, type: value})
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="payment">Payment</SelectItem>
+                      <SelectItem value="shipping">Shipping</SelectItem>
+                      <SelectItem value="email">Email</SelectItem>
+                      <SelectItem value="sms">SMS</SelectItem>
+                      <SelectItem value="analytics">Analytics</SelectItem>
+                      <SelectItem value="social">Social</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Description</label>
+                  <textarea 
+                    className="w-full p-3 border rounded-md min-h-[80px] resize-none" 
+                    placeholder="Integration description" 
+                    value={newIntegrationData.description}
+                    onChange={(e) => setNewIntegrationData({...newIntegrationData, description: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Webhook URL</label>
+                  <Input 
+                    placeholder="https://example.com/webhook" 
+                    value={newIntegrationData.webhookUrl}
+                    onChange={(e) => setNewIntegrationData({...newIntegrationData, webhookUrl: e.target.value})}
+                  />
+                </div>
+              </div>
+              {/* Configuration Section */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Configuration (JSON)</h3>
+                
+                {/* Demo Configuration Buttons */}
+                <div className="space-y-3">
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">💳 Payment Gateways</h4>
+                    <div className="flex gap-2 flex-wrap">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setNewIntegrationData({...newIntegrationData, config: JSON.stringify({
+                          apiKey: "pk_test_51234567890abcdef",
+                          secretKey: "sk_test_51234567890abcdef",
+                          webhookSecret: "whsec_1234567890abcdef",
+                          endpoint: "https://api.stripe.com/v1",
+                          timeout: 30000,
+                          retries: 3,
+                          currency: "USD",
+                          supportedMethods: ["card", "bank_transfer", "wallet"],
+                          webhookEvents: ["payment_intent.succeeded", "payment_intent.payment_failed"]
+                        }, null, 2)})}
+                      >
+                        Stripe Payment
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setNewIntegrationData({...newIntegrationData, config: JSON.stringify({
+                          apiKey: "your-paypal-client-id",
+                          secret: "your-paypal-secret",
+                          environment: "sandbox",
+                          webhookId: "webhook-123456",
+                          currency: "USD",
+                          returnUrl: "https://yourstore.com/payment/success",
+                          cancelUrl: "https://yourstore.com/payment/cancel"
+                        }, null, 2)})}
+                      >
+                        PayPal
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">🚚 Shipping Services</h4>
+                    <div className="flex gap-2 flex-wrap">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setNewIntegrationData({...newIntegrationData, config: JSON.stringify({
+                          apiKey: "your-fedex-key",
+                          secretKey: "your-fedex-secret",
+                          accountNumber: "123456789",
+                          meterNumber: "987654321",
+                          environment: "production",
+                          serviceTypes: ["FEDEX_GROUND", "FEDEX_EXPRESS_SAVER"],
+                          packagingTypes: ["YOUR_PACKAGING", "FEDEX_BOX"]
+                        }, null, 2)})}
+                      >
+                        FedEx Shipping
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setNewIntegrationData({...newIntegrationData, config: JSON.stringify({
+                          apiKey: "your-ups-key",
+                          username: "your-ups-username",
+                          password: "your-ups-password",
+                          accountNumber: "UPS123456",
+                          environment: "production",
+                          serviceCodes: ["03", "12", "01"],
+                          packagingTypes: ["02", "01", "04"]
+                        }, null, 2)})}
+                      >
+                        UPS Shipping
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">📧 Email Services</h4>
+                    <div className="flex gap-2 flex-wrap">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setNewIntegrationData({...newIntegrationData, config: JSON.stringify({
+                          apiKey: "your-sendgrid-key",
+                          fromEmail: "noreply@yourstore.com",
+                          fromName: "Your Store",
+                          replyTo: "support@yourstore.com",
+                          templates: {
+                            welcome: "d-1234567890abcdef",
+                            orderConfirmation: "d-0987654321fedcba",
+                            passwordReset: "d-1122334455667788"
+                          },
+                          categories: ["transactional", "marketing"],
+                          trackingSettings: {
+                            clickTracking: true,
+                            openTracking: true,
+                            subscriptionTracking: true
+                          }
+                        }, null, 2)})}
+                      >
+                        SendGrid Email
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setNewIntegrationData({...newIntegrationData, config: JSON.stringify({
+                          apiKey: "your-mailgun-key",
+                          domain: "mg.yourstore.com",
+                          fromEmail: "noreply@mg.yourstore.com",
+                          fromName: "Your Store",
+                          webhookSigningKey: "key-1234567890abcdef",
+                          templates: {
+                            welcome: "welcome-template",
+                            orderConfirmation: "order-template"
+                          }
+                        }, null, 2)})}
+                      >
+                        Mailgun Email
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">📊 Analytics & Tracking</h4>
+                    <div className="flex gap-2 flex-wrap">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setNewIntegrationData({...newIntegrationData, config: JSON.stringify({
+                          trackingId: "GA-123456789-1",
+                          measurementId: "G-XXXXXXXXXX",
+                          apiSecret: "your-ga4-secret",
+                          customDimensions: {
+                            userId: "custom-1",
+                            orderValue: "custom-2",
+                            customerType: "custom-3"
+                          },
+                          events: ["purchase", "add_to_cart", "view_item"],
+                          enhancedEcommerce: true
+                        }, null, 2)})}
+                      >
+                        Google Analytics
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setNewIntegrationData({...newIntegrationData, config: JSON.stringify({
+                          pixelId: "123456789012345",
+                          accessToken: "your-facebook-token",
+                          testEventCode: "TEST12345",
+                          events: ["Purchase", "AddToCart", "ViewContent"],
+                          customData: {
+                            currency: "USD",
+                            value: "order_value"
+                          }
+                        }, null, 2)})}
+                      >
+                        Facebook Pixel
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">📱 SMS & Notifications</h4>
+                    <div className="flex gap-2 flex-wrap">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setNewIntegrationData({...newIntegrationData, config: JSON.stringify({
+                          accountSid: "AC1234567890abcdef",
+                          authToken: "your-twilio-auth-token",
+                          fromNumber: "+1234567890",
+                          messagingServiceSid: "MG1234567890abcdef",
+                          webhookUrl: "https://yourstore.com/webhooks/twilio",
+                          statusCallback: "https://yourstore.com/webhooks/twilio/status"
+                        }, null, 2)})}
+                      >
+                        Twilio SMS
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setNewIntegrationData({...newIntegrationData, config: JSON.stringify({
+                          apiKey: "your-slack-bot-token",
+                          signingSecret: "your-slack-signing-secret",
+                          channel: "#notifications",
+                          webhookUrl: "https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX",
+                          events: ["order.created", "order.updated", "payment.completed"]
+                        }, null, 2)})}
+                      >
+                        Slack Notifications
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setNewIntegrationData({...newIntegrationData, config: JSON.stringify({
+                          apiKey: "your-discord-bot-token",
+                          webhookUrl: "https://discord.com/api/webhooks/123456789012345678/abcdefghijklmnopqrstuvwxyz1234567890",
+                          channelId: "123456789012345678",
+                          events: ["order.created", "payment.completed", "user.registered"]
+                        }, null, 2)})}
+                      >
+                        Discord Bot
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">🔗 Automation</h4>
+                    <div className="flex gap-2 flex-wrap">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setNewIntegrationData({...newIntegrationData, config: JSON.stringify({
+                          apiKey: "your-zapier-webhook-key",
+                          webhookUrl: "https://hooks.zapier.com/hooks/catch/123456/abcdef/",
+                          events: ["order.created", "customer.registered", "product.updated"],
+                          retryPolicy: {
+                            maxRetries: 3,
+                            retryDelay: 5000
+                          }
+                        }, null, 2)})}
+                      >
+                        Zapier Webhook
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* JSON Tools */}
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      try {
+                        const parsed = JSON.parse(newIntegrationData.config);
+                        setNewIntegrationData({...newIntegrationData, config: JSON.stringify(parsed, null, 2)});
+                        toast({ title: "Success", description: "JSON formatted successfully" });
+                      } catch (error) {
+                        toast({ 
+                          title: "Error", 
+                          description: "Invalid JSON format", 
+                          variant: "destructive" 
+                        });
+                      }
+                    }}
+                  >
+                    Format JSON
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setNewIntegrationData({...newIntegrationData, config: '{}'})}
+                  >
+                    Clear
+                  </Button>
+                </div>
+                
+                {/* JSON Textarea */}
+                <div>
+                  <textarea 
+                    className="w-full p-3 border rounded-md min-h-[200px] font-mono text-sm resize-none"
+                    placeholder='{"apiKey": "your-key", "endpoint": "https://api.example.com"}'
+                    value={newIntegrationData.config}
+                    onChange={(e) => setNewIntegrationData({...newIntegrationData, config: e.target.value})}
+                  />
+                  <div className="text-xs text-muted-foreground mt-2">
+                    💡 Click on the buttons above to load example configurations for different integration types
+                  </div>
+                </div>
+              </div>
+            
+            {/* Dialog Footer */}
+            <div className="flex justify-end space-x-2 pt-4 border-t">
+              <Button variant="outline" onClick={() => setIsCreateIntegrationDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleCreateIntegration}
+                disabled={isSubmitting || !newIntegrationData.name || !newIntegrationData.provider || !newIntegrationData.type}
+                className="min-w-[100px]"
+              >
+                {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+                Create
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Export Dialog */}
+      <Dialog open={isExportDialogOpen} onOpenChange={setIsExportDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t.export}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium">Format</label>
+              <Select value={exportFormat} onValueChange={(value: 'json' | 'csv') => setExportFormat(value)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="json">JSON</SelectItem>
+                  <SelectItem value="csv">CSV</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="includeInactive"
+                checked={includeInactive}
+                onChange={(e) => setIncludeInactive(e.target.checked)}
+              />
+              <label htmlFor="includeInactive" className="text-sm">
+                Include inactive items
+              </label>
+            </div>
+          </div>
+          <div className="flex justify-end space-x-2">
+            <Button variant="outline" onClick={() => setIsExportDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleExport} disabled={isSubmitting}>
+              {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+              Export
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Import Dialog */}
+      <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t.import}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium">Select File</label>
+              <input
+                type="file"
+                accept=".json"
+                onChange={handleFileSelect}
+                className="w-full p-2 border rounded"
+              />
+              {importFile && (
+                <p className="text-sm text-muted-foreground mt-1">
+                  Selected: {importFile.name}
+                </p>
+              )}
+            </div>
+            <div className="text-sm text-muted-foreground">
+              <p>Supported format: JSON</p>
+              <p>File should contain API keys and integrations data.</p>
+            </div>
+          </div>
+          <div className="flex justify-end space-x-2">
+            <Button variant="outline" onClick={() => setIsImportDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleImport} disabled={isSubmitting || !importFile}>
+              {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+              Import
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
       </div>
     </AdminLayout>
   );

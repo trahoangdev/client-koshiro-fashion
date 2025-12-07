@@ -7,10 +7,18 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+dist-ssr/
+build/
 *.local
+
+# Cache
+.npm-cache/
+.cache/
 
 # Editor directories and files
 .vscode/*
@@ -23,9 +31,8 @@ dist-ssr
 *.sln
 *.sw?
 
-# Documentation files (markdown)
-*.md
-!README.md
+# TypeScript
+*.tsbuildinfo
 
 
 # Environment files
@@ -140,3 +147,6 @@ jspm_packages/
 
 # TernJS port file
 .tern-port
+
+#markdown
+*.md

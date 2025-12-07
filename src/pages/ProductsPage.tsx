@@ -1,29 +1,17 @@
 import { useState, useEffect, useMemo } from "react";
-import { useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import EnhancedProductGrid from "@/components/EnhancedProductGrid";
-import FilterBar from "@/components/FilterBar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { api, Product, Category } from "@/lib/api";
 import { logger } from "@/lib/logger";
-
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { 
-  Grid3X3, 
-  List, 
-  SlidersHorizontal, 
-  SortAsc, 
-  SortDesc,
-  Filter,
-  X
-} from "lucide-react";
+import { Grid3X3, List, Filter } from "lucide-react";
 
 const ProductsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();

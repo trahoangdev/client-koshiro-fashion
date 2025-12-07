@@ -16,6 +16,8 @@ export interface AuthContextType {
   }) => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
+  googleLogin: (token: string) => Promise<void>;
+  facebookLogin: (token: string) => Promise<void>;
   getUserRoleName: () => string;
   isAdminUser: () => boolean;
 }
