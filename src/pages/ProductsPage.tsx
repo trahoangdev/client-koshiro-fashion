@@ -14,7 +14,6 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { Grid3X3, List, Filter } from "lucide-react";
 
 const ProductsPage = () => {
-  const [searchParams, setSearchParams] = useSearchParams();
   const { language } = useLanguage();
   const { toast } = useToast();
 
