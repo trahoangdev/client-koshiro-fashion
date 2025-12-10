@@ -1,10 +1,8 @@
 import React from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { 
-  Truck, 
+import {
+  Truck,
   Package,
   Clock,
   Globe,
@@ -348,8 +346,8 @@ const ShippingInfoPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      <Header cartItemsCount={0} onSearch={() => {}} />
-      
+
+
       <main className="py-8">
         <div className="container mx-auto px-4 space-y-12">
           {/* Hero Section */}
@@ -357,14 +355,14 @@ const ShippingInfoPage = () => {
             <div className="relative overflow-hidden rounded-2xl shadow-2xl">
               {/* Banner Background */}
               <div className="absolute inset-0">
-                <img 
-                  src="/images/banners/banner-07.png" 
+                <img
+                  src="/images/banners/banner-07.png"
                   alt="Shipping Information Banner"
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/50 to-black/60"></div>
               </div>
-              
+
               {/* Content */}
               <div className="relative z-10 p-12 md:p-16 text-white">
                 <div className="flex justify-center mb-6">
@@ -388,7 +386,7 @@ const ShippingInfoPage = () => {
           {/* Content */}
           <section>
             <div className="max-w-4xl mx-auto space-y-6">
-              
+
               {/* Shipping Methods */}
               <Card className="rounded-xl border-2 shadow-lg hover:shadow-xl transition-all overflow-hidden">
                 <CardHeader className="pb-4">
@@ -615,8 +613,8 @@ const ShippingInfoPage = () => {
           </section>
         </div>
       </main>
-      
-      <Footer />
+
+
     </div>
   );
 };

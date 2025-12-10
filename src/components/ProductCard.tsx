@@ -75,72 +75,7 @@ const renderProductImage = (product: Product, index: number, alt: string, classN
   );
 };
 
-// Helper function to get hex color from color name
-const getColorHex = (colorName: string): string => {
-  const colorMap: { [key: string]: string } = {
-    // Vietnamese colors
-    'Đỏ': '#ef4444',
-    'Xanh dương': '#3b82f6',
-    'Xanh nhạt': '#93c5fd',
-    'Xanh lá': '#22c55e',
-    'Vàng': '#eab308',
-    'Hồng': '#ec4899',
-    'Tím': '#a855f7',
-    'Cam': '#f97316',
-    'Nâu': '#a16207',
-    'Đen': '#000000',
-    'Trắng': '#ffffff',
-    'Xám': '#6b7280',
-    'Xám đậm': '#374151',
-    'Xám nhạt': '#d1d5db',
-    'Bạc': '#c0c0c0',
-    'Vàng kim': '#ffd700',
-
-    // English colors
-    'Red': '#ef4444',
-    'Blue': '#3b82f6',
-    'Light Blue': '#93c5fd',
-    'Green': '#22c55e',
-    'Yellow': '#eab308',
-    'Pink': '#ec4899',
-    'Purple': '#a855f7',
-    'Orange': '#f97316',
-    'Brown': '#a16207',
-    'Black': '#000000',
-    'White': '#ffffff',
-    'Gray': '#6b7280',
-    'Dark Gray': '#374151',
-    'Light Gray': '#d1d5db',
-    'Silver': '#c0c0c0',
-    'Gold': '#ffd700',
-
-    // Japanese colors
-    '赤': '#ef4444',
-    '青': '#3b82f6',
-    '薄い青': '#93c5fd',
-    '緑': '#22c55e',
-    '黄色': '#eab308',
-    'ピンク': '#ec4899',
-    '紫': '#a855f7',
-    'オレンジ': '#f97316',
-    '茶色': '#a16207',
-    '黒': '#000000',
-    '白': '#ffffff',
-    'グレー': '#6b7280',
-    '濃いグレー': '#374151',
-    '薄いグレー': '#d1d5db',
-    'シルバー': '#c0c0c0',
-    'ゴールド': '#ffd700',
-  };
-
-  // Check if it's already a hex color
-  if (colorName.startsWith('#')) {
-    return colorName;
-  }
-
-  // Return mapped color or default gray
-  return colorMap[colorName] || '#6b7280';
-};
+import { getColorHex } from "@/lib/colors";
 
 const ProductCard = ({ product, viewMode = 'grid', onAddToCart, onAddToWishlist, onAddToCompare }: ProductCardProps) => {
   const { language, t } = useLanguage();
@@ -331,8 +266,8 @@ const ProductCard = ({ product, viewMode = 'grid', onAddToCart, onAddToWishlist,
                       <Star
                         key={star}
                         className={`h-3.5 w-3.5 transition-all duration-300 ${star <= 4 // Mock rating of 4 stars
-                            ? 'text-yellow-400 fill-current group-hover:text-yellow-500 group-hover:scale-110'
-                            : 'text-gray-300 dark:text-gray-600'
+                          ? 'text-yellow-400 fill-current group-hover:text-yellow-500 group-hover:scale-110'
+                          : 'text-gray-300 dark:text-gray-600'
                           }`}
                       />
                     ))}
@@ -424,9 +359,9 @@ const ProductCard = ({ product, viewMode = 'grid', onAddToCart, onAddToWishlist,
   }
 
   return (
-    <Card className="group overflow-hidden border-stone-200/60 dark:border-stone-700/60 hover:shadow-2xl hover:shadow-primary/10 hover:border-primary/20 dark:hover:border-primary/30 transition-all duration-500 cursor-pointer rounded-xl h-[560px] flex flex-col bg-gradient-to-br from-white via-white to-stone-50/50 dark:from-stone-800 dark:via-stone-800 dark:to-stone-900/50 backdrop-blur-sm hover:scale-[1.02] hover:-translate-y-1" onClick={handleCardClick}>
-      {/* Image Section - Fixed height for consistency, rounded corners matching Sale banner */}
-      <div className="relative overflow-hidden rounded-t-xl h-[280px] flex-shrink-0 bg-gradient-to-br from-stone-100 to-stone-200 dark:from-stone-700 dark:to-stone-800">
+    <Card className="group overflow-hidden border-stone-200/60 dark:border-stone-700/60 hover:shadow-2xl hover:shadow-primary/10 hover:border-primary/20 dark:hover:border-primary/30 transition-all duration-500 cursor-pointer rounded-xl h-full flex flex-col bg-gradient-to-br from-white via-white to-stone-50/50 dark:from-stone-800 dark:via-stone-800 dark:to-stone-900/50 backdrop-blur-sm hover:scale-[1.02] hover:-translate-y-1" onClick={handleCardClick}>
+      {/* Image Section - Flexible height with aspect ratio */}
+      <div className="relative overflow-hidden rounded-t-xl aspect-[4/5] w-full flex-shrink-0 bg-gradient-to-br from-stone-100 to-stone-200 dark:from-stone-700 dark:to-stone-800">
         {/* Gradient Overlay on Hover */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-10"></div>
         {/* Primary Image - Default */}
@@ -541,8 +476,8 @@ const ProductCard = ({ product, viewMode = 'grid', onAddToCart, onAddToWishlist,
                 <Star
                   key={star}
                   className={`h-3.5 w-3.5 transition-all duration-300 ${star <= 4 // Mock rating of 4 stars
-                      ? 'text-yellow-400 fill-current group-hover:text-yellow-500 group-hover:scale-110'
-                      : 'text-gray-300 dark:text-gray-600'
+                    ? 'text-yellow-400 fill-current group-hover:text-yellow-500 group-hover:scale-110'
+                    : 'text-gray-300 dark:text-gray-600'
                     }`}
                 />
               ))}

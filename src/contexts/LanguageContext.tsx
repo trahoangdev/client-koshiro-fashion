@@ -188,6 +188,24 @@ const translations = {
     flashSale: 'Flash Sale',
     limitedTime: 'Thời Gian Có Hạn',
 
+    // Footer
+    description: 'Thời trang Nhật Bản chính hãng cho tâm hồn hiện đại',
+    shop: 'Cửa Hàng',
+    quickLinks: 'Liên Kết Nhanh',
+    customerService: 'Dịch Vụ Khách Hàng',
+    shipping: 'Thông Tin Giao Hàng',
+    legal: 'Pháp Lý',
+    privacy: 'Chính Sách Bảo Mật',
+    terms: 'Điều Khoản Dịch Vụ',
+    newsletter: 'Bản Tin',
+    emailPlaceholder: 'Email của bạn',
+    rights: 'Tất cả quyền được bảo lưu.',
+    followUs: 'Theo Dõi Chúng Tôi',
+    contactUs: 'Liên Hệ',
+    phone: 'Điện Thoại',
+    email: 'Email',
+    address: 'Địa Chỉ',
+
     // Messages
     noData: 'Không có dữ liệu',
     noResults: 'Không tìm thấy kết quả',
@@ -398,6 +416,24 @@ const translations = {
     flashSale: 'Flash Sale',
     limitedTime: 'Limited Time',
 
+    // Footer
+    description: 'Authentic Japanese fashion for the modern soul',
+    shop: 'Shop',
+    quickLinks: 'Quick Links',
+    customerService: 'Customer Service',
+    shipping: 'Shipping Info',
+    legal: 'Legal',
+    privacy: 'Privacy Policy',
+    terms: 'Terms of Service',
+    newsletter: 'Newsletter',
+    emailPlaceholder: 'Your email',
+    rights: 'All rights reserved.',
+    followUs: 'Follow Us',
+    contactUs: 'Contact Us',
+    phone: 'Phone',
+    email: 'Email',
+    address: 'Address',
+
     // Messages
     noData: 'No data',
     noResults: 'No results found',
@@ -607,6 +643,24 @@ const translations = {
     exclusive: '限定オファー',
     flashSale: 'フラッシュセール',
     limitedTime: '期間限定',
+
+    // Footer
+    description: '現代の魂のための本格的な日本ファッション',
+    shop: 'ショップ',
+    quickLinks: 'クイックリンク',
+    customerService: 'カスタマーサービス',
+    shipping: '配送情報',
+    legal: '法的',
+    privacy: 'プライバシーポリシー',
+    terms: '利用規約',
+    newsletter: 'ニュースレター',
+    emailPlaceholder: 'あなたのメール',
+    rights: '全著作権所有。',
+    followUs: 'フォローする',
+    contactUs: 'お問い合わせ',
+    phone: '電話',
+    email: 'メール',
+    address: '住所',
 
     // Messages
     noData: 'データがありません',

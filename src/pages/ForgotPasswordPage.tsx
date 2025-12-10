@@ -7,8 +7,6 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function ForgotPasswordPage() {
@@ -91,14 +89,14 @@ export default function ForgotPasswordPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateEmail()) return;
 
     setIsLoading(true);
-    
+
     try {
       await api.forgotPassword(email);
-      
+
       toast({
         title: "Success",
         description: t.resetSuccess
@@ -119,10 +117,10 @@ export default function ForgotPasswordPage() {
     if (!validateEmail()) return;
 
     setIsLoading(true);
-    
+
     try {
       await api.forgotPassword(email);
-      
+
       toast({
         title: "Success",
         description: t.resetSuccess
@@ -141,8 +139,8 @@ export default function ForgotPasswordPage() {
   if (isSubmitted) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-        <Header cartItemsCount={0} onSearch={() => {}} />
-        
+
+
         <main className="py-8">
           <div className="container mx-auto px-4">
             <div className="flex justify-center">
@@ -178,15 +176,15 @@ export default function ForgotPasswordPage() {
           </div>
         </main>
 
-        <Footer />
+
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      <Header cartItemsCount={0} onSearch={() => {}} />
-      
+
+
       <main className="py-8">
         <div className="container mx-auto px-4">
           <div className="flex justify-center">
@@ -237,7 +235,7 @@ export default function ForgotPasswordPage() {
         </div>
       </main>
 
-      <Footer />
+
     </div>
   );
 } 

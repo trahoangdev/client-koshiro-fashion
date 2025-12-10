@@ -600,9 +600,18 @@ class ApiClient {
     return this.request<PaginationResponse<Order>>(endpoint);
   }
 
+  async validateCoupon(code: string, subtotal: number): Promise<{ success: boolean; data?: { discountAmount: number }; message?: string }> {
+    return this.request<{ success: boolean; data?: { discountAmount: number }; message?: string }>('/promotions/validate', {
+      method: 'POST',
+      body: JSON.stringify({ code, orderValue: subtotal }),
+    });
+  }
+
   async getUserOrder(id: string): Promise<{ order: Order }> {
     return this.request<{ order: Order }>(`/orders/my-orders/${id}`);
   }
+
+
 
   async createOrder(orderData: {
     userId?: string;

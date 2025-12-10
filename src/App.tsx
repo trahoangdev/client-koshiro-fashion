@@ -16,6 +16,7 @@ import { Loader2 } from "lucide-react";
 
 // Eager load Index page (homepage) for fast initial load
 import Index from "./pages/Index";
+import Layout from "@/components/Layout";
 
 // Lazy load all other pages for code splitting
 const Profile = lazy(() => import("./pages/Profile"));
@@ -111,389 +112,391 @@ function App() {
             <AuthProvider>
               <NotificationsProvider>
                 <TooltipProvider>
-                <ErrorBoundary>
-                <Router>
-                  <ScrollToTop />
-                  <Routes>
-                      {/* Public Routes */}
-                      <Route path="/" element={<Index />} />
-                      <Route path="/profile" element={
-                        <Suspense fallback={<PageLoader />}>
-                          <Profile />
-                        </Suspense>
-                      } />
-                      <Route path="/product/:id" element={
-                        <Suspense fallback={<PageLoader />}>
-                          <ProductDetail />
-                        </Suspense>
-                      } />
-                      <Route path="/category/:slug" element={
-                        <Suspense fallback={<PageLoader />}>
-                          <CategoryPage />
-                        </Suspense>
-                      } />
-                      <Route path="/categories" element={
-                        <Suspense fallback={<PageLoader />}>
-                          <CategoriesPage />
-                        </Suspense>
-                      } />
-                      <Route path="/products" element={
-                        <Suspense fallback={<PageLoader />}>
-                          <ProductsPage />
-                        </Suspense>
-                      } />
-                      <Route path="/cart" element={
-                        <Suspense fallback={<PageLoader />}>
-                          <CartPage />
-                        </Suspense>
-                      } />
-                      <Route path="/wishlist" element={
-                        <Suspense fallback={<PageLoader />}>
-                          <WishlistPage />
-                        </Suspense>
-                      } />
-                      <Route path="/checkout" element={
-                        <Suspense fallback={<PageLoader />}>
-                          <CheckoutPage />
-                        </Suspense>
-                      } />
-                      <Route path="/sale" element={
-                        <Suspense fallback={<PageLoader />}>
-                          <SalePage />
-                        </Suspense>
-                      } />
-                      <Route path="/about" element={
-                        <Suspense fallback={<PageLoader />}>
-                          <AboutPage />
-                        </Suspense>
-                      } />
-                      <Route path="/contact" element={
-                        <Suspense fallback={<PageLoader />}>
-                          <ContactPage />
-                        </Suspense>
-                      } />
-                      <Route path="/info" element={
-                        <Suspense fallback={<PageLoader />}>
-                          <InfoPage />
-                        </Suspense>
-                      } />
-                      <Route path="/search" element={
-                        <Suspense fallback={<PageLoader />}>
-                          <SearchPage />
-                        </Suspense>
-                      } />
-                      <Route path="/order-tracking" element={
-                        <Suspense fallback={<PageLoader />}>
-                          <OrderTrackingPage />
-                        </Suspense>
-                      } />
-                      <Route path="/compare" element={
-                        <Suspense fallback={<PageLoader />}>
-                          <ComparePage />
-                        </Suspense>
-                      } />
-                      <Route path="/reviews" element={
-                        <Suspense fallback={<PageLoader />}>
-                          <ReviewsPage />
-                        </Suspense>
-                      } />
-                      <Route path="/login" element={
-                        <Suspense fallback={<PageLoader />}>
-                          <LoginPage />
-                        </Suspense>
-                      } />
-                      <Route path="/register" element={
-                        <Suspense fallback={<PageLoader />}>
-                          <RegisterPage />
-                        </Suspense>
-                      } />
-                      <Route path="/forgot-password" element={
-                        <Suspense fallback={<PageLoader />}>
-                          <ForgotPasswordPage />
-                        </Suspense>
-                      } />
-                      <Route path="/reset-password" element={
-                        <Suspense fallback={<PageLoader />}>
-                          <ResetPasswordPage />
-                        </Suspense>
-                      } />
-                      <Route path="/size-guide" element={
-                        <Suspense fallback={<PageLoader />}>
-                          <SizeGuidePage />
-                        </Suspense>
-                      } />
-                      <Route path="/privacy-policy" element={
-                        <Suspense fallback={<PageLoader />}>
-                          <PrivacyPolicyPage />
-                        </Suspense>
-                      } />
-                      <Route path="/faq" element={
-                        <Suspense fallback={<PageLoader />}>
-                          <FAQPage />
-                        </Suspense>
-                      } />
-                      <Route path="/terms-of-service" element={
-                        <Suspense fallback={<PageLoader />}>
-                          <TermsOfServicePage />
-                        </Suspense>
-                      } />
-                      <Route path="/shipping-info" element={
-                        <Suspense fallback={<PageLoader />}>
-                          <ShippingInfoPage />
-                        </Suspense>
-                      } />
-                      <Route path="/returns" element={
-                        <Suspense fallback={<PageLoader />}>
-                          <ReturnsPage />
-                        </Suspense>
-                      } />
+                  <ErrorBoundary>
+                    <Router>
+                      <ScrollToTop />
+                      <Routes>
+                        {/* Public Routes with Layout */}
+                        <Route element={<Layout />}>
+                          <Route path="/" element={<Index />} />
+                          <Route path="/profile" element={
+                            <Suspense fallback={<PageLoader />}>
+                              <Profile />
+                            </Suspense>
+                          } />
+                          <Route path="/product/:id" element={
+                            <Suspense fallback={<PageLoader />}>
+                              <ProductDetail />
+                            </Suspense>
+                          } />
+                          <Route path="/category/:slug" element={
+                            <Suspense fallback={<PageLoader />}>
+                              <CategoryPage />
+                            </Suspense>
+                          } />
+                          <Route path="/categories" element={
+                            <Suspense fallback={<PageLoader />}>
+                              <CategoriesPage />
+                            </Suspense>
+                          } />
+                          <Route path="/products" element={
+                            <Suspense fallback={<PageLoader />}>
+                              <ProductsPage />
+                            </Suspense>
+                          } />
+                          <Route path="/cart" element={
+                            <Suspense fallback={<PageLoader />}>
+                              <CartPage />
+                            </Suspense>
+                          } />
+                          <Route path="/wishlist" element={
+                            <Suspense fallback={<PageLoader />}>
+                              <WishlistPage />
+                            </Suspense>
+                          } />
+                          <Route path="/checkout" element={
+                            <Suspense fallback={<PageLoader />}>
+                              <CheckoutPage />
+                            </Suspense>
+                          } />
+                          <Route path="/sale" element={
+                            <Suspense fallback={<PageLoader />}>
+                              <SalePage />
+                            </Suspense>
+                          } />
+                          <Route path="/about" element={
+                            <Suspense fallback={<PageLoader />}>
+                              <AboutPage />
+                            </Suspense>
+                          } />
+                          <Route path="/contact" element={
+                            <Suspense fallback={<PageLoader />}>
+                              <ContactPage />
+                            </Suspense>
+                          } />
+                          <Route path="/info" element={
+                            <Suspense fallback={<PageLoader />}>
+                              <InfoPage />
+                            </Suspense>
+                          } />
+                          <Route path="/search" element={
+                            <Suspense fallback={<PageLoader />}>
+                              <SearchPage />
+                            </Suspense>
+                          } />
+                          <Route path="/order-tracking" element={
+                            <Suspense fallback={<PageLoader />}>
+                              <OrderTrackingPage />
+                            </Suspense>
+                          } />
+                          <Route path="/compare" element={
+                            <Suspense fallback={<PageLoader />}>
+                              <ComparePage />
+                            </Suspense>
+                          } />
+                          <Route path="/reviews" element={
+                            <Suspense fallback={<PageLoader />}>
+                              <ReviewsPage />
+                            </Suspense>
+                          } />
+                          <Route path="/login" element={
+                            <Suspense fallback={<PageLoader />}>
+                              <LoginPage />
+                            </Suspense>
+                          } />
+                          <Route path="/register" element={
+                            <Suspense fallback={<PageLoader />}>
+                              <RegisterPage />
+                            </Suspense>
+                          } />
+                          <Route path="/forgot-password" element={
+                            <Suspense fallback={<PageLoader />}>
+                              <ForgotPasswordPage />
+                            </Suspense>
+                          } />
+                          <Route path="/reset-password" element={
+                            <Suspense fallback={<PageLoader />}>
+                              <ResetPasswordPage />
+                            </Suspense>
+                          } />
+                          <Route path="/size-guide" element={
+                            <Suspense fallback={<PageLoader />}>
+                              <SizeGuidePage />
+                            </Suspense>
+                          } />
+                          <Route path="/privacy-policy" element={
+                            <Suspense fallback={<PageLoader />}>
+                              <PrivacyPolicyPage />
+                            </Suspense>
+                          } />
+                          <Route path="/faq" element={
+                            <Suspense fallback={<PageLoader />}>
+                              <FAQPage />
+                            </Suspense>
+                          } />
+                          <Route path="/terms-of-service" element={
+                            <Suspense fallback={<PageLoader />}>
+                              <TermsOfServicePage />
+                            </Suspense>
+                          } />
+                          <Route path="/shipping-info" element={
+                            <Suspense fallback={<PageLoader />}>
+                              <ShippingInfoPage />
+                            </Suspense>
+                          } />
+                          <Route path="/returns" element={
+                            <Suspense fallback={<PageLoader />}>
+                              <ReturnsPage />
+                            </Suspense>
+                          } />
+                        </Route>
 
-                      {/* Admin Routes */}
-                      <Route path="/admin/login" element={
-                        <Suspense fallback={<PageLoader />}>
-                          <AdminLogin />
-                        </Suspense>
-                      } />
-                      <Route
-                        path="/admin"
-                        element={
-                          <ProtectedAdminRoute>
-                            <Suspense fallback={<PageLoader />}>
-                            <AdminDashboard />
-                            </Suspense>
-                          </ProtectedAdminRoute>
-                        }
-                      />
-                      <Route
-                        path="/admin/analytics"
-                        element={
-                          <ProtectedAdminRoute>
-                            <Suspense fallback={<PageLoader />}>
-                            <AdminAnalyticsPage />
-                            </Suspense>
-                          </ProtectedAdminRoute>
-                        }
-                      />
-                      <Route
-                        path="/admin/reports"
-                        element={
-                          <ProtectedAdminRoute>
-                            <Suspense fallback={<PageLoader />}>
-                            <AdminReportsPage />
-                            </Suspense>
-                          </ProtectedAdminRoute>
-                        }
-                      />
-                      <Route
-                        path="/admin/notifications"
-                        element={
-                          <ProtectedAdminRoute>
-                            <Suspense fallback={<PageLoader />}>
-                            <AdminNotificationsPage />
-                            </Suspense>
-                          </ProtectedAdminRoute>
-                        }
-                      />
-                      <Route
-                        path="/admin/products"
-                        element={
-                          <ProtectedAdminRoute>
-                            <Suspense fallback={<PageLoader />}>
-                            <AdminProducts />
-                            </Suspense>
-                          </ProtectedAdminRoute>
-                        }
-                      />
-                      <Route
-                        path="/admin/products/new"
-                        element={
-                          <ProtectedAdminRoute>
-                            <Suspense fallback={<PageLoader />}>
-                            <ProductFormPage />
-                            </Suspense>
-                          </ProtectedAdminRoute>
-                        }
-                      />
-                      <Route
-                        path="/admin/products/:id/edit"
-                        element={
-                          <ProtectedAdminRoute>
-                            <Suspense fallback={<PageLoader />}>
-                            <ProductFormPage />
-                            </Suspense>
-                          </ProtectedAdminRoute>
-                        }
-                      />
-                      <Route
-                        path="/admin/categories"
-                        element={
-                          <ProtectedAdminRoute>
-                            <Suspense fallback={<PageLoader />}>
-                            <AdminCategories />
-                            </Suspense>
-                          </ProtectedAdminRoute>
-                        }
-                      />
-                      <Route
-                        path="/admin/orders"
-                        element={
-                          <ProtectedAdminRoute>
-                            <Suspense fallback={<PageLoader />}>
-                            <AdminOrders />
-                            </Suspense>
-                          </ProtectedAdminRoute>
-                        }
-                      />
-                      <Route
-                        path="/admin/users"
-                        element={
-                          <ProtectedAdminRoute>
-                            <Suspense fallback={<PageLoader />}>
-                            <AdminUsers />
-                            </Suspense>
-                          </ProtectedAdminRoute>
-                        }
-                      />
-                      <Route
-                        path="/admin/activity"
-                        element={
-                          <ProtectedAdminRoute>
-                            <Suspense fallback={<PageLoader />}>
-                            <AdminActivity />
-                            </Suspense>
-                          </ProtectedAdminRoute>
-                        }
-                      />
-                      <Route
-                        path="/admin/reviews"
-                        element={
-                          <ProtectedAdminRoute>
-                            <Suspense fallback={<PageLoader />}>
-                            <AdminReviews />
-                            </Suspense>
-                          </ProtectedAdminRoute>
-                        }
-                      />
-                      <Route
-                        path="/admin/settings"
-                        element={
-                          <ProtectedAdminRoute>
-                            <Suspense fallback={<PageLoader />}>
-                            <AdminSettings />
-                            </Suspense>
-                          </ProtectedAdminRoute>
-                        }
-                      />
-                      <Route
-                        path="/admin/promotions"
-                        element={
-                          <ProtectedAdminRoute>
-                            <Suspense fallback={<PageLoader />}>
-                            <AdminPromotionsPage />
-                            </Suspense>
-                          </ProtectedAdminRoute>
-                        }
-                      />
-                      <Route
-                        path="/admin/inventory"
-                        element={
-                          <ProtectedAdminRoute>
-                            <Suspense fallback={<PageLoader />}>
-                            <AdminInventoryPage />
-                            </Suspense>
-                          </ProtectedAdminRoute>
-                        }
-                      />
-                      <Route
-                        path="/admin/shipping"
-                        element={
-                          <ProtectedAdminRoute>
-                            <Suspense fallback={<PageLoader />}>
-                            <AdminShippingPage />
-                            </Suspense>
-                          </ProtectedAdminRoute>
-                        }
-                      />
-                      <Route
-                        path="/admin/payments"
-                        element={
-                          <ProtectedAdminRoute>
-                            <Suspense fallback={<PageLoader />}>
-                            <AdminPaymentsPage />
-                            </Suspense>
-                          </ProtectedAdminRoute>
-                        }
-                      />
-                      <Route
-                        path="/admin/roles"
-                        element={
-                          <ProtectedAdminRoute>
-                            <Suspense fallback={<PageLoader />}>
-                            <AdminRolesPage />
-                            </Suspense>
-                          </ProtectedAdminRoute>
-                        }
-                      />
-                      <Route
-                        path="/admin/roles/:id"
-                        element={
-                          <ProtectedAdminRoute>
-                            <Suspense fallback={<PageLoader />}>
-                            <RoleDetailPage />
-                            </Suspense>
-                          </ProtectedAdminRoute>
-                        }
-                      />
-                      <Route
-                        path="/admin/roles/:id/edit"
-                        element={
-                          <ProtectedAdminRoute>
-                            <Suspense fallback={<PageLoader />}>
-                            <RoleDetailPage />
-                            </Suspense>
-                          </ProtectedAdminRoute>
-                        }
-                      />
-                      <Route
-                        path="/admin/permissions/:id"
-                        element={
-                          <ProtectedAdminRoute>
-                            <Suspense fallback={<PageLoader />}>
-                            <PermissionDetailPage />
-                            </Suspense>
-                          </ProtectedAdminRoute>
-                        }
-                      />
-                      <Route
-                        path="/admin/permissions/:id/edit"
-                        element={
-                          <ProtectedAdminRoute>
-                            <Suspense fallback={<PageLoader />}>
-                            <PermissionDetailPage />
-                            </Suspense>
-                          </ProtectedAdminRoute>
-                        }
-                      />
-                      <Route
-                        path="/admin/api"
-                        element={
-                          <ProtectedAdminRoute>
-                            <Suspense fallback={<PageLoader />}>
-                            <AdminApiPage />
-                            </Suspense>
-                          </ProtectedAdminRoute>
-                        }
-                      />
-                      
-                      {/* 404 Not Found Route - Must be last */}
-                      <Route path="*" element={
-                        <Suspense fallback={<PageLoader />}>
-                          <NotFound />
-                        </Suspense>
-                      } />
-                  </Routes>
-                </Router>
-                </ErrorBoundary>
+                        {/* Admin Routes */}
+                        <Route path="/admin/login" element={
+                          <Suspense fallback={<PageLoader />}>
+                            <AdminLogin />
+                          </Suspense>
+                        } />
+                        <Route
+                          path="/admin"
+                          element={
+                            <ProtectedAdminRoute>
+                              <Suspense fallback={<PageLoader />}>
+                                <AdminDashboard />
+                              </Suspense>
+                            </ProtectedAdminRoute>
+                          }
+                        />
+                        <Route
+                          path="/admin/analytics"
+                          element={
+                            <ProtectedAdminRoute>
+                              <Suspense fallback={<PageLoader />}>
+                                <AdminAnalyticsPage />
+                              </Suspense>
+                            </ProtectedAdminRoute>
+                          }
+                        />
+                        <Route
+                          path="/admin/reports"
+                          element={
+                            <ProtectedAdminRoute>
+                              <Suspense fallback={<PageLoader />}>
+                                <AdminReportsPage />
+                              </Suspense>
+                            </ProtectedAdminRoute>
+                          }
+                        />
+                        <Route
+                          path="/admin/notifications"
+                          element={
+                            <ProtectedAdminRoute>
+                              <Suspense fallback={<PageLoader />}>
+                                <AdminNotificationsPage />
+                              </Suspense>
+                            </ProtectedAdminRoute>
+                          }
+                        />
+                        <Route
+                          path="/admin/products"
+                          element={
+                            <ProtectedAdminRoute>
+                              <Suspense fallback={<PageLoader />}>
+                                <AdminProducts />
+                              </Suspense>
+                            </ProtectedAdminRoute>
+                          }
+                        />
+                        <Route
+                          path="/admin/products/new"
+                          element={
+                            <ProtectedAdminRoute>
+                              <Suspense fallback={<PageLoader />}>
+                                <ProductFormPage />
+                              </Suspense>
+                            </ProtectedAdminRoute>
+                          }
+                        />
+                        <Route
+                          path="/admin/products/:id/edit"
+                          element={
+                            <ProtectedAdminRoute>
+                              <Suspense fallback={<PageLoader />}>
+                                <ProductFormPage />
+                              </Suspense>
+                            </ProtectedAdminRoute>
+                          }
+                        />
+                        <Route
+                          path="/admin/categories"
+                          element={
+                            <ProtectedAdminRoute>
+                              <Suspense fallback={<PageLoader />}>
+                                <AdminCategories />
+                              </Suspense>
+                            </ProtectedAdminRoute>
+                          }
+                        />
+                        <Route
+                          path="/admin/orders"
+                          element={
+                            <ProtectedAdminRoute>
+                              <Suspense fallback={<PageLoader />}>
+                                <AdminOrders />
+                              </Suspense>
+                            </ProtectedAdminRoute>
+                          }
+                        />
+                        <Route
+                          path="/admin/users"
+                          element={
+                            <ProtectedAdminRoute>
+                              <Suspense fallback={<PageLoader />}>
+                                <AdminUsers />
+                              </Suspense>
+                            </ProtectedAdminRoute>
+                          }
+                        />
+                        <Route
+                          path="/admin/activity"
+                          element={
+                            <ProtectedAdminRoute>
+                              <Suspense fallback={<PageLoader />}>
+                                <AdminActivity />
+                              </Suspense>
+                            </ProtectedAdminRoute>
+                          }
+                        />
+                        <Route
+                          path="/admin/reviews"
+                          element={
+                            <ProtectedAdminRoute>
+                              <Suspense fallback={<PageLoader />}>
+                                <AdminReviews />
+                              </Suspense>
+                            </ProtectedAdminRoute>
+                          }
+                        />
+                        <Route
+                          path="/admin/settings"
+                          element={
+                            <ProtectedAdminRoute>
+                              <Suspense fallback={<PageLoader />}>
+                                <AdminSettings />
+                              </Suspense>
+                            </ProtectedAdminRoute>
+                          }
+                        />
+                        <Route
+                          path="/admin/promotions"
+                          element={
+                            <ProtectedAdminRoute>
+                              <Suspense fallback={<PageLoader />}>
+                                <AdminPromotionsPage />
+                              </Suspense>
+                            </ProtectedAdminRoute>
+                          }
+                        />
+                        <Route
+                          path="/admin/inventory"
+                          element={
+                            <ProtectedAdminRoute>
+                              <Suspense fallback={<PageLoader />}>
+                                <AdminInventoryPage />
+                              </Suspense>
+                            </ProtectedAdminRoute>
+                          }
+                        />
+                        <Route
+                          path="/admin/shipping"
+                          element={
+                            <ProtectedAdminRoute>
+                              <Suspense fallback={<PageLoader />}>
+                                <AdminShippingPage />
+                              </Suspense>
+                            </ProtectedAdminRoute>
+                          }
+                        />
+                        <Route
+                          path="/admin/payments"
+                          element={
+                            <ProtectedAdminRoute>
+                              <Suspense fallback={<PageLoader />}>
+                                <AdminPaymentsPage />
+                              </Suspense>
+                            </ProtectedAdminRoute>
+                          }
+                        />
+                        <Route
+                          path="/admin/roles"
+                          element={
+                            <ProtectedAdminRoute>
+                              <Suspense fallback={<PageLoader />}>
+                                <AdminRolesPage />
+                              </Suspense>
+                            </ProtectedAdminRoute>
+                          }
+                        />
+                        <Route
+                          path="/admin/roles/:id"
+                          element={
+                            <ProtectedAdminRoute>
+                              <Suspense fallback={<PageLoader />}>
+                                <RoleDetailPage />
+                              </Suspense>
+                            </ProtectedAdminRoute>
+                          }
+                        />
+                        <Route
+                          path="/admin/roles/:id/edit"
+                          element={
+                            <ProtectedAdminRoute>
+                              <Suspense fallback={<PageLoader />}>
+                                <RoleDetailPage />
+                              </Suspense>
+                            </ProtectedAdminRoute>
+                          }
+                        />
+                        <Route
+                          path="/admin/permissions/:id"
+                          element={
+                            <ProtectedAdminRoute>
+                              <Suspense fallback={<PageLoader />}>
+                                <PermissionDetailPage />
+                              </Suspense>
+                            </ProtectedAdminRoute>
+                          }
+                        />
+                        <Route
+                          path="/admin/permissions/:id/edit"
+                          element={
+                            <ProtectedAdminRoute>
+                              <Suspense fallback={<PageLoader />}>
+                                <PermissionDetailPage />
+                              </Suspense>
+                            </ProtectedAdminRoute>
+                          }
+                        />
+                        <Route
+                          path="/admin/api"
+                          element={
+                            <ProtectedAdminRoute>
+                              <Suspense fallback={<PageLoader />}>
+                                <AdminApiPage />
+                              </Suspense>
+                            </ProtectedAdminRoute>
+                          }
+                        />
+
+                        {/* 404 Not Found Route - Must be last */}
+                        <Route path="*" element={
+                          <Suspense fallback={<PageLoader />}>
+                            <NotFound />
+                          </Suspense>
+                        } />
+                      </Routes>
+                    </Router>
+                  </ErrorBoundary>
                 </TooltipProvider>
               </NotificationsProvider>
             </AuthProvider>

@@ -1,7 +1,5 @@
 import { useState, useEffect } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import EnhancedProductGrid from "@/components/EnhancedProductGrid";
 import { api, Product } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
@@ -37,27 +35,27 @@ const SalePage = () => {
     const loadSaleProducts = async () => {
       try {
         setIsLoading(true);
-        const response = await api.getProducts({ 
-          isActive: true, 
+        const response = await api.getProducts({
+          isActive: true,
           limit: 100 // Load more products for better filtering
         });
-        
+
         // Filter products that are on sale
-        const saleProducts = (response.products || []).filter(product => 
-          product.onSale || 
-          product.salePrice || 
+        const saleProducts = (response.products || []).filter(product =>
+          product.onSale ||
+          product.salePrice ||
           (product.originalPrice && product.originalPrice > product.price)
         );
-        
+
         setProducts(saleProducts);
         setFilteredProducts(saleProducts);
       } catch (error) {
         console.error('Error loading sale products:', error);
         toast({
           title: language === 'vi' ? "Lỗi tải dữ liệu" : language === 'ja' ? "データ読み込みエラー" : "Error Loading Data",
-          description: language === 'vi' ? "Không thể tải sản phẩm khuyến mãi" : 
-                      language === 'ja' ? "セール商品を読み込めません" : 
-                      "Unable to load sale products",
+          description: language === 'vi' ? "Không thể tải sản phẩm khuyến mãi" :
+            language === 'ja' ? "セール商品を読み込めません" :
+              "Unable to load sale products",
           variant: "destructive",
         });
       } finally {
@@ -75,9 +73,9 @@ const SalePage = () => {
     // Search filter
     if (searchQuery.trim()) {
       filtered = filtered.filter(product => {
-        const name = language === 'vi' ? product.name : 
-                    language === 'ja' ? (product.nameJa || product.name) : 
-                    (product.nameEn || product.name);
+        const name = language === 'vi' ? product.name :
+          language === 'ja' ? (product.nameJa || product.name) :
+            (product.nameEn || product.name);
         return name.toLowerCase().includes(searchQuery.toLowerCase());
       });
     }
@@ -87,13 +85,13 @@ const SalePage = () => {
       filtered = filtered.filter(product => {
         // Calculate discount percentage from salePrice vs price, or originalPrice vs price
         let discountPercent = 0;
-        
+
         if (product.salePrice && product.salePrice < product.price) {
           discountPercent = ((product.price - product.salePrice) / product.price) * 100;
         } else if (product.originalPrice && product.originalPrice > product.price) {
           discountPercent = ((product.originalPrice - product.price) / product.originalPrice) * 100;
         }
-        
+
         switch (discountFilter) {
           case 'high': return discountPercent >= 50;
           case 'medium': return discountPercent >= 30 && discountPercent < 50;
@@ -122,13 +120,13 @@ const SalePage = () => {
       filtered = filtered.filter(product => {
         // Calculate discount percentage consistently
         let discountPercent = 0;
-        
+
         if (product.salePrice && product.salePrice < product.price) {
           discountPercent = ((product.price - product.salePrice) / product.price) * 100;
         } else if (product.originalPrice && product.originalPrice > product.price) {
           discountPercent = ((product.originalPrice - product.price) / product.originalPrice) * 100;
         }
-        
+
         switch (activeTab) {
           case 'flash': return discountPercent >= 50; // Flash sales (high discount)
           case 'featured': return product.isFeatured; // Featured sale items
@@ -248,10 +246,7 @@ const SalePage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      <Header
-        cartItemsCount={cartItemsCount}
-        onSearch={() => {}}
-      />
+
 
       <main className="py-8">
         <div className="container mx-auto px-4 space-y-8">
@@ -260,14 +255,14 @@ const SalePage = () => {
             <div className="relative overflow-hidden rounded-2xl shadow-2xl">
               {/* Banner Background with Gradient */}
               <div className="absolute inset-0">
-                <img 
-                  src="/images/banners/banner-04.png" 
+                <img
+                  src="/images/banners/banner-04.png"
                   alt="Sale Banner"
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/50 to-black/60"></div>
               </div>
-              
+
               {/* Content */}
               <div className="relative z-10 p-12 md:p-16 text-white">
                 <div className="flex items-center justify-center mb-4">
@@ -414,7 +409,7 @@ const SalePage = () => {
         </div>
       </main>
 
-      <Footer />
+
     </div>
   );
 };

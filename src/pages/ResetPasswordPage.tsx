@@ -7,8 +7,6 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function ResetPasswordPage() {
@@ -127,14 +125,14 @@ export default function ResetPasswordPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm() || !token) return;
 
     setIsLoading(true);
-    
+
     try {
       await api.resetPassword(token, formData.password);
-      
+
       toast({
         title: "Success",
         description: t.resetSuccess
@@ -154,8 +152,8 @@ export default function ResetPasswordPage() {
   if (isSuccess) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-        <Header cartItemsCount={0} onSearch={() => {}} />
-        
+
+
         <main className="py-8">
           <div className="container mx-auto px-4">
             <div className="flex justify-center">
@@ -180,15 +178,15 @@ export default function ResetPasswordPage() {
           </div>
         </main>
 
-        <Footer />
+
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      <Header cartItemsCount={0} onSearch={() => {}} />
-      
+
+
       <main className="py-8">
         <div className="container mx-auto px-4">
           <div className="flex justify-center">
@@ -209,7 +207,7 @@ export default function ResetPasswordPage() {
                         type={showPassword ? "text" : "password"}
                         placeholder={language === 'vi' ? 'Nhập mật khẩu mới' : language === 'ja' ? '新しいパスワードを入力' : 'Enter new password'}
                         value={formData.password}
-                        onChange={(e) => setFormData({...formData, password: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                         className="pl-10 pr-10 rounded-lg border-2 focus:border-primary transition-all"
                         disabled={isLoading}
                       />
@@ -240,7 +238,7 @@ export default function ResetPasswordPage() {
                         type={showConfirmPassword ? "text" : "password"}
                         placeholder={language === 'vi' ? 'Xác nhận mật khẩu mới' : language === 'ja' ? '新しいパスワードを確認' : 'Confirm new password'}
                         value={formData.confirmPassword}
-                        onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                         className="pl-10 pr-10 rounded-lg border-2 focus:border-primary transition-all"
                         disabled={isLoading}
                       />
@@ -284,7 +282,7 @@ export default function ResetPasswordPage() {
         </div>
       </main>
 
-      <Footer />
+
     </div>
   );
 } 

@@ -5,8 +5,6 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts';
 import { formatCurrency } from '@/lib/currency';
 import { api, Product } from '@/lib/api';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -32,6 +30,7 @@ const CartPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
 
+
   const cartItemsCount = cartItems.reduce((count, item) => count + item.quantity, 0);
 
   const handleSearch = (query: string) => {
@@ -53,19 +52,19 @@ const CartPage: React.FC = () => {
         const response = await api.getCart();
         if (response && response.items && Array.isArray(response.items)) {
           const cartItemsData = response.items
-            .filter((item: { 
-              productId: string; 
-              quantity: number; 
-              size?: string; 
-              color?: string; 
-              product: Product; 
+            .filter((item: {
+              productId: string;
+              quantity: number;
+              size?: string;
+              color?: string;
+              product: Product;
             }) => item && item.product && item.product._id && item.product.images && Array.isArray(item.product.images)) // Filter out items with missing product data
-            .map((item: { 
-              productId: string; 
-              quantity: number; 
-              size?: string; 
-              color?: string; 
-              product: Product; 
+            .map((item: {
+              productId: string;
+              quantity: number;
+              size?: string;
+              color?: string;
+              product: Product;
             }) => ({
               productId: item.productId,
               product: item.product,
@@ -80,12 +79,12 @@ const CartPage: React.FC = () => {
       } catch (error) {
         logger.error('Error loading cart', error);
         toast({
-          title: language === 'vi' ? "Lỗi tải dữ liệu" : 
-                 language === 'ja' ? "データ読み込みエラー" : 
-                 "Error Loading Data",
+          title: language === 'vi' ? "Lỗi tải dữ liệu" :
+            language === 'ja' ? "データ読み込みエラー" :
+              "Error Loading Data",
           description: language === 'vi' ? "Không thể tải thông tin giỏ hàng" :
-                       language === 'ja' ? "カート情報を読み込めませんでした" :
-                       "Unable to load cart information",
+            language === 'ja' ? "カート情報を読み込めませんでした" :
+              "Unable to load cart information",
           variant: "destructive",
         });
       } finally {
@@ -99,12 +98,12 @@ const CartPage: React.FC = () => {
   const updateQuantity = async (productId: string, newQuantity: number, selectedSize?: string, selectedColor?: string) => {
     if (!isAuthenticated) {
       toast({
-        title: language === 'vi' ? "Cần đăng nhập" : 
-               language === 'ja' ? "ログインが必要です" : 
-               "Login Required",
+        title: language === 'vi' ? "Cần đăng nhập" :
+          language === 'ja' ? "ログインが必要です" :
+            "Login Required",
         description: language === 'vi' ? "Vui lòng đăng nhập để quản lý giỏ hàng" :
-                     language === 'ja' ? "カートを管理するにはログインしてください" :
-                     "Please login to manage cart",
+          language === 'ja' ? "カートを管理するにはログインしてください" :
+            "Please login to manage cart",
         variant: "destructive",
       });
       return;
@@ -113,36 +112,36 @@ const CartPage: React.FC = () => {
     try {
       setUpdating(productId);
       await api.updateCartItem(productId, newQuantity);
-      
+
       // Wait a bit to ensure API call is complete, then dispatch event
       setTimeout(() => {
         logger.debug('Dispatching cartUpdated event (CartPage update quantity)');
         window.dispatchEvent(new CustomEvent('cartUpdated'));
       }, 100);
-      
-      setCartItems(prev => prev.map(item => 
-        item.productId === productId 
+
+      setCartItems(prev => prev.map(item =>
+        item.productId === productId
           ? { ...item, quantity: newQuantity }
           : item
       ));
 
       toast({
-        title: language === 'vi' ? "Cập nhật số lượng" : 
-               language === 'ja' ? "数量を更新" : 
-               "Quantity Updated",
+        title: language === 'vi' ? "Cập nhật số lượng" :
+          language === 'ja' ? "数量を更新" :
+            "Quantity Updated",
         description: language === 'vi' ? "Số lượng đã được cập nhật" :
-                     language === 'ja' ? "数量が更新されました" :
-                     "Quantity has been updated",
+          language === 'ja' ? "数量が更新されました" :
+            "Quantity has been updated",
       });
     } catch (error) {
       logger.error('Error updating quantity', error);
       toast({
-        title: language === 'vi' ? "Lỗi" : 
-               language === 'ja' ? "エラー" : 
-               "Error",
+        title: language === 'vi' ? "Lỗi" :
+          language === 'ja' ? "エラー" :
+            "Error",
         description: language === 'vi' ? "Không thể cập nhật số lượng" :
-                     language === 'ja' ? "数量を更新できませんでした" :
-                     "Could not update quantity",
+          language === 'ja' ? "数量を更新できませんでした" :
+            "Could not update quantity",
         variant: "destructive",
       });
     } finally {
@@ -153,12 +152,12 @@ const CartPage: React.FC = () => {
   const removeItem = async (productId: string, selectedSize?: string, selectedColor?: string) => {
     if (!isAuthenticated) {
       toast({
-        title: language === 'vi' ? "Cần đăng nhập" : 
-               language === 'ja' ? "ログインが必要です" : 
-               "Login Required",
+        title: language === 'vi' ? "Cần đăng nhập" :
+          language === 'ja' ? "ログインが必要です" :
+            "Login Required",
         description: language === 'vi' ? "Vui lòng đăng nhập để quản lý giỏ hàng" :
-                     language === 'ja' ? "カートを管理するにはログインしてください" :
-                     "Please login to manage cart",
+          language === 'ja' ? "カートを管理するにはログインしてください" :
+            "Please login to manage cart",
         variant: "destructive",
       });
       return;
@@ -166,34 +165,65 @@ const CartPage: React.FC = () => {
 
     try {
       await api.removeFromCart(productId);
-      
+
       // Wait a bit to ensure API call is complete, then dispatch event
       setTimeout(() => {
         logger.debug('Dispatching cartUpdated event (CartPage remove item)');
         window.dispatchEvent(new CustomEvent('cartUpdated'));
       }, 100);
-      
+
       setCartItems(prev => prev.filter(item => item.productId !== productId));
 
       toast({
-        title: language === 'vi' ? "Xóa sản phẩm" : 
-               language === 'ja' ? "商品を削除" : 
-               "Item Removed",
+        title: language === 'vi' ? "Xóa sản phẩm" :
+          language === 'ja' ? "商品を削除" :
+            "Item Removed",
         description: language === 'vi' ? "Sản phẩm đã được xóa khỏi giỏ hàng" :
-                     language === 'ja' ? "商品がカートから削除されました" :
-                     "Item has been removed from cart",
+          language === 'ja' ? "商品がカートから削除されました" :
+            "Item has been removed from cart",
       });
     } catch (error) {
       logger.error('Error removing item', error);
       toast({
-        title: language === 'vi' ? "Lỗi" : 
-               language === 'ja' ? "エラー" : 
-               "Error",
+        title: language === 'vi' ? "Lỗi" :
+          language === 'ja' ? "エラー" :
+            "Error",
         description: language === 'vi' ? "Không thể xóa sản phẩm" :
-                     language === 'ja' ? "商品を削除できませんでした" :
-                     "Could not remove item",
+          language === 'ja' ? "商品を削除できませんでした" :
+            "Could not remove item",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleClearCart = async () => {
+    if (!isAuthenticated) return;
+
+    if (!window.confirm(language === 'vi' ? "Bạn có chắc chắn muốn xóa tất cả sản phẩm?" : language === 'ja' ? "カートを空にしてもよろしいですか？" : "Are you sure you want to clear your cart?")) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await api.clearCart();
+      setCartItems([]);
+
+      // Dispatch event
+      window.dispatchEvent(new CustomEvent('cartUpdated'));
+
+      toast({
+        title: language === 'vi' ? "Thành công" : language === 'ja' ? "成功" : "Success",
+        description: language === 'vi' ? "Đã xóa tất cả sản phẩm" : language === 'ja' ? "カートを空にしました" : "All items removed",
+      });
+    } catch (error) {
+      logger.error('Error clearing cart', error);
+      toast({
+        title: language === 'vi' ? "Lỗi" : language === 'ja' ? "エラー" : "Error",
+        description: language === 'vi' ? "Không thể xóa giỏ hàng" : language === 'ja' ? "カートを空にできませんでした" : "Could not clear cart",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -216,7 +246,7 @@ const CartPage: React.FC = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-        <Header cartItemsCount={cartItemsCount} onSearch={handleSearch} />
+
         <div className="container mx-auto px-4 py-8">
           <div className="flex items-center justify-center h-64">
             <Card className="rounded-xl border-2 shadow-lg p-8">
@@ -227,7 +257,6 @@ const CartPage: React.FC = () => {
             </Card>
           </div>
         </div>
-        <Footer />
       </div>
     );
   }
@@ -235,7 +264,7 @@ const CartPage: React.FC = () => {
   if (cartItems.length === 0) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-        <Header cartItemsCount={cartItemsCount} onSearch={handleSearch} />
+
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-2xl mx-auto">
             <Card className="rounded-xl border-2 shadow-xl overflow-hidden">
@@ -249,30 +278,30 @@ const CartPage: React.FC = () => {
                   <>
                     <h1 className="text-3xl font-bold mb-3">
                       {language === 'vi' ? 'Cần đăng nhập' :
-                       language === 'ja' ? 'ログインが必要です' : 'Login Required'}
+                        language === 'ja' ? 'ログインが必要です' : 'Login Required'}
                     </h1>
                     <p className="text-muted-foreground mb-8 text-lg">
                       {language === 'vi' ? 'Vui lòng đăng nhập để xem giỏ hàng của bạn' :
-                       language === 'ja' ? 'カートを表示するにはログインしてください' :
-                       'Please login to view your cart'}
+                        language === 'ja' ? 'カートを表示するにはログインしてください' :
+                          'Please login to view your cart'}
                     </p>
                     <div className="flex gap-4 justify-center">
-                      <Button 
+                      <Button
                         onClick={() => navigate('/login')}
                         size="lg"
                         className="rounded-xl font-semibold px-8"
                       >
                         {language === 'vi' ? 'Đăng Nhập' :
-                         language === 'ja' ? 'ログイン' : 'Login'}
+                          language === 'ja' ? 'ログイン' : 'Login'}
                       </Button>
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         onClick={() => navigate('/register')}
                         size="lg"
                         className="rounded-xl font-semibold px-8"
                       >
                         {language === 'vi' ? 'Đăng Ký' :
-                         language === 'ja' ? '登録' : 'Register'}
+                          language === 'ja' ? '登録' : 'Register'}
                       </Button>
                     </div>
                   </>
@@ -280,7 +309,7 @@ const CartPage: React.FC = () => {
                   <>
                     <h1 className="text-3xl font-bold mb-3">{language === 'vi' ? "Giỏ hàng trống" : language === 'ja' ? "カートは空です" : "Your cart is empty"}</h1>
                     <p className="text-muted-foreground mb-8 text-lg">{language === 'vi' ? "Bạn chưa có sản phẩm nào trong giỏ hàng" : language === 'ja' ? "カートに商品がありません" : "You don't have any items in your cart"}</p>
-                    <Button 
+                    <Button
                       onClick={() => navigate('/')}
                       size="lg"
                       className="rounded-xl font-semibold px-8"
@@ -293,21 +322,20 @@ const CartPage: React.FC = () => {
             </Card>
           </div>
         </div>
-        <Footer />
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      <Header cartItemsCount={cartItemsCount} onSearch={handleSearch} />
-      
+
+
       <div className="container mx-auto px-4 py-8">
         {/* Header Section */}
         <div className="mb-8">
           <div className="flex items-center space-x-4 mb-4">
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               onClick={() => navigate('/')}
               className="rounded-lg hover:bg-primary/10"
             >
@@ -325,6 +353,17 @@ const CartPage: React.FC = () => {
                 {cartItems.length} {language === 'vi' ? "sản phẩm" : language === 'ja' ? "商品" : "items"}
               </Badge>
             </div>
+
+            {cartItems.length >= 3 && (
+              <Button
+                variant="destructive"
+                onClick={handleClearCart}
+                className="rounded-lg shadow-sm hover:shadow-md transition-all"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                {language === 'vi' ? "Xóa tất cả" : language === 'ja' ? "すべて削除" : "Clear All"}
+              </Button>
+            )}
           </div>
         </div>
 
@@ -334,14 +373,14 @@ const CartPage: React.FC = () => {
             {cartItems.map((item) => (
               <Card key={item.product?._id || item.productId} className="overflow-hidden rounded-xl border-2 shadow-lg hover:shadow-xl transition-all">
                 <div className="flex">
-                  <div className="w-32 h-32 flex-shrink-0 bg-muted rounded-l-xl overflow-hidden">
+                  <div className="w-32 flex-shrink-0 bg-muted rounded-l-xl overflow-hidden">
                     <img
                       src={item.product?.images?.[0] || '/placeholder.svg'}
                       alt={item.product?.name || 'Product'}
                       className="w-full h-full object-cover"
                     />
                   </div>
-                  
+
                   <div className="flex-1 p-6 flex flex-col">
                     <div className="flex justify-between items-start mb-4">
                       <div className="flex-1">
@@ -349,8 +388,8 @@ const CartPage: React.FC = () => {
                           {item.product?.name || 'Product'}
                         </h3>
                         <p className="text-muted-foreground text-sm mb-3">
-                          {typeof item.product?.categoryId === 'string' 
-                            ? 'Category' 
+                          {typeof item.product?.categoryId === 'string'
+                            ? 'Category'
                             : item.product?.categoryId?.name || 'Category'}
                         </p>
                         <div className="flex items-center space-x-2 mb-3">
@@ -366,7 +405,7 @@ const CartPage: React.FC = () => {
                           )}
                         </div>
                       </div>
-                      
+
                       <Button
                         variant="ghost"
                         size="sm"
@@ -381,7 +420,7 @@ const CartPage: React.FC = () => {
                         )}
                       </Button>
                     </div>
-                    
+
                     <div className="flex items-center justify-between pt-4 mt-auto border-t">
                       <div className="flex items-center space-x-2 bg-muted/30 rounded-lg p-1">
                         <Button
@@ -393,7 +432,7 @@ const CartPage: React.FC = () => {
                         >
                           <Minus className="h-4 w-4" />
                         </Button>
-                        
+
                         <Input
                           type="number"
                           min="1"
@@ -403,7 +442,7 @@ const CartPage: React.FC = () => {
                           className="w-14 text-center rounded-md border-0 bg-background font-semibold h-8"
                           disabled={updating === (item.product?._id || item.productId)}
                         />
-                        
+
                         <Button
                           variant="ghost"
                           size="sm"
@@ -414,7 +453,7 @@ const CartPage: React.FC = () => {
                           <Plus className="h-4 w-4" />
                         </Button>
                       </div>
-                      
+
                       <div className="text-right ml-4">
                         <div className="text-xl font-bold text-primary mb-1">
                           {formatCurrency((item.product?.price || 0) * item.quantity, language)}
@@ -444,62 +483,61 @@ const CartPage: React.FC = () => {
                 <CardTitle className="text-lg font-bold">{language === 'vi' ? "Tóm tắt đơn hàng" : language === 'ja' ? "注文サマリー" : "Order Summary"}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
+                {/* Promo/Referral Codes */}
+
+
                 <div className="space-y-3 p-3 rounded-lg bg-muted/30">
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-medium text-muted-foreground">{language === 'vi' ? "Tạm tính" : language === 'ja' ? "小計" : "Subtotal"}</span>
                     <span className="font-semibold">{formatCurrency(calculateSubtotal(), language)}</span>
                   </div>
-                  
+
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-medium text-muted-foreground">{language === 'vi' ? "Phí vận chuyển" : language === 'ja' ? "配送料" : "Shipping"}</span>
                     <span className={calculateShipping() === 0 ? 'text-green-600 font-semibold' : 'font-semibold'}>
                       {calculateShipping() === 0 ? language === 'vi' ? "Miễn phí" : language === 'ja' ? "送料無料" : "Free" : formatCurrency(calculateShipping(), language)}
                     </span>
                   </div>
-                  
+
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-medium text-muted-foreground">{language === 'vi' ? "Thuế" : language === 'ja' ? "税金" : "Tax"}</span>
                     <span className="font-semibold">{formatCurrency(calculateTax(), language)}</span>
                   </div>
-                  
+
                   <Separator className="my-2" />
-                  
+
                   <div className="flex justify-between items-center pt-2">
                     <span className="text-lg font-bold">{language === 'vi' ? "Tổng cộng" : language === 'ja' ? "合計" : "Total"}</span>
                     <span className="text-xl font-bold text-primary">{formatCurrency(calculateTotal(), language)}</span>
                   </div>
                 </div>
-                
+
                 <div className="space-y-4">
-                  <Button 
-                    className="w-full rounded-xl font-semibold text-lg h-12 shadow-lg hover:shadow-xl transition-all" 
-                    size="lg" 
+                  <Button
+                    className="w-full rounded-xl font-semibold text-lg h-12 shadow-lg hover:shadow-xl transition-all"
+                    size="lg"
                     onClick={() => navigate('/checkout')}
                   >
                     <CreditCard className="h-5 w-5 mr-2" />
                     {language === 'vi' ? "Thanh toán" : language === 'ja' ? "チェックアウト" : "Proceed to Checkout"}
                   </Button>
-                  
+
                   <div className="flex items-center space-x-2 p-3 rounded-lg bg-muted/30 text-sm">
                     <Truck className="h-4 w-4 text-primary" />
                     <span className="text-muted-foreground">
                       {language === 'vi' ? "Dự kiến giao hàng" : language === 'ja' ? "配送予定日" : "Estimated Delivery"}: {language === 'vi' ? "3-5 ngày làm việc" : language === 'ja' ? "3-5営業日" : "3-5 business days"}
                     </span>
                   </div>
-                  
-                  <div className="text-xs text-muted-foreground text-center p-2 rounded-lg bg-primary/5">
-                    {language === 'vi' ? "🔒 Thanh toán an toàn" : language === 'ja' ? "🔒 安全なチェックアウト" : "🔒 Secure Checkout"}
-                    <br />
-                    {language === 'vi' ? "Thông tin của bạn được bảo vệ" : language === 'ja' ? "あなたの情報は保護されています" : "Your information is protected"}
-                  </div>
+
+
                 </div>
               </CardContent>
             </Card>
           </div>
         </div>
       </div>
-      
-      <Footer />
+
+
     </div>
   );
 };

@@ -9,8 +9,6 @@ import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth, useSettings } from "@/contexts";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function RegisterPage() {
@@ -31,7 +29,7 @@ export default function RegisterPage() {
   const { register, isAuthenticated } = useAuth();
   const { settings } = useSettings();
   const navigate = useNavigate();
-  
+
   const passwordMinLength = settings?.passwordMinLength || 8;
 
   // Redirect if already authenticated
@@ -221,8 +219,8 @@ export default function RegisterPage() {
       toast({
         title: "Error",
         description: language === 'vi' ? `Mật khẩu phải có ít nhất ${passwordMinLength} ký tự` :
-                     language === 'ja' ? `パスワードは少なくとも${passwordMinLength}文字である必要があります` :
-                     `Password must be at least ${passwordMinLength} characters`,
+          language === 'ja' ? `パスワードは少なくとも${passwordMinLength}文字である必要があります` :
+            `Password must be at least ${passwordMinLength} characters`,
         variant: "destructive"
       });
       return false;
@@ -240,11 +238,11 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
 
     setIsLoading(true);
-    
+
     try {
       // Prepare user data for registration
       const userData = {
@@ -253,9 +251,9 @@ export default function RegisterPage() {
         password: formData.password,
         phone: formData.phone
       };
-      
+
       await register(userData);
-      
+
       // Navigate to home page after successful registration
       navigate("/");
     } catch (error) {
@@ -268,8 +266,8 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      <Header cartItemsCount={0} onSearch={() => {}} />
-      
+
+
       <main className="py-8">
         <div className="container mx-auto px-4">
           <div className="flex justify-center">
@@ -464,17 +462,17 @@ export default function RegisterPage() {
                   </div>
 
                   <div className="mt-6 space-y-3">
-                    <Button 
-                      variant="outline" 
-                      className="w-full rounded-lg font-medium" 
+                    <Button
+                      variant="outline"
+                      className="w-full rounded-lg font-medium"
                       disabled={isLoading}
                     >
                       <User className="mr-2 h-4 w-4" />
                       {t.continueWithGoogle}
                     </Button>
-                    <Button 
-                      variant="outline" 
-                      className="w-full rounded-lg font-medium" 
+                    <Button
+                      variant="outline"
+                      className="w-full rounded-lg font-medium"
                       disabled={isLoading}
                     >
                       <User className="mr-2 h-4 w-4" />
@@ -495,7 +493,7 @@ export default function RegisterPage() {
         </div>
       </main>
 
-      <Footer />
+
     </div>
   );
 } 

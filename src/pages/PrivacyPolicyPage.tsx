@@ -1,17 +1,15 @@
 import React from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Shield, 
-  Lock, 
-  Eye, 
-  Users, 
-  Mail, 
-  Globe, 
+import {
+  Shield,
+  Lock,
+  Eye,
+  Users,
+  Mail,
+  Globe,
   Database,
   Clock,
   CheckCircle,
@@ -268,8 +266,8 @@ const PrivacyPolicyPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      <Header cartItemsCount={0} onSearch={() => {}} />
-      
+
+
       <main className="py-8">
         <div className="container mx-auto px-4 space-y-12">
           {/* Hero Section */}
@@ -277,14 +275,14 @@ const PrivacyPolicyPage = () => {
             <div className="relative overflow-hidden rounded-2xl shadow-2xl">
               {/* Banner Background */}
               <div className="absolute inset-0">
-                <img 
-                  src="/images/banners/banner-04.png" 
+                <img
+                  src="/images/banners/banner-04.png"
                   alt="Privacy Policy Banner"
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/50 to-black/60"></div>
               </div>
-              
+
               {/* Content */}
               <div className="relative z-10 p-12 md:p-16 text-white">
                 <div className="flex justify-center mb-6">
@@ -298,7 +296,7 @@ const PrivacyPolicyPage = () => {
                 <p className="text-xl md:text-2xl text-white/90 mb-6 font-light leading-relaxed">
                   {t.subtitle}
                 </p>
-                
+
                 <div className="flex items-center justify-center space-x-2 text-sm text-white/80">
                   <Clock className="h-4 w-4" />
                   <span>{t.lastUpdated}: {t.effectiveDate}</span>
@@ -310,7 +308,7 @@ const PrivacyPolicyPage = () => {
           {/* Content */}
           <section>
             <div className="max-w-4xl mx-auto space-y-6">
-              
+
               {/* Overview */}
               <Card className="rounded-xl border-2 shadow-lg hover:shadow-xl transition-all overflow-hidden">
                 <CardHeader className="pb-4">
@@ -344,9 +342,9 @@ const PrivacyPolicyPage = () => {
                       {t.sections.informationWeCollect.personalInfo.content}
                     </p>
                   </div>
-                  
+
                   <Separator />
-                  
+
                   <div className="p-4 rounded-lg bg-muted/30 border-l-4 border-primary">
                     <h3 className="font-bold mb-2 flex items-center">
                       <Globe className="h-4 w-4 mr-2 text-primary" />
@@ -356,9 +354,9 @@ const PrivacyPolicyPage = () => {
                       {t.sections.informationWeCollect.automaticInfo.content}
                     </p>
                   </div>
-                  
+
                   <Separator />
-                  
+
                   <div className="p-4 rounded-lg bg-muted/30 border-l-4 border-primary">
                     <h3 className="font-bold mb-2 flex items-center">
                       <Eye className="h-4 w-4 mr-2 text-primary" />
@@ -518,7 +516,7 @@ const PrivacyPolicyPage = () => {
                 </CardHeader>
                 <CardContent>
                   <p className="text-muted-foreground mb-4 font-medium leading-relaxed">{t.sections.contact.content}</p>
-                  
+
                   <div className="space-y-3">
                     <div className="flex items-center space-x-3 p-3 rounded-lg bg-muted/30">
                       <Mail className="h-4 w-4 text-primary flex-shrink-0" />
@@ -540,8 +538,8 @@ const PrivacyPolicyPage = () => {
           </section>
         </div>
       </main>
-      
-      <Footer />
+
+
     </div>
   );
 };

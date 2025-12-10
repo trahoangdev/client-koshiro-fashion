@@ -1,13 +1,12 @@
+
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import EnhancedProductGrid from "@/components/EnhancedProductGrid";
 import ProductCard from "@/components/ProductCard";
 import FilterBar from "@/components/FilterBar";
 import Cart from "@/components/Cart";
 import ThemeToggle from "@/components/ThemeToggle";
-import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { api, Product, Category } from "@/lib/api";
@@ -47,7 +46,35 @@ const CATEGORY_IMAGES: Record<string, string> = {
 
 // Helper function to render category image
 const renderCategoryImage = (category: Category) => {
-  // Priority 1: Static mapping from codebase (ensures correct local images)
+  // Priority 1: Cloudinary images (Backend provided)
+  if (category.cloudinaryImages && category.cloudinaryImages.length > 0) {
+    const cloudinaryImage = category.cloudinaryImages[0];
+    return (
+      <CloudinaryImage
+        publicId={cloudinaryImage.publicId}
+        secureUrl={cloudinaryImage.secureUrl}
+        responsiveUrls={cloudinaryImage.responsiveUrls}
+        alt={category.name}
+        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+        size="medium"
+        loading="lazy"
+      />
+    );
+  }
+
+  // Priority 2: Legacy image from DB (if not placeholder)
+  if (category.image && !category.image.includes('placeholder')) {
+    return (
+      <img
+        src={category.image}
+        alt={category.name}
+        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+        loading="lazy"
+      />
+    );
+  }
+
+  // Priority 3: Static mapping from codebase (Fallback)
   // Check by slug
   if (category.slug && CATEGORY_IMAGES[category.slug]) {
     return (
@@ -65,34 +92,6 @@ const renderCategoryImage = (category: Category) => {
     return (
       <img
         src={CATEGORY_IMAGES[category.name]}
-        alt={category.name}
-        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-        loading="lazy"
-      />
-    );
-  }
-
-  // Priority 2: Cloudinary images
-  if (category.cloudinaryImages && category.cloudinaryImages.length > 0) {
-    const cloudinaryImage = category.cloudinaryImages[0];
-    return (
-      <CloudinaryImage
-        publicId={cloudinaryImage.publicId}
-        secureUrl={cloudinaryImage.secureUrl}
-        responsiveUrls={cloudinaryImage.responsiveUrls}
-        alt={category.name}
-        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-        size="medium"
-        loading="lazy"
-      />
-    );
-  }
-
-  // Priority 3: Legacy image from DB (if not placeholder)
-  if (category.image && !category.image.includes('placeholder')) {
-    return (
-      <img
-        src={category.image}
         alt={category.name}
         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         loading="lazy"
@@ -304,7 +303,7 @@ const Index = () => {
           language === 'ja' ? "カートに追加されました" :
             "Added to Cart",
         description: language === 'vi' ? `${getProductName(product)} đã được thêm vào giỏ hàng` :
-          language === 'ja' ? `${getProductName(product)}がカートに追加されました` :
+          language === 'ja' ? `${getProductName(product)} がカートに追加されました` :
             `${getProductName(product)} has been added to your cart.`,
       });
     } catch (error) {
@@ -328,7 +327,7 @@ const Index = () => {
       try {
         if (isAuthenticated) {
           const item = cartItems.find(item =>
-            `${item.product._id}-${item.selectedColor}-${item.selectedSize}` === itemId
+            `${item.product._id} -${item.selectedColor} -${item.selectedSize} ` === itemId
           );
           if (item) {
             await api.removeFromCart(item.product._id);
@@ -339,7 +338,7 @@ const Index = () => {
         }
         setCartItems(items =>
           items.filter(item =>
-            `${item.product._id}-${item.selectedColor}-${item.selectedSize}` !== itemId
+            `${item.product._id} -${item.selectedColor} -${item.selectedSize} ` !== itemId
           )
         );
       } catch (error) {
@@ -352,7 +351,7 @@ const Index = () => {
       // Update cart via API if authenticated
       if (isAuthenticated) {
         const item = cartItems.find(item =>
-          `${item.product._id}-${item.selectedColor}-${item.selectedSize}` === itemId
+          `${item.product._id} -${item.selectedColor} -${item.selectedSize} ` === itemId
         );
         if (item) {
           await api.updateCartItem(item.product._id, quantity);
@@ -367,7 +366,7 @@ const Index = () => {
 
       setCartItems(items =>
         items.map(item =>
-          `${item.product._id}-${item.selectedColor}-${item.selectedSize}` === itemId
+          `${item.product._id} -${item.selectedColor} -${item.selectedSize} ` === itemId
             ? { ...item, quantity }
             : item
         )
@@ -391,7 +390,7 @@ const Index = () => {
       // Remove from cart via API if authenticated
       if (isAuthenticated) {
         const item = cartItems.find(item =>
-          `${item.product._id}-${item.selectedColor}-${item.selectedSize}` === itemId
+          `${item.product._id} -${item.selectedColor} -${item.selectedSize} ` === itemId
         );
         if (item) {
           await api.removeFromCart(item.product._id);
@@ -406,7 +405,7 @@ const Index = () => {
 
       setCartItems(items =>
         items.filter(item =>
-          `${item.product._id}-${item.selectedColor}-${item.selectedSize}` !== itemId
+          `${item.product._id} -${item.selectedColor} -${item.selectedSize} ` !== itemId
         )
       );
     } catch (error) {
@@ -482,13 +481,14 @@ const Index = () => {
 
     try {
       await api.addToWishlist(product._id);
+      window.dispatchEvent(new CustomEvent('wishlistUpdated'));
 
       toast({
         title: language === 'vi' ? "Đã thêm vào danh sách yêu thích" :
           language === 'ja' ? "お気に入りに追加されました" :
             "Added to Wishlist",
         description: language === 'vi' ? `${getProductName(product)} đã được thêm vào danh sách yêu thích` :
-          language === 'ja' ? `${getProductName(product)}がお気に入りに追加されました` :
+          language === 'ja' ? `${getProductName(product)} がお気に入りに追加されました` :
             `${getProductName(product)} has been added to wishlist`,
       });
     } catch (error) {
@@ -545,6 +545,7 @@ const Index = () => {
 
     const newCompareList = [...compareList, product];
     localStorage.setItem('koshiro_compare_list', JSON.stringify(newCompareList));
+    window.dispatchEvent(new CustomEvent('compareUpdated'));
 
     toast({
       title: language === 'vi' ? "Đã thêm vào so sánh" :
@@ -557,14 +558,11 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      <Header
-        cartItemsCount={cartItemsCount}
-        onSearch={setSearchQuery}
-      />
+    <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
 
-      {/* Zen Hero Section */}
-      <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden bg-stone-900 rounded-b-2xl shadow-2xl">
+      {/* Toast notifications */}
+      {/* Hero Section - Optimized with fetchPriority */}
+      <section className="relative h-[80vh] md:h-[90vh] flex items-center justify-center overflow-hidden bg-stone-900 rounded-b-2xl shadow-2xl">
         {/* Background Image */}
         <div className="absolute inset-0">
           <img
@@ -579,7 +577,7 @@ const Index = () => {
           {/* Subtle Pattern Overlay */}
           <div className="absolute inset-0 opacity-[0.02]">
             <div className="absolute inset-0" style={{
-              backgroundImage: `radial-gradient(circle at 1px 1px, rgb(255 255 255) 1px, transparent 0)`,
+              backgroundImage: `radial - gradient(circle at 1px 1px, rgb(255 255 255) 1px, transparent 0)`,
               backgroundSize: '40px 40px'
             }} />
           </div>
@@ -642,7 +640,7 @@ const Index = () => {
         </div>
 
         {/* Custom Scroll Wheel Indicator */}
-        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 z-20">
+        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 z-20" aria-hidden="true">
           <div className="relative flex flex-col items-center justify-center">
             {/* Mouse Body */}
             <div className="relative w-8 h-12 border-[3px] border-white/60 rounded-full bg-white/20 backdrop-blur-md animate-scroll-wheel shadow-lg shadow-white/20">
@@ -779,7 +777,7 @@ const Index = () => {
                     <div
                       key={product._id}
                       style={{
-                        animationDelay: `${index * 100}ms`,
+                        animationDelay: `${index * 100} ms`,
                         animation: 'fadeInUp 0.6s ease-out forwards',
                         opacity: 0,
                         transform: 'translateY(20px)'
@@ -839,12 +837,12 @@ const Index = () => {
                     key={category._id}
                     className="group cursor-pointer rounded-xl border-2 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden hover:scale-[1.02] hover:border-primary"
                     style={{
-                      animationDelay: `${index * 150}ms`,
+                      animationDelay: `${index * 150} ms`,
                       animation: 'fadeInUp 0.6s ease-out forwards',
                       opacity: 0,
                       transform: 'translateY(20px)'
                     }}
-                    onClick={() => navigate(`/category/${category.slug}`)}
+                    onClick={() => navigate(`/ category / ${category.slug} `)}
                   >
                     <div className="aspect-[4/3] relative overflow-hidden">
                       {renderCategoryImage(category)}
@@ -1039,7 +1037,6 @@ const Index = () => {
         </div>
       )}
 
-      <Footer />
     </div>
   );
 };

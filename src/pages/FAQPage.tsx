@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { 
-  HelpCircle, 
+import {
+  HelpCircle,
   ChevronDown,
   ChevronUp,
   ShoppingBag,
@@ -419,8 +417,8 @@ const FAQPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      <Header cartItemsCount={0} onSearch={() => {}} />
-      
+
+
       <main className="py-8">
         <div className="container mx-auto px-4 space-y-12">
           {/* Hero Section */}
@@ -428,14 +426,14 @@ const FAQPage = () => {
             <div className="relative overflow-hidden rounded-2xl shadow-2xl">
               {/* Banner Background */}
               <div className="absolute inset-0">
-                <img 
-                  src="/images/banners/banner-05.png" 
+                <img
+                  src="/images/banners/banner-05.png"
                   alt="FAQ Banner"
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/50 to-black/60"></div>
               </div>
-              
+
               {/* Content */}
               <div className="relative z-10 p-12 md:p-16 text-white">
                 <div className="flex justify-center mb-6">
@@ -460,7 +458,7 @@ const FAQPage = () => {
                 const category = categoryKey as keyof typeof t.faqs;
                 const Icon = categoryIcons[category];
                 const faqsArray = faqs as Array<{ question: string; answer: string }>;
-                
+
                 return (
                   <Card key={categoryKey} className="rounded-xl border-2 shadow-lg hover:shadow-xl transition-all overflow-hidden">
                     <CardHeader className="pb-4">
@@ -473,9 +471,9 @@ const FAQPage = () => {
                       {faqsArray.map((faq, index) => {
                         const faqIndex = getFAQIndex(category, index);
                         const isOpen = openIndex === faqIndex;
-                        
+
                         return (
-                          <div 
+                          <div
                             key={index}
                             className="rounded-lg border-2 border-muted hover:border-primary transition-all overflow-hidden"
                           >
@@ -517,21 +515,21 @@ const FAQPage = () => {
                 </CardHeader>
                 <CardContent>
                   <p className="text-muted-foreground mb-4 font-medium leading-relaxed">
-                    {language === 'vi' 
+                    {language === 'vi'
                       ? 'Nếu bạn không tìm thấy câu trả lời cho câu hỏi của mình, đội ngũ dịch vụ khách hàng của chúng tôi luôn sẵn sàng hỗ trợ bạn.'
                       : language === 'ja'
-                      ? '質問の回答が見つからない場合、カスタマーサービスチームがいつでもサポートいたします。'
-                      : "If you couldn't find the answer to your question, our customer service team is always ready to help you."}
+                        ? '質問の回答が見つからない場合、カスタマーサービスチームがいつでもサポートいたします。'
+                        : "If you couldn't find the answer to your question, our customer service team is always ready to help you."}
                   </p>
                   <div className="flex flex-wrap gap-3">
-                    <a 
+                    <a
                       href="mailto:contact@koshiro.com"
                       className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-all font-semibold"
                     >
                       <Mail className="h-4 w-4" />
                       {language === 'vi' ? 'Gửi Email' : language === 'ja' ? 'メール送信' : 'Send Email'}
                     </a>
-                    <a 
+                    <a
                       href="tel:+84123456789"
                       className="flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all font-semibold"
                     >
@@ -545,8 +543,8 @@ const FAQPage = () => {
           </section>
         </div>
       </main>
-      
-      <Footer />
+
+
     </div>
   );
 };

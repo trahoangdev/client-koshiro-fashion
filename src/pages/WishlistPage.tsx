@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -41,7 +39,7 @@ const WishlistPage = () => {
         // Load real wishlist data from API
         const response = await api.getWishlist();
         let wishlistData: Product[] = [];
-        
+
         if (Array.isArray(response)) {
           wishlistData = response;
         } else if (response && typeof response === 'object') {
@@ -52,17 +50,17 @@ const WishlistPage = () => {
             wishlistData = responseObj.wishlist as Product[];
           }
         }
-        
+
         setWishlistItems(wishlistData);
       } catch (error) {
         console.error('Error loading wishlist:', error);
         toast({
-          title: language === 'vi' ? "Lỗi tải dữ liệu" : 
-                 language === 'ja' ? "データ読み込みエラー" : 
-                 "Data Loading Error",
+          title: language === 'vi' ? "Lỗi tải dữ liệu" :
+            language === 'ja' ? "データ読み込みエラー" :
+              "Data Loading Error",
           description: language === 'vi' ? "Không thể tải danh sách yêu thích" :
-                       language === 'ja' ? "お気に入りリストを読み込めませんでした" :
-                       "Could not load wishlist",
+            language === 'ja' ? "お気に入りリストを読み込めませんでした" :
+              "Could not load wishlist",
           variant: "destructive",
         });
         setWishlistItems([]); // Set empty array on error
@@ -86,12 +84,12 @@ const WishlistPage = () => {
       try {
         const response = await api.getCart();
         if (response && response.items) {
-          const cartItemsData = response.items.map((item: { 
-            productId: string; 
-            quantity: number; 
-            size?: string; 
-            color?: string; 
-            product: Product; 
+          const cartItemsData = response.items.map((item: {
+            productId: string;
+            quantity: number;
+            size?: string;
+            color?: string;
+            product: Product;
           }) => ({
             id: item.productId,
             product: item.product,
@@ -119,12 +117,12 @@ const WishlistPage = () => {
     // Only allow adding to cart if user is authenticated
     if (!isAuthenticated) {
       toast({
-        title: language === 'vi' ? "Cần đăng nhập" : 
-               language === 'ja' ? "ログインが必要です" : 
-               "Login Required",
+        title: language === 'vi' ? "Cần đăng nhập" :
+          language === 'ja' ? "ログインが必要です" :
+            "Login Required",
         description: language === 'vi' ? "Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng" :
-                     language === 'ja' ? "商品をカートに追加するにはログインしてください" :
-                     "Please login to add products to cart",
+          language === 'ja' ? "商品をカートに追加するにはログインしてください" :
+            "Please login to add products to cart",
         variant: "destructive",
       });
       return;
@@ -133,7 +131,7 @@ const WishlistPage = () => {
     try {
       // Add to cart via API
       await api.addToCart(product._id, 1);
-      
+
       setCartItems(prev => {
         const existingItem = prev.find(item => item.id === product._id);
         if (existingItem) {
@@ -147,22 +145,22 @@ const WishlistPage = () => {
       });
 
       toast({
-        title: language === 'vi' ? "Đã thêm vào giỏ hàng" : 
-               language === 'ja' ? "カートに追加されました" : 
-               "Added to Cart",
+        title: language === 'vi' ? "Đã thêm vào giỏ hàng" :
+          language === 'ja' ? "カートに追加されました" :
+            "Added to Cart",
         description: language === 'vi' ? `${getProductName(product)} đã được thêm vào giỏ hàng` :
-                     language === 'ja' ? `${getProductName(product)}がカートに追加されました` :
-                     `${getProductName(product)} has been added to cart`,
+          language === 'ja' ? `${getProductName(product)}がカートに追加されました` :
+            `${getProductName(product)} has been added to cart`,
       });
     } catch (error) {
       console.error('Error adding to cart:', error);
       toast({
-        title: language === 'vi' ? "Lỗi" : 
-               language === 'ja' ? "エラー" : 
-               "Error",
+        title: language === 'vi' ? "Lỗi" :
+          language === 'ja' ? "エラー" :
+            "Error",
         description: language === 'vi' ? "Không thể thêm vào giỏ hàng" :
-                     language === 'ja' ? "カートに追加できませんでした" :
-                     "Could not add to cart",
+          language === 'ja' ? "カートに追加できませんでした" :
+            "Could not add to cart",
         variant: "destructive",
       });
     }
@@ -172,12 +170,12 @@ const WishlistPage = () => {
     // Only allow removing from wishlist if user is authenticated
     if (!isAuthenticated) {
       toast({
-        title: language === 'vi' ? "Cần đăng nhập" : 
-               language === 'ja' ? "ログインが必要です" : 
-               "Login Required",
+        title: language === 'vi' ? "Cần đăng nhập" :
+          language === 'ja' ? "ログインが必要です" :
+            "Login Required",
         description: language === 'vi' ? "Vui lòng đăng nhập để quản lý danh sách yêu thích" :
-                     language === 'ja' ? "お気に入りリストを管理するにはログインしてください" :
-                     "Please login to manage wishlist",
+          language === 'ja' ? "お気に入りリストを管理するにはログインしてください" :
+            "Please login to manage wishlist",
         variant: "destructive",
       });
       return;
@@ -185,26 +183,26 @@ const WishlistPage = () => {
 
     try {
       await api.removeFromWishlist(productId);
-      
+
       setWishlistItems(prev => prev.filter(item => item._id !== productId));
-      
+
       toast({
-        title: language === 'vi' ? "Đã xóa khỏi danh sách yêu thích" : 
-               language === 'ja' ? "お気に入りから削除されました" : 
-               "Removed from Wishlist",
+        title: language === 'vi' ? "Đã xóa khỏi danh sách yêu thích" :
+          language === 'ja' ? "お気に入りから削除されました" :
+            "Removed from Wishlist",
         description: language === 'vi' ? "Sản phẩm đã được xóa khỏi danh sách yêu thích" :
-                     language === 'ja' ? "商品がお気に入りから削除されました" :
-                     "Product has been removed from wishlist",
+          language === 'ja' ? "商品がお気に入りから削除されました" :
+            "Product has been removed from wishlist",
       });
     } catch (error) {
       console.error('Error removing from wishlist:', error);
       toast({
-        title: language === 'vi' ? "Lỗi" : 
-               language === 'ja' ? "エラー" : 
-               "Error",
+        title: language === 'vi' ? "Lỗi" :
+          language === 'ja' ? "エラー" :
+            "Error",
         description: language === 'vi' ? "Không thể xóa khỏi danh sách yêu thích" :
-                     language === 'ja' ? "お気に入りから削除できませんでした" :
-                     "Could not remove from wishlist",
+          language === 'ja' ? "お気に入りから削除できませんでした" :
+            "Could not remove from wishlist",
         variant: "destructive",
       });
     }
@@ -214,12 +212,12 @@ const WishlistPage = () => {
     // Only allow clearing wishlist if user is authenticated
     if (!isAuthenticated) {
       toast({
-        title: language === 'vi' ? "Cần đăng nhập" : 
-               language === 'ja' ? "ログインが必要です" : 
-               "Login Required",
+        title: language === 'vi' ? "Cần đăng nhập" :
+          language === 'ja' ? "ログインが必要です" :
+            "Login Required",
         description: language === 'vi' ? "Vui lòng đăng nhập để quản lý danh sách yêu thích" :
-                     language === 'ja' ? "お気に入りリストを管理するにはログインしてください" :
-                     "Please login to manage wishlist",
+          language === 'ja' ? "お気に入りリストを管理するにはログインしてください" :
+            "Please login to manage wishlist",
         variant: "destructive",
       });
       return;
@@ -228,24 +226,24 @@ const WishlistPage = () => {
     try {
       await api.clearWishlist();
       setWishlistItems([]);
-      
+
       toast({
-        title: language === 'vi' ? "Đã xóa tất cả" : 
-               language === 'ja' ? "すべて削除されました" : 
-               "All Cleared",
+        title: language === 'vi' ? "Đã xóa tất cả" :
+          language === 'ja' ? "すべて削除されました" :
+            "All Cleared",
         description: language === 'vi' ? "Tất cả sản phẩm đã được xóa khỏi danh sách yêu thích" :
-                     language === 'ja' ? "すべての商品がお気に入りから削除されました" :
-                     "All products have been removed from wishlist",
+          language === 'ja' ? "すべての商品がお気に入りから削除されました" :
+            "All products have been removed from wishlist",
       });
     } catch (error) {
       console.error('Error clearing wishlist:', error);
       toast({
-        title: language === 'vi' ? "Lỗi" : 
-               language === 'ja' ? "エラー" : 
-               "Error",
+        title: language === 'vi' ? "Lỗi" :
+          language === 'ja' ? "エラー" :
+            "Error",
         description: language === 'vi' ? "Không thể xóa danh sách yêu thích" :
-                     language === 'ja' ? "お気に入りリストを削除できませんでした" :
-                     "Could not clear wishlist",
+          language === 'ja' ? "お気に入りリストを削除できませんでした" :
+            "Could not clear wishlist",
         variant: "destructive",
       });
     }
@@ -299,11 +297,8 @@ const WishlistPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      <Header
-        cartItemsCount={cartItemsCount}
-        onSearch={() => {}}
-        refreshWishlistTrigger={refreshWishlistTrigger}
-      />
+
+
 
       <main className="py-8">
         <div className="container mx-auto px-4 space-y-8">
@@ -312,14 +307,14 @@ const WishlistPage = () => {
             <div className="relative overflow-hidden rounded-2xl shadow-2xl">
               {/* Banner Background */}
               <div className="absolute inset-0">
-                <img 
-                  src="/images/banners/banner-04.png" 
+                <img
+                  src="/images/banners/banner-04.png"
                   alt="Wishlist Banner"
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/50 to-black/60"></div>
               </div>
-              
+
               {/* Content */}
               <div className="relative z-10 p-12 md:p-16 text-white">
                 <div className="flex items-center justify-center mb-4">
@@ -345,24 +340,24 @@ const WishlistPage = () => {
                 <Heart className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
                 <h2 className="text-2xl font-semibold mb-2">
                   {language === 'vi' ? 'Cần đăng nhập' :
-                   language === 'ja' ? 'ログインが必要です' : 'Login Required'}
+                    language === 'ja' ? 'ログインが必要です' : 'Login Required'}
                 </h2>
                 <p className="text-muted-foreground mb-8">
                   {language === 'vi' ? 'Vui lòng đăng nhập để xem danh sách yêu thích của bạn' :
-                   language === 'ja' ? 'お気に入りリストを表示するにはログインしてください' :
-                   'Please login to view your wishlist'}
+                    language === 'ja' ? 'お気に入りリストを表示するにはログインしてください' :
+                      'Please login to view your wishlist'}
                 </p>
                 <div className="space-x-4">
                   <Link to="/login">
                     <Button size="lg">
                       {language === 'vi' ? 'Đăng Nhập' :
-                       language === 'ja' ? 'ログイン' : 'Login'}
+                        language === 'ja' ? 'ログイン' : 'Login'}
                     </Button>
                   </Link>
                   <Link to="/register">
                     <Button variant="outline" size="lg">
                       {language === 'vi' ? 'Đăng Ký' :
-                       language === 'ja' ? '登録' : 'Register'}
+                        language === 'ja' ? '登録' : 'Register'}
                     </Button>
                   </Link>
                 </div>
@@ -399,8 +394,8 @@ const WishlistPage = () => {
                         <Heart className="h-4 w-4 mr-2" />
                         {wishlistItems.length} {t.items}
                       </Badge>
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         onClick={clearWishlist}
                         className="rounded-lg text-destructive hover:bg-destructive/10 hover:text-destructive transition-all"
                       >
@@ -431,11 +426,11 @@ const WishlistPage = () => {
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
                         </div>
-                        
+
                         <h3 className="font-bold mb-3 line-clamp-2 group-hover:text-primary transition-colors">
                           {getProductName(product)}
                         </h3>
-                        
+
                         <div className="flex items-center justify-between mb-4 pb-4 border-b">
                           <div className="flex items-center space-x-2 flex-wrap">
                             <span className="text-xl font-bold text-primary">
@@ -463,8 +458,8 @@ const WishlistPage = () => {
                             )}
                           </div>
                         </div>
-                        
-                        <Button 
+
+                        <Button
                           className="w-full rounded-lg font-semibold shadow-md hover:shadow-lg transition-all"
                           onClick={() => addToCart(product)}
                         >
@@ -485,9 +480,9 @@ const WishlistPage = () => {
               <Link to="/">
                 <Button variant="outline" size="lg">
                   <ArrowLeft className="h-4 w-4 mr-2" />
-                  {language === 'vi' ? "Tiếp Tục Mua Sắm" : 
-                   language === 'ja' ? "ショッピングを続ける" : 
-                   "Continue Shopping"}
+                  {language === 'vi' ? "Tiếp Tục Mua Sắm" :
+                    language === 'ja' ? "ショッピングを続ける" :
+                      "Continue Shopping"}
                 </Button>
               </Link>
             </section>
@@ -495,7 +490,7 @@ const WishlistPage = () => {
         </div>
       </main>
 
-      <Footer />
+
     </div>
   );
 };

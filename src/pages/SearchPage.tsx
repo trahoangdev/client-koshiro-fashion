@@ -3,8 +3,6 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
 import { api, Product, Category } from "@/lib/api";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import AdvancedSearch from "@/components/AdvancedSearch";
 import EnhancedProductGrid from "@/components/EnhancedProductGrid";
 import { Button } from "@/components/ui/button";
@@ -39,7 +37,7 @@ const SearchPage: React.FC = () => {
   const navigate = useNavigate();
   const { language } = useLanguage();
   const { toast } = useToast();
-  
+
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchPerformed, setSearchPerformed] = useState(false);
@@ -57,9 +55,9 @@ const SearchPage: React.FC = () => {
     const loadData = async () => {
       try {
         // Load trending products
-        const productsResponse = await api.getProducts({ 
-          isFeatured: true, 
-          limit: 8 
+        const productsResponse = await api.getProducts({
+          isFeatured: true,
+          limit: 8
         });
         setTrendingProducts(productsResponse.products || []);
 
@@ -146,7 +144,7 @@ const SearchPage: React.FC = () => {
       }
 
       const response = await api.getProducts(queryParams);
-      
+
       setProducts(response.products || []);
 
       // Show results toast
@@ -187,6 +185,7 @@ const SearchPage: React.FC = () => {
     try {
       await api.addToWishlist(product._id);
       setRefreshWishlistTrigger(prev => prev + 1);
+      window.dispatchEvent(new CustomEvent('wishlistUpdated'));
       toast({
         title: "Added to Wishlist",
         description: `${product.name} has been added to your wishlist.`,
@@ -203,7 +202,7 @@ const SearchPage: React.FC = () => {
   const handleAddToCompare = (product: Product) => {
     const savedCompareList = localStorage.getItem('koshiro_compare_list');
     let compareList: Product[] = [];
-    
+
     if (savedCompareList) {
       try {
         compareList = JSON.parse(savedCompareList);
@@ -214,12 +213,12 @@ const SearchPage: React.FC = () => {
 
     if (compareList.length >= 4) {
       toast({
-        title: language === 'vi' ? "Giới hạn so sánh" : 
-               language === 'ja' ? "比較制限" : 
-               "Compare Limit",
+        title: language === 'vi' ? "Giới hạn so sánh" :
+          language === 'ja' ? "比較制限" :
+            "Compare Limit",
         description: language === 'vi' ? "Bạn chỉ có thể so sánh tối đa 4 sản phẩm" :
-                     language === 'ja' ? "最大4つの商品を比較できます" :
-                     "You can compare up to 4 products",
+          language === 'ja' ? "最大4つの商品を比較できます" :
+            "You can compare up to 4 products",
         variant: "destructive",
       });
       return;
@@ -227,12 +226,12 @@ const SearchPage: React.FC = () => {
 
     if (compareList.find(p => p._id === product._id)) {
       toast({
-        title: language === 'vi' ? "Sản phẩm đã có" : 
-               language === 'ja' ? "商品は既に追加済み" : 
-               "Product Already Added",
+        title: language === 'vi' ? "Sản phẩm đã có" :
+          language === 'ja' ? "商品は既に追加済み" :
+            "Product Already Added",
         description: language === 'vi' ? "Sản phẩm này đã có trong danh sách so sánh" :
-                     language === 'ja' ? "この商品は既に比較リストにあります" :
-                     "This product is already in the compare list",
+          language === 'ja' ? "この商品は既に比較リストにあります" :
+            "This product is already in the compare list",
         variant: "destructive",
       });
       return;
@@ -240,14 +239,15 @@ const SearchPage: React.FC = () => {
 
     const newCompareList = [...compareList, product];
     localStorage.setItem('koshiro_compare_list', JSON.stringify(newCompareList));
-    
+    window.dispatchEvent(new CustomEvent('compareUpdated'));
+
     toast({
-      title: language === 'vi' ? "Đã thêm vào so sánh" : 
-             language === 'ja' ? "比較リストに追加" : 
-             "Added to Compare",
+      title: language === 'vi' ? "Đã thêm vào so sánh" :
+        language === 'ja' ? "比較リストに追加" :
+          "Added to Compare",
       description: language === 'vi' ? "Sản phẩm đã được thêm vào danh sách so sánh" :
-                   language === 'ja' ? "商品が比較リストに追加されました" :
-                   "Product has been added to compare list",
+        language === 'ja' ? "商品が比較リストに追加されました" :
+          "Product has been added to compare list",
     });
   };
 
@@ -264,32 +264,20 @@ const SearchPage: React.FC = () => {
   };
 
   const handleCategoryClick = (category: Category) => {
-          handleSearch({
-        query: '',
-        category: category._id,
-        priceRange: [0, 1000000], // Tăng max price để phù hợp với giá VND
-        inStock: false,
-        onSale: false,
-        featured: false,
-        sortBy: 'relevance'
-      });
+    handleSearch({
+      query: '',
+      category: category._id,
+      priceRange: [0, 1000000], // Tăng max price để phù hợp với giá VND
+      inStock: false,
+      onSale: false,
+      featured: false,
+      sortBy: 'relevance'
+    });
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      <Header 
-        cartItemsCount={0} 
-        onSearch={(query) => handleSearch({
-          query,
-          category: 'all',
-          priceRange: [0, 1000000],
-          inStock: false,
-          onSale: false,
-          featured: false,
-          sortBy: 'relevance'
-        })} 
-        refreshWishlistTrigger={refreshWishlistTrigger}
-      />
+
 
       <div className="container mx-auto px-4 py-8">
         {/* Back Button */}
@@ -335,7 +323,7 @@ const SearchPage: React.FC = () => {
                         <>
                           {language === 'vi' ? 'Sản phẩm trong ' : language === 'ja' ? '商品: ' : 'Products in '}
                           "<span className="text-primary">{
-                            categories.find(c => c._id === currentFilters.category) 
+                            categories.find(c => c._id === currentFilters.category)
                               ? getCategoryName(categories.find(c => c._id === currentFilters.category)!)
                               : 'Unknown Category'
                           }</span>"
@@ -370,14 +358,14 @@ const SearchPage: React.FC = () => {
               <div className="relative overflow-hidden rounded-2xl shadow-2xl">
                 {/* Banner Background */}
                 <div className="absolute inset-0">
-                  <img 
-                    src="/images/banners/banner-04.png" 
+                  <img
+                    src="/images/banners/banner-04.png"
                     alt="Search Banner"
                     className="w-full h-full object-cover"
                   />
                   <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/50 to-black/60"></div>
                 </div>
-                
+
                 {/* Content */}
                 <div className="relative z-10 py-12 md:py-16 text-white">
                   <div className="flex justify-center mb-4">
@@ -387,13 +375,13 @@ const SearchPage: React.FC = () => {
                   </div>
                   <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-4 bg-gradient-to-r from-white via-white to-white/80 bg-clip-text text-transparent">
                     {language === 'vi' ? 'Tìm Phong Cách Hoàn Hảo' :
-                     language === 'ja' ? '完璧なスタイルを見つける' :
-                     'Find Your Perfect Style'}
+                      language === 'ja' ? '完璧なスタイルを見つける' :
+                        'Find Your Perfect Style'}
                   </h1>
                   <p className="text-xl md:text-2xl text-white/90 max-w-2xl mx-auto leading-relaxed">
                     {language === 'vi' ? 'Khám phá hàng ngàn sản phẩm từ các thương hiệu hàng đầu. Tìm kiếm theo tên, danh mục hoặc duyệt qua các bộ sưu tập được tuyển chọn của chúng tôi.' :
-                     language === 'ja' ? 'トップブランドから何千もの商品を発見。名前、カテゴリで検索するか、キュレーションされたコレクションを閲覧してください。' :
-                     'Discover thousands of products from top brands. Search by name, category, or browse our curated collections.'}
+                      language === 'ja' ? 'トップブランドから何千もの商品を発見。名前、カテゴリで検索するか、キュレーションされたコレクションを閲覧してください。' :
+                        'Discover thousands of products from top brands. Search by name, category, or browse our curated collections.'}
                   </p>
                 </div>
               </div>
@@ -404,8 +392,8 @@ const SearchPage: React.FC = () => {
               <CardHeader className="pb-4">
                 <CardTitle className="flex items-center text-xl font-bold">
                   <TrendingUp className="h-5 w-5 mr-2 text-primary" />
-                  {language === 'vi' ? 'Danh Mục Phổ Biến' : 
-                   language === 'ja' ? '人気カテゴリ' : 'Popular Categories'}
+                  {language === 'vi' ? 'Danh Mục Phổ Biến' :
+                    language === 'ja' ? '人気カテゴリ' : 'Popular Categories'}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -414,7 +402,7 @@ const SearchPage: React.FC = () => {
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
                     <p className="text-sm text-muted-foreground">
                       {language === 'vi' ? 'Đang tải danh mục...' :
-                       language === 'ja' ? 'カテゴリを読み込み中...' : 'Loading categories...'}
+                        language === 'ja' ? 'カテゴリを読み込み中...' : 'Loading categories...'}
                     </p>
                   </div>
                 ) : categories.length > 0 ? (
@@ -428,8 +416,8 @@ const SearchPage: React.FC = () => {
                       >
                         <span className="font-semibold">{getCategoryName(category)}</span>
                         <Badge variant="secondary" className="text-xs font-medium">
-                          {category.productCount || 0} {language === 'vi' ? 'sản phẩm' : 
-                                                         language === 'ja' ? '商品' : 'products'}
+                          {category.productCount || 0} {language === 'vi' ? 'sản phẩm' :
+                            language === 'ja' ? '商品' : 'products'}
                         </Badge>
                       </Button>
                     ))}
@@ -438,7 +426,7 @@ const SearchPage: React.FC = () => {
                   <div className="text-center py-8">
                     <p className="text-muted-foreground">
                       {language === 'vi' ? 'Không có danh mục nào' :
-                       language === 'ja' ? 'カテゴリがありません' : 'No categories available'}
+                        language === 'ja' ? 'カテゴリがありません' : 'No categories available'}
                     </p>
                   </div>
                 )}
@@ -452,12 +440,12 @@ const SearchPage: React.FC = () => {
                   <CardContent className="p-6 text-center">
                     <h2 className="text-3xl md:text-4xl font-bold mb-4">
                       {language === 'vi' ? 'Đang Thịnh Hành' :
-                       language === 'ja' ? '今トレンド' : 'Trending Now'}
+                        language === 'ja' ? '今トレンド' : 'Trending Now'}
                     </h2>
                     <p className="text-lg text-muted-foreground">
                       {language === 'vi' ? 'Xem những gì đang phổ biến trong khách hàng của chúng tôi' :
-                       language === 'ja' ? 'お客様に人気の商品をチェック' :
-                       'Check out what\'s popular among our customers'}
+                        language === 'ja' ? 'お客様に人気の商品をチェック' :
+                          'Check out what\'s popular among our customers'}
                     </p>
                   </CardContent>
                 </Card>
@@ -476,16 +464,16 @@ const SearchPage: React.FC = () => {
             <Card className="rounded-xl border-2 shadow-lg bg-background/95 backdrop-blur-sm">
               <CardHeader className="pb-4">
                 <CardTitle className="text-xl font-bold">
-                  {language === 'vi' ? 'Mẹo Tìm Kiếm' : 
-                   language === 'ja' ? '検索のコツ' : 'Search Tips'}
+                  {language === 'vi' ? 'Mẹo Tìm Kiếm' :
+                    language === 'ja' ? '検索のコツ' : 'Search Tips'}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="p-4 rounded-lg bg-muted/30 border-l-4 border-primary">
                     <h4 className="font-bold mb-3 text-lg">
-                      {language === 'vi' ? 'Tìm Kiếm Nhanh' : 
-                       language === 'ja' ? 'クイック検索' : 'Quick Search'}
+                      {language === 'vi' ? 'Tìm Kiếm Nhanh' :
+                        language === 'ja' ? 'クイック検索' : 'Quick Search'}
                     </h4>
                     <ul className="space-y-2 text-sm text-muted-foreground">
                       {language === 'vi' ? (
@@ -511,8 +499,8 @@ const SearchPage: React.FC = () => {
                   </div>
                   <div className="p-4 rounded-lg bg-muted/30 border-l-4 border-primary">
                     <h4 className="font-bold mb-3 text-lg">
-                      {language === 'vi' ? 'Bộ Lọc Nâng Cao' : 
-                       language === 'ja' ? '高度なフィルター' : 'Advanced Filters'}
+                      {language === 'vi' ? 'Bộ Lọc Nâng Cao' :
+                        language === 'ja' ? '高度なフィルター' : 'Advanced Filters'}
                     </h4>
                     <ul className="space-y-2 text-sm text-muted-foreground">
                       {language === 'vi' ? (
@@ -543,7 +531,7 @@ const SearchPage: React.FC = () => {
         )}
       </div>
 
-      <Footer />
+
     </div>
   );
 };

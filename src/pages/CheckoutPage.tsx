@@ -5,25 +5,23 @@ import { useAuth, useSettings } from "@/contexts";
 import { useToast } from "@/hooks/use-toast";
 import { api, Product } from "@/lib/api";
 import { formatCurrency } from "@/lib/currency";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { 
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { 
-  CreditCard, 
-  Truck, 
-  CheckCircle, 
+import {
+  CreditCard,
+  Truck,
+  CheckCircle,
   ArrowLeft,
   Lock,
   Shield,
@@ -32,7 +30,8 @@ import {
   Smartphone,
   Banknote,
   QrCode,
-  Wallet
+  Wallet,
+  Tag
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -52,8 +51,17 @@ const CheckoutPage = () => {
   const [isCompleted, setIsCompleted] = useState(false);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [createdOrder, setCreatedOrder] = useState<any>(null);
   const [paymentMethod, setPaymentMethod] = useState<'cod' | 'bank' | 'stripe' | 'paypal'>('cod');
   const [selectedShippingZone, setSelectedShippingZone] = useState<string>('');
+  const [couponCode, setCouponCode] = useState('');
+  // ... (previous state declarations)
+
+
+
+  const [referralCode, setReferralCode] = useState('');
+  const [discountAmount, setDiscountAmount] = useState(0);
+  const [isCouponApplied, setIsCouponApplied] = useState(false);
   const [formData, setFormData] = useState({
     // Shipping Information
     firstName: "",
@@ -91,12 +99,12 @@ const CheckoutPage = () => {
         const response = await api.getCart();
         if (response && response.items && Array.isArray(response.items)) {
           const cartItemsData = response.items
-            .filter((item: { 
-              productId: string; 
-              quantity: number; 
-              size?: string; 
-              color?: string; 
-              product: Product; 
+            .filter((item: {
+              productId: string;
+              quantity: number;
+              size?: string;
+              color?: string;
+              product: Product;
             }) => {
               // More lenient filtering - just check essential fields
               if (!item || !item.product) {
@@ -109,12 +117,12 @@ const CheckoutPage = () => {
               }
               return true;
             })
-            .map((item: { 
-              productId: string; 
-              quantity: number; 
-              size?: string; 
-              color?: string; 
-              product: Product; 
+            .map((item: {
+              productId: string;
+              quantity: number;
+              size?: string;
+              color?: string;
+              product: Product;
             }) => ({
               productId: item.productId,
               product: {
@@ -131,7 +139,7 @@ const CheckoutPage = () => {
           console.warn('Invalid cart response:', response);
           setCartItems([]);
         }
-        
+
         // Pre-fill form with user data if authenticated
         if (isAuthenticated && user) {
           setFormData(prev => ({
@@ -145,22 +153,70 @@ const CheckoutPage = () => {
         }
       } catch (error) {
         console.error('Error loading cart:', error);
-        toast({
-          title: language === 'vi' ? "Lỗi tải giỏ hàng" : 
-                 language === 'ja' ? "カート読み込みエラー" : 
-                 "Error Loading Cart",
-          description: language === 'vi' ? "Không thể tải thông tin giỏ hàng" :
-                       language === 'ja' ? "カート情報を読み込めませんでした" :
-                       "Unable to load cart information",
-          variant: "destructive",
-        });
+        // ... (error handling)
       } finally {
         setLoading(false);
       }
     };
-
     loadCart();
-  }, [isAuthenticated, user, toast, language]);
+  }, [isAuthenticated, api, toast]);
+
+  const subtotal = cartItems.reduce((acc, item) => acc + (item.product.price * item.quantity), 0);
+
+  // Calculate shipping cost based on settings or default
+  const shipping = (() => {
+    if (!settings) return subtotal > 2000000 ? 0 : 50000;
+
+    // Check free shipping threshold
+    if (settings.freeShippingThreshold > 0 && subtotal >= settings.freeShippingThreshold) {
+      return 0;
+    }
+
+    // Check if shipping zone is selected
+    if (selectedShippingZone && settings.shippingZones && settings.shippingZones.length > 0) {
+      const zone = settings.shippingZones.find(z => z.name === selectedShippingZone);
+      if (zone) return zone.cost;
+    }
+
+    return settings.defaultShippingCost || 50000;
+  })();
+
+  const tax = subtotal * 0.1;
+  const total = Math.max(0, subtotal + shipping + tax - discountAmount);
+
+  const handleApplyCoupon = async () => {
+    if (!couponCode) return;
+
+    try {
+      const response = await api.validateCoupon(couponCode, subtotal);
+      if (response.success && response.data) {
+        setDiscountAmount(response.data.discountAmount);
+        setIsCouponApplied(true);
+        toast({
+          title: language === 'vi' ? "Thành công" : "Success",
+          description: language === 'vi' ? `Đã áp dụng mã giảm giá. Bạn được giảm ${formatCurrency(response.data.discountAmount, language)}` : `Discount applied. You saved ${formatCurrency(response.data.discountAmount, language)}`,
+        });
+      } else {
+        setDiscountAmount(0);
+        setIsCouponApplied(false);
+        toast({
+          title: language === 'vi' ? "Lỗi" : "Error",
+          description: response.message || (language === 'vi' ? "Mã giảm giá không hợp lệ" : "Invalid discount code"),
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error applying coupon:', error);
+      setDiscountAmount(0);
+      setIsCouponApplied(false);
+      toast({
+        title: language === 'vi' ? "Lỗi" : "Error",
+        description: language === 'vi' ? "Không thể áp dụng mã giảm giá" : "Failed to apply discount code",
+        variant: "destructive",
+      });
+    }
+  };
+
 
   // Redirect if cart is empty or user not authenticated
   useEffect(() => {
@@ -175,35 +231,7 @@ const CheckoutPage = () => {
     }
   }, [loading, cartItems.length, navigate, isAuthenticated]);
 
-  const subtotal = cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
-  
-  // Calculate shipping cost based on settings
-  const calculateShipping = () => {
-    if (!settings) {
-      // Fallback to default
-      return subtotal > 2000000 ? 0 : 50000;
-    }
-    
-    // Check free shipping threshold
-    if (settings.freeShippingThreshold > 0 && subtotal >= settings.freeShippingThreshold) {
-      return 0;
-    }
-    
-    // Check if shipping zone is selected
-    if (selectedShippingZone && settings.shippingZones && settings.shippingZones.length > 0) {
-      const zone = settings.shippingZones.find(z => z.name === selectedShippingZone);
-      if (zone) {
-        return zone.cost;
-      }
-    }
-    
-    // Use default shipping cost
-    return settings.defaultShippingCost || 50000;
-  };
-  
-  const shipping = calculateShipping();
-  const tax = subtotal * 0.1; // 10% tax
-  const total = subtotal + shipping + tax;
+
 
   const cartItemsCount = cartItems.reduce((count, item) => count + item.quantity, 0);
 
@@ -229,7 +257,7 @@ const CheckoutPage = () => {
       codInstructions: "Cash on Delivery Instructions",
       codInstructionsList: [
         "Prepare exact amount for faster delivery",
-        "Payment accepted: cash only", 
+        "Payment accepted: cash only",
         "Delivery fee may apply for remote areas",
         "Please check your order before payment"
       ],
@@ -261,7 +289,11 @@ const CheckoutPage = () => {
       orderComplete: "Order Complete!",
       orderCompleteDescription: "Thank you for your purchase. You will receive an email confirmation shortly.",
       orderNumber: "Order #12345",
-      continueShopping: "Continue Shopping"
+      continueShopping: "Continue Shopping",
+      discountCode: "Discount Code",
+      referralCode: "Referral Code",
+      apply: "Apply",
+      enterCode: "Enter code"
     },
     vi: {
       title: "Thanh Toán",
@@ -311,7 +343,11 @@ const CheckoutPage = () => {
       orderComplete: "Đặt Hàng Thành Công!",
       orderCompleteDescription: "Cảm ơn bạn đã mua hàng. Bạn sẽ nhận được email xác nhận trong thời gian ngắn.",
       orderNumber: "Đơn Hàng #12345",
-      continueShopping: "Tiếp Tục Mua Sắm"
+      continueShopping: "Tiếp Tục Mua Sắm",
+      discountCode: "Mã Giảm Giá",
+      referralCode: "Mã Giới Thiệu",
+      apply: "Áp Dụng",
+      enterCode: "Nhập mã"
     },
     ja: {
       title: "チェックアウト",
@@ -361,7 +397,11 @@ const CheckoutPage = () => {
       orderComplete: "注文完了！",
       orderCompleteDescription: "ご購入ありがとうございます。確認メールをすぐにお送りします。",
       orderNumber: "注文番号 #12345",
-      continueShopping: "ショッピングを続ける"
+      continueShopping: "ショッピングを続ける",
+      discountCode: "割引コード",
+      referralCode: "紹介コード",
+      apply: "適用",
+      enterCode: "コードを入力"
     }
   };
 
@@ -373,7 +413,7 @@ const CheckoutPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!isAuthenticated) {
       toast({
         title: "Cần đăng nhập",
@@ -412,7 +452,7 @@ const CheckoutPage = () => {
           throw new Error('Please fill in all card details for Stripe payment');
         }
       }
-      
+
       // PayPal and bank transfer don't require card details
 
       // Prepare order data
@@ -429,33 +469,45 @@ const CheckoutPage = () => {
           phone: formData.phone,
           address: formData.address,
           city: formData.city,
-          district: formData.state
+          district: formData.state,
+          state: formData.state,
+          zipCode: formData.zipCode,
+          country: formData.country,
         },
         billingAddress: {
           name: `${formData.firstName} ${formData.lastName}`,
           phone: formData.phone,
           address: formData.address,
           city: formData.city,
-          district: formData.state
+          district: formData.state,
+          state: formData.state,
+          zipCode: formData.zipCode,
+          country: formData.country,
         },
-        paymentMethod: paymentMethod === 'cod' ? 'Cash on Delivery' : 
-                      paymentMethod === 'bank' ? 'Bank Transfer' :
-                      paymentMethod === 'stripe' ? 'Stripe' :
-                      paymentMethod === 'paypal' ? 'PayPal' : 'Online Payment',
-        notes: formData.notes
+        paymentMethod: paymentMethod === 'cod' ? 'Cash on Delivery' :
+          paymentMethod === 'bank' ? 'Bank Transfer' :
+            paymentMethod === 'stripe' ? 'Stripe' :
+              paymentMethod === 'paypal' ? 'PayPal' : 'Online Payment',
+        notes: formData.notes,
+        couponCode: isCouponApplied ? couponCode : undefined,
+        referralCode: referralCode || undefined
       };
 
       // Debug: Log order data
       console.log('Creating order with data:', orderData);
       console.log('Cart items before order:', cartItems);
-      
+
       // Create order via API
       const response = await api.createOrder(orderData);
       console.log('Order created successfully:', response);
-      
+
+      if (response && response.order) {
+        setCreatedOrder(response.order);
+      }
+
       setIsProcessing(false);
       setIsCompleted(true);
-      
+
       // Clear cart after successful order (with error handling)
       try {
         await api.clearCart();
@@ -465,7 +517,7 @@ const CheckoutPage = () => {
         // Don't fail the checkout if cart clearing fails
         // User can manually clear cart later
       }
-      
+
       toast({
         title: language === 'vi' ? 'Đặt hàng thành công!' : language === 'ja' ? 'ご注文が完了しました！' : 'Order placed successfully!',
         description: language === 'vi' ? 'Đơn hàng của bạn đã được xác nhận và sẽ được giao sớm.' : language === 'ja' ? 'ご注文が確認され、まもなく発送されます。' : 'Your order has been confirmed and will be delivered soon.',
@@ -477,9 +529,9 @@ const CheckoutPage = () => {
         message: error instanceof Error ? error.message : 'Unknown error',
         stack: error instanceof Error ? error.stack : 'No stack trace'
       });
-      
+
       setIsProcessing(false);
-      
+
       // Better error message handling
       let errorMessage = language === 'vi' ? 'Có lỗi xảy ra khi đặt hàng' : language === 'ja' ? '注文処理中にエラーが発生しました' : 'An error occurred while placing the order';
       if (error instanceof Error) {
@@ -493,7 +545,7 @@ const CheckoutPage = () => {
           errorMessage = error.message;
         }
       }
-      
+
       toast({
         title: language === 'vi' ? 'Lỗi đặt hàng' : language === 'ja' ? '注文エラー' : 'Order Error',
         description: errorMessage,
@@ -504,32 +556,72 @@ const CheckoutPage = () => {
 
   if (isCompleted) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-        <Header cartItemsCount={0} onSearch={handleSearch} />
-        <main className="py-8">
-          <div className="container space-y-8">
-            {/* Hero Banner */}
-            <section className="text-center">
-              <div className="relative overflow-hidden rounded-xl shadow-2xl">
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-primary/10 to-transparent"></div>
-                <div className="relative z-10 py-16">
-                  <CheckCircle className="h-20 w-20 text-green-500 mx-auto mb-6 animate-bounce" />
-                  <h1 className="text-4xl md:text-5xl font-bold mb-4">{t.orderComplete}</h1>
-                  <p className="text-xl text-muted-foreground mb-6">{t.orderCompleteDescription}</p>
-                  <Badge variant="secondary" className="text-lg px-6 py-2 mb-8">{t.orderNumber}</Badge>
-                  <div className="flex justify-center gap-4">
-                    <Link to="/">
-                      <Button size="lg" className="modern-gradient text-white">
-                        {t.continueShopping}
-                      </Button>
-                    </Link>
-                  </div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/30 to-background p-4 animate-in fade-in duration-500">
+        <div className="max-w-xl w-full">
+          <Card className="border-none shadow-2xl bg-card/80 backdrop-blur-sm overflow-hidden relative">
+            {/* Decorative top gradient */}
+            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-green-400 to-emerald-500"></div>
+
+            <CardContent className="pt-12 pb-10 px-6 sm:px-10 text-center">
+              <div className="mb-8 relative inline-block">
+                <div className="absolute inset-0 bg-green-500/20 rounded-full animate-ping opacity-75"></div>
+                <div className="relative bg-white rounded-full p-4 shadow-lg ring-1 ring-green-100">
+                  <CheckCircle className="h-16 w-16 text-green-500" strokeWidth={2.5} />
                 </div>
               </div>
-            </section>
-          </div>
-        </main>
-        <Footer />
+
+              <h1 className="text-3xl sm:text-4xl font-bold mb-3 tracking-tight text-foreground">
+                {language === 'vi' ? 'Đặt hàng thành công!' : 'Order Complete!'}
+              </h1>
+
+              <p className="text-muted-foreground text-lg mb-8 max-w-md mx-auto leading-relaxed">
+                {language === 'vi'
+                  ? 'Cảm ơn bạn đã mua sắm. Đơn hàng của bạn đã được xác nhận và sẽ sớm được giao.'
+                  : 'Thank you for your purchase. Your order has been confirmed and will be processed shortly.'}
+              </p>
+
+              {createdOrder && (
+                <div className="bg-muted/50 rounded-xl p-6 mb-8 border border-muted/80">
+                  <p className="text-sm text-muted-foreground uppercase tracking-wider font-semibold mb-2">
+                    {language === 'vi' ? 'Mã đơn hàng' : 'Order Number'}
+                  </p>
+                  <div className="flex items-center justify-center gap-2">
+                    <span className="text-2xl font-mono font-bold text-primary tracking-wide">
+                      {createdOrder.orderNumber}
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-primary transition-colors"
+                      onClick={() => {
+                        navigator.clipboard.writeText(createdOrder.orderNumber);
+                        toast({ description: language === 'vi' ? 'Đã sao chép mã' : 'Order ID copied' });
+                      }}
+                    >
+                      <Tag className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Link to="/" className="w-full sm:w-auto">
+                  <Button size="lg" className="w-full h-12 text-base font-semibold shadow-md rounded-xl hover:translate-y-[-2px] transition-all bg-gradient-to-r from-primary to-primary/90 text-primary-foreground">
+                    {t.continueShopping}
+                  </Button>
+                </Link>
+
+                {createdOrder && (
+                  <Link to={`/profile?section=orders`} className="w-full sm:w-auto">
+                    <Button variant="outline" size="lg" className="w-full h-12 text-base font-semibold rounded-xl border-2 hover:bg-muted/50 transition-colors">
+                      {language === 'vi' ? 'Xem đơn hàng' : 'View Order'}
+                    </Button>
+                  </Link>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
@@ -537,7 +629,7 @@ const CheckoutPage = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-        <Header cartItemsCount={0} onSearch={handleSearch} />
+
         <main className="py-8">
           <div className="container space-y-8">
             <section className="text-center py-16">
@@ -548,14 +640,13 @@ const CheckoutPage = () => {
             </section>
           </div>
         </main>
-        <Footer />
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      <Header cartItemsCount={cartItemsCount} onSearch={handleSearch} />
+
 
       <main className="py-8">
         <div className="container space-y-8">
@@ -564,14 +655,14 @@ const CheckoutPage = () => {
             <div className="relative overflow-hidden rounded-2xl shadow-2xl">
               {/* Banner Background */}
               <div className="absolute inset-0">
-                <img 
-                  src="/images/banners/banner-01.png" 
+                <img
+                  src="/images/banners/banner-01.png"
                   alt="Checkout Banner"
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/50 to-black/60"></div>
               </div>
-              
+
               {/* Content */}
               <div className="relative z-10 p-12 md:p-16 text-white">
                 <div className="flex justify-center mb-6">
@@ -742,17 +833,15 @@ const CheckoutPage = () => {
                         {/* COD Option */}
                         {(!settings || settings.cashOnDelivery) && (
                           <div
-                            className={`p-6 border-2 rounded-xl cursor-pointer transition-all duration-300 hover:shadow-lg ${
-                              paymentMethod === 'cod'
-                                ? 'border-primary bg-primary/10 shadow-md scale-[1.02]'
-                                : 'border-muted hover:border-primary/50 bg-muted/30 hover:bg-muted/50'
-                            }`}
+                            className={`p-6 border-2 rounded-xl cursor-pointer transition-all duration-300 hover:shadow-lg ${paymentMethod === 'cod'
+                              ? 'border-primary bg-primary/10 shadow-md scale-[1.02]'
+                              : 'border-muted hover:border-primary/50 bg-muted/30 hover:bg-muted/50'
+                              }`}
                             onClick={() => setPaymentMethod('cod')}
                           >
                             <div className="flex items-start space-x-4">
-                              <div className={`p-3 rounded-full ${
-                                paymentMethod === 'cod' ? 'bg-primary text-primary-foreground' : 'bg-background'
-                              }`}>
+                              <div className={`p-3 rounded-full ${paymentMethod === 'cod' ? 'bg-primary text-primary-foreground' : 'bg-background'
+                                }`}>
                                 <Banknote className="h-5 w-5" />
                               </div>
                               <div className="flex-1 min-w-0">
@@ -772,17 +861,15 @@ const CheckoutPage = () => {
                         {/* Bank Transfer Option */}
                         {(!settings || settings.bankTransfer) && (
                           <div
-                            className={`p-6 border-2 rounded-xl cursor-pointer transition-all duration-300 hover:shadow-lg ${
-                              paymentMethod === 'bank'
-                                ? 'border-primary bg-primary/10 shadow-md scale-[1.02]'
-                                : 'border-muted hover:border-primary/50 bg-muted/30 hover:bg-muted/50'
-                            }`}
+                            className={`p-6 border-2 rounded-xl cursor-pointer transition-all duration-300 hover:shadow-lg ${paymentMethod === 'bank'
+                              ? 'border-primary bg-primary/10 shadow-md scale-[1.02]'
+                              : 'border-muted hover:border-primary/50 bg-muted/30 hover:bg-muted/50'
+                              }`}
                             onClick={() => setPaymentMethod('bank')}
                           >
                             <div className="flex items-start space-x-4">
-                              <div className={`p-3 rounded-full ${
-                                paymentMethod === 'bank' ? 'bg-primary text-primary-foreground' : 'bg-background'
-                              }`}>
+                              <div className={`p-3 rounded-full ${paymentMethod === 'bank' ? 'bg-primary text-primary-foreground' : 'bg-background'
+                                }`}>
                                 <Wallet className="h-5 w-5" />
                               </div>
                               <div className="flex-1 min-w-0">
@@ -796,17 +883,15 @@ const CheckoutPage = () => {
                         {/* Stripe Option */}
                         {settings && settings.stripeEnabled && (
                           <div
-                            className={`p-6 border-2 rounded-xl cursor-pointer transition-all duration-300 hover:shadow-lg ${
-                              paymentMethod === 'stripe'
-                                ? 'border-primary bg-primary/10 shadow-md scale-[1.02]'
-                                : 'border-muted hover:border-primary/50 bg-muted/30 hover:bg-muted/50'
-                            }`}
+                            className={`p-6 border-2 rounded-xl cursor-pointer transition-all duration-300 hover:shadow-lg ${paymentMethod === 'stripe'
+                              ? 'border-primary bg-primary/10 shadow-md scale-[1.02]'
+                              : 'border-muted hover:border-primary/50 bg-muted/30 hover:bg-muted/50'
+                              }`}
                             onClick={() => setPaymentMethod('stripe')}
                           >
                             <div className="flex items-start space-x-4">
-                              <div className={`p-3 rounded-full ${
-                                paymentMethod === 'stripe' ? 'bg-primary text-primary-foreground' : 'bg-background'
-                              }`}>
+                              <div className={`p-3 rounded-full ${paymentMethod === 'stripe' ? 'bg-primary text-primary-foreground' : 'bg-background'
+                                }`}>
                                 <CreditCard className="h-5 w-5" />
                               </div>
                               <div className="flex-1 min-w-0">
@@ -824,17 +909,15 @@ const CheckoutPage = () => {
                         {/* PayPal Option */}
                         {settings && settings.paypalEnabled && (
                           <div
-                            className={`p-6 border-2 rounded-xl cursor-pointer transition-all duration-300 hover:shadow-lg ${
-                              paymentMethod === 'paypal'
-                                ? 'border-primary bg-primary/10 shadow-md scale-[1.02]'
-                                : 'border-muted hover:border-primary/50 bg-muted/30 hover:bg-muted/50'
-                            }`}
+                            className={`p-6 border-2 rounded-xl cursor-pointer transition-all duration-300 hover:shadow-lg ${paymentMethod === 'paypal'
+                              ? 'border-primary bg-primary/10 shadow-md scale-[1.02]'
+                              : 'border-muted hover:border-primary/50 bg-muted/30 hover:bg-muted/50'
+                              }`}
                             onClick={() => setPaymentMethod('paypal')}
                           >
                             <div className="flex items-start space-x-4">
-                              <div className={`p-3 rounded-full ${
-                                paymentMethod === 'paypal' ? 'bg-primary text-primary-foreground' : 'bg-background'
-                              }`}>
+                              <div className={`p-3 rounded-full ${paymentMethod === 'paypal' ? 'bg-primary text-primary-foreground' : 'bg-background'
+                                }`}>
                                 <QrCode className="h-5 w-5" />
                               </div>
                               <div className="flex-1 min-w-0">
@@ -860,7 +943,7 @@ const CheckoutPage = () => {
                           </div>
                           <span className="text-sm font-bold text-green-700 dark:text-green-300">Secure Payment</span>
                         </div>
-                        
+
                         {/* Card Details */}
                         <div className="space-y-4">
                           <div>
@@ -891,7 +974,7 @@ const CheckoutPage = () => {
                                   <SelectValue placeholder="MM" />
                                 </SelectTrigger>
                                 <SelectContent className="rounded-lg border-2">
-                                  {Array.from({length: 12}, (_, i) => i + 1).map(month => (
+                                  {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
                                     <SelectItem key={month} value={month.toString().padStart(2, '0')} className="rounded-md">
                                       {month.toString().padStart(2, '0')}
                                     </SelectItem>
@@ -906,7 +989,7 @@ const CheckoutPage = () => {
                                   <SelectValue placeholder="YYYY" />
                                 </SelectTrigger>
                                 <SelectContent className="rounded-lg border-2">
-                                  {Array.from({length: 10}, (_, i) => new Date().getFullYear() + i).map(year => (
+                                  {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() + i).map(year => (
                                     <SelectItem key={year} value={year.toString()} className="rounded-md">
                                       {year}
                                     </SelectItem>
@@ -932,33 +1015,33 @@ const CheckoutPage = () => {
                         <div className="pt-5 border-t border-stone-200/50 dark:border-stone-700/50">
                           <p className="text-sm font-semibold mb-4 text-stone-700 dark:text-stone-300">Or pay with:</p>
                           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
+                            <Button
+                              variant="outline"
+                              size="sm"
                               className="h-20 flex-col hover:bg-gradient-to-br hover:from-primary/10 hover:to-primary/5 hover:border-primary/50 transition-all duration-300 hover:scale-105 border-stone-200/60 dark:border-stone-700/60"
                             >
                               <Wallet className="h-5 w-5 mb-2 text-primary" />
                               <span className="text-xs font-medium">Momo</span>
                             </Button>
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
+                            <Button
+                              variant="outline"
+                              size="sm"
                               className="h-20 flex-col hover:bg-gradient-to-br hover:from-primary/10 hover:to-primary/5 hover:border-primary/50 transition-all duration-300 hover:scale-105 border-stone-200/60 dark:border-stone-700/60"
                             >
                               <Smartphone className="h-5 w-5 mb-2 text-primary" />
                               <span className="text-xs font-medium">ZaloPay</span>
                             </Button>
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
+                            <Button
+                              variant="outline"
+                              size="sm"
                               className="h-20 flex-col hover:bg-gradient-to-br hover:from-primary/10 hover:to-primary/5 hover:border-primary/50 transition-all duration-300 hover:scale-105 border-stone-200/60 dark:border-stone-700/60"
                             >
                               <QrCode className="h-5 w-5 mb-2 text-primary" />
                               <span className="text-xs font-medium">VietQR</span>
                             </Button>
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
+                            <Button
+                              variant="outline"
+                              size="sm"
                               className="h-20 flex-col hover:bg-gradient-to-br hover:from-primary/10 hover:to-primary/5 hover:border-primary/50 transition-all duration-300 hover:scale-105 border-stone-200/60 dark:border-stone-700/60"
                             >
                               <CreditCard className="h-5 w-5 mb-2 text-primary" />
@@ -970,26 +1053,7 @@ const CheckoutPage = () => {
                     )}
 
                     {/* COD Information */}
-                    {paymentMethod === 'cod' && (
-                      <div className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl border border-blue-200/50 dark:border-blue-800/50">
-                        <div className="flex items-start space-x-4">
-                          <div className="p-2.5 rounded-full bg-blue-100 dark:bg-blue-900/50 flex-shrink-0">
-                            <Banknote className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-semibold text-blue-900 dark:text-blue-300 mb-3 text-lg">{t.codInstructions}</h4>
-                            <ul className="text-sm text-blue-800 dark:text-blue-400 space-y-2.5">
-                              {t.codInstructionsList.map((instruction, index) => (
-                                <li key={index} className="flex items-start space-x-2.5">
-                                  <span className="text-blue-500 dark:text-blue-400 mt-1 font-bold">•</span>
-                                  <span className="leading-relaxed flex-1">{instruction}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        </div>
-                      </div>
-                    )}
+
                   </CardContent>
                 </Card>
 
@@ -1025,12 +1089,12 @@ const CheckoutPage = () => {
                             <img
                               src={item.product.images?.[0] || '/placeholder.svg'}
                               alt={item.product.name}
-                              className="w-16 h-16 object-cover rounded-lg border-2"
+                              className="w-16 h-16 object-cover rounded-md"
                             />
                             <div className="flex-1 min-w-0">
                               <p className="font-bold text-sm truncate">{item.product.name}</p>
                               <p className="text-xs text-muted-foreground font-medium">
-                                {item.selectedSize} • {item.selectedColor} • Qty: {item.quantity}
+                                {item.selectedSize}  {item.selectedColor} x {item.quantity}
                               </p>
                             </div>
                             <p className="font-bold text-sm flex-shrink-0 text-primary">{formatCurrency(item.product.price * item.quantity, language)}</p>
@@ -1038,6 +1102,55 @@ const CheckoutPage = () => {
                         </CardContent>
                       </Card>
                     ))}
+                  </div>
+
+                  <Separator className="my-4" />
+
+                  {/* Discount & Referral Codes */}
+                  <div className="space-y-3 mb-4">
+                    <div className="flex space-x-2">
+                      <div className="relative flex-1">
+                        <Tag className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          placeholder={t.discountCode}
+                          value={couponCode}
+                          onChange={(e) => {
+                            setCouponCode(e.target.value);
+                            if (isCouponApplied) {
+                              setIsCouponApplied(false);
+                              setDiscountAmount(0);
+                            }
+                          }}
+                          className="pl-9 bg-background/50"
+                        />
+                      </div>
+                      <Button variant="outline" onClick={handleApplyCoupon} disabled={!couponCode || isCouponApplied}>
+                        {isCouponApplied ? (language === 'vi' ? 'Đã áp dụng' : 'Applied') : t.apply}
+                      </Button>
+                    </div>
+
+                    {/* Referral Code Hidden */}
+                    {/* <div className="flex space-x-2">
+                      <div className="relative flex-1">
+                        <QrCode className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          placeholder={t.referralCode}
+                          value={referralCode}
+                          onChange={(e) => setReferralCode(e.target.value)}
+                          className="pl-9 bg-background/50"
+                        />
+                      </div>
+                      <Button variant="outline" onClick={() => {
+                        if (referralCode) {
+                          toast({
+                            title: language === 'vi' ? "Thành công" : "Success",
+                            description: language === 'vi' ? "Đã áp dụng mã giới thiệu" : "Referral code applied",
+                          });
+                        }
+                      }}>
+                        {t.apply}
+                      </Button>
+                    </div> */}
                   </div>
 
                   <Separator className="my-4" />
@@ -1056,8 +1169,14 @@ const CheckoutPage = () => {
                       <span className="text-muted-foreground">{t.tax}</span>
                       <span className="font-bold">{formatCurrency(tax, language)}</span>
                     </div>
+                    {discountAmount > 0 && (
+                      <div className="flex justify-between text-sm font-medium text-green-600">
+                        <span>{language === 'vi' ? 'Giảm giá' : 'Discount'}</span>
+                        <span className="font-bold">-{formatCurrency(discountAmount, language)}</span>
+                      </div>
+                    )}
                     <Separator className="my-3" />
-                    <div className="flex justify-between font-bold text-lg pt-2 p-3 rounded-lg bg-primary/10 border-l-4 border-primary">
+                    <div className="flex justify-between font-bold text-xl pt-2">
                       <span>{t.total}</span>
                       <span className="text-primary">
                         {formatCurrency(total, language)}
@@ -1065,24 +1184,11 @@ const CheckoutPage = () => {
                     </div>
                   </div>
 
-                  {/* Security Notice */}
-                  <Card className="rounded-lg border-2 bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800/50">
-                    <CardContent className="p-4">
-                      <div className="flex items-start space-x-3">
-                        <div className="p-2 rounded-full bg-green-100 dark:bg-green-900/50 flex-shrink-0">
-                          <Shield className="h-5 w-5 text-green-600 dark:text-green-400" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-bold text-green-800 dark:text-green-300">{t.secure}</p>
-                          <p className="text-xs text-green-700 dark:text-green-400 mt-1 font-medium">{t.secureDescription}</p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+
 
                   {/* Place Order Button */}
-                  <Button 
-                    className="w-full rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105" 
+                  <Button
+                    className="w-full rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
                     size="lg"
                     onClick={handleSubmit}
                     disabled={isProcessing}
@@ -1106,7 +1212,7 @@ const CheckoutPage = () => {
         </div>
       </main>
 
-      <Footer />
+
     </div>
   );
 };

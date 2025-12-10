@@ -21,6 +21,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth, useSettings } from "@/contexts";
 import { useCart } from "@/hooks/useCart";
+import { useWishlist } from "@/hooks/useWishlist";
+import { useCompare } from "@/hooks/useCompare";
 
 interface HeaderProps {
   cartItemsCount?: number; // Made optional as it's now handled internally
@@ -30,13 +32,15 @@ interface HeaderProps {
 
 const Header = ({ cartItemsCount: propCartItemsCount, onSearch, refreshWishlistTrigger }: HeaderProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [wishlistCount, setWishlistCount] = useState(0);
+  // const [wishlistCount, setWishlistCount] = useState(0); // Removed local state
   const [categories, setCategories] = useState<Category[]>([]);
   const { language, setLanguage, t } = useLanguage();
   const { user, isAuthenticated, logout } = useAuth();
   const { settings } = useSettings();
   const navigate = useNavigate();
   const { itemsCount } = useCart();
+  const { wishlistCount } = useWishlist();
+  const { compareCount } = useCompare();
 
   // Use itemsCount from hook, fallback to prop if not authenticated (though hook handles auth check returning 0)
   // or logic dictates. Since hook returns 0 if not auth, and we want to show 0 or prop if provided for some reason (e.g. optimistic UI from parent?)
@@ -45,36 +49,7 @@ const Header = ({ cartItemsCount: propCartItemsCount, onSearch, refreshWishlistT
 
   const websiteName = settings?.websiteName || 'KOSHIRO';
 
-  // Load wishlist count
-  useEffect(() => {
-    const loadWishlistCount = async () => {
-      if (!isAuthenticated) {
-        setWishlistCount(0);
-        return;
-      }
 
-      try {
-        const response = await api.getWishlist();
-        let wishlistData: Product[] = [];
-        if (Array.isArray(response)) {
-          wishlistData = response;
-        } else if (response && typeof response === 'object') {
-          const responseObj = response as unknown as Record<string, unknown>;
-          if ('data' in responseObj && Array.isArray(responseObj.data)) {
-            wishlistData = responseObj.data as Product[];
-          } else if ('wishlist' in responseObj && Array.isArray(responseObj.wishlist)) {
-            wishlistData = responseObj.wishlist as Product[];
-          }
-        }
-        setWishlistCount(wishlistData.length);
-      } catch (error) {
-        console.error('Failed to load wishlist count:', error);
-        setWishlistCount(0);
-      }
-    };
-
-    loadWishlistCount();
-  }, [isAuthenticated, refreshWishlistTrigger]);
 
   // Load categories
   useEffect(() => {
@@ -272,8 +247,16 @@ const Header = ({ cartItemsCount: propCartItemsCount, onSearch, refreshWishlistT
 
           {/* Compare */}
           <Link to="/compare">
-            <Button variant="ghost" size="icon" className="hidden lg:flex h-10 w-10 hover:bg-primary/10 transition-colors duration-300">
+            <Button variant="ghost" size="icon" className="hidden lg:flex relative h-10 w-10 hover:bg-primary/10 transition-colors duration-300">
               <GitCompare className="h-5 w-5" />
+              {compareCount > 0 && (
+                <Badge
+                  variant="destructive"
+                  className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-xs flex items-center justify-center"
+                >
+                  {compareCount}
+                </Badge>
+              )}
             </Button>
           </Link>
 
