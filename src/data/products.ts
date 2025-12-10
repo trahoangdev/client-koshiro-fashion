@@ -1,8 +1,8 @@
-import { Product } from "@/types/product";
+import { Product } from "@/lib/api";
 
 export const mockProducts: Product[] = [
   {
-    id: "1",
+    _id: "1",
     name: "Áo sơ mi Nhật Bản",
     nameEn: "Japanese Shirt",
     nameJa: "日本のシャツ",
@@ -12,9 +12,8 @@ export const mockProducts: Product[] = [
     price: 850000,
     originalPrice: 950000,
     images: ["/src/assets/product-shirt-1.jpg"],
-    categoryId: "1",
-    category: {
-      id: "1",
+    categoryId: {
+      _id: "1",
       name: "Áo",
       slug: "tops"
     },
@@ -25,10 +24,14 @@ export const mockProducts: Product[] = [
     isFeatured: true,
     tags: ["áo sơ mi", "nhật bản", "thời trang"],
     createdAt: "2024-01-01T00:00:00Z",
-    updatedAt: "2024-01-01T00:00:00Z"
+    updatedAt: "2024-01-01T00:00:00Z",
+    isNew: false,
+    isLimitedEdition: false,
+    isBestSeller: false,
+    onSale: false,
   },
   {
-    id: "2",
+    _id: "2",
     name: "Quần jean Nhật Bản",
     nameEn: "Japanese Jeans",
     nameJa: "日本のジーンズ",
@@ -38,9 +41,8 @@ export const mockProducts: Product[] = [
     price: 1200000,
     originalPrice: 1400000,
     images: ["/src/assets/product-pants-1.jpg"],
-    categoryId: "2",
-    category: {
-      id: "2",
+    categoryId: {
+      _id: "2",
       name: "Quần",
       slug: "bottoms"
     },
@@ -51,10 +53,14 @@ export const mockProducts: Product[] = [
     isFeatured: false,
     tags: ["quần jean", "nhật bản", "chất lượng cao"],
     createdAt: "2024-01-01T00:00:00Z",
-    updatedAt: "2024-01-01T00:00:00Z"
+    updatedAt: "2024-01-01T00:00:00Z",
+    onSale: false,
+    isNew: false,
+    isLimitedEdition: false,
+    isBestSeller: false
   },
   {
-    id: "3",
+    _id: "3",
     name: "Túi xách Nhật Bản",
     nameEn: "Japanese Bag",
     nameJa: "日本のバッグ",
@@ -64,9 +70,8 @@ export const mockProducts: Product[] = [
     price: 650000,
     originalPrice: 750000,
     images: ["/src/assets/product-accessories-1.jpg"],
-    categoryId: "3",
-    category: {
-      id: "3",
+    categoryId: {
+      _id: "3",
       name: "Phụ kiện",
       slug: "accessories"
     },
@@ -77,10 +82,14 @@ export const mockProducts: Product[] = [
     isFeatured: true,
     tags: ["túi xách", "phụ kiện", "nhật bản"],
     createdAt: "2024-01-01T00:00:00Z",
-    updatedAt: "2024-01-01T00:00:00Z"
+    updatedAt: "2024-01-01T00:00:00Z",
+    onSale: false,
+    isNew: false,
+    isLimitedEdition: false,
+    isBestSeller: false
   },
   {
-    id: "4",
+    _id: "4",
     name: "Kimono truyền thống",
     nameEn: "Traditional Kimono",
     nameJa: "伝統的な着物",
@@ -90,9 +99,8 @@ export const mockProducts: Product[] = [
     price: 2500000,
     originalPrice: 2800000,
     images: ["/placeholder.svg"],
-    categoryId: "4",
-    category: {
-      id: "4",
+    categoryId: {
+      _id: "4",
       name: "Kimono",
       slug: "kimono"
     },
@@ -103,10 +111,14 @@ export const mockProducts: Product[] = [
     isFeatured: true,
     tags: ["kimono", "truyền thống", "hoa anh đào"],
     createdAt: "2024-01-01T00:00:00Z",
-    updatedAt: "2024-01-01T00:00:00Z"
+    updatedAt: "2024-01-01T00:00:00Z",
+    onSale: false,
+    isNew: false,
+    isLimitedEdition: false,
+    isBestSeller: false
   },
   {
-    id: "5",
+    _id: "5",
     name: "Yukata mùa hè",
     nameEn: "Summer Yukata",
     nameJa: "夏の浴衣",
@@ -116,9 +128,8 @@ export const mockProducts: Product[] = [
     price: 1800000,
     originalPrice: 2000000,
     images: ["/placeholder.svg"],
-    categoryId: "5",
-    category: {
-      id: "5",
+    categoryId: {
+      _id: "5",
       name: "Yukata",
       slug: "yukata"
     },
@@ -129,6 +140,10 @@ export const mockProducts: Product[] = [
     isFeatured: false,
     tags: ["yukata", "mùa hè", "sóng nước"],
     createdAt: "2024-01-01T00:00:00Z",
-    updatedAt: "2024-01-01T00:00:00Z"
+    updatedAt: "2024-01-01T00:00:00Z",
+    onSale: false,
+    isNew: false,
+    isLimitedEdition: false,
+    isBestSeller: false
   }
 ];

@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { formatCurrency } from '@/lib/currency';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { CartItem } from '@/types/cart';
+import { CartItem } from "@/lib/api";
 import CloudinaryImage from '@/components/CloudinaryImage';
 
 interface MiniCartProps {
@@ -34,7 +34,7 @@ const MiniCart: React.FC<MiniCartProps> = ({
     if (isOpen) {
       // Trigger animation
       setTimeout(() => setShowAnimation(true), 10);
-      
+
       // Auto close after 5 seconds if no interaction
       const timer = setTimeout(() => {
         if (isOpen) {
@@ -78,8 +78,8 @@ const MiniCart: React.FC<MiniCartProps> = ({
   };
 
   const subtotal = cartItems.reduce((sum, item) => {
-    const itemPrice = item.product.salePrice && item.product.salePrice < item.product.price 
-      ? item.product.salePrice 
+    const itemPrice = item.product.salePrice && item.product.salePrice < item.product.price
+      ? item.product.salePrice
       : item.product.price;
     return sum + (itemPrice * item.quantity);
   }, 0);
@@ -122,17 +122,15 @@ const MiniCart: React.FC<MiniCartProps> = ({
     <>
       {/* Backdrop */}
       <div
-        className={`fixed inset-0 bg-black/20 backdrop-blur-sm z-[60] transition-opacity duration-200 ${
-          showAnimation ? 'opacity-100' : 'opacity-0'
-        }`}
+        className={`fixed inset-0 bg-black/20 backdrop-blur-sm z-[60] transition-opacity duration-200 ${showAnimation ? 'opacity-100' : 'opacity-0'
+          }`}
         onClick={handleClose}
       />
 
       {/* Mini Cart Panel */}
       <div
-        className={`fixed top-0 right-0 h-full w-full sm:w-96 bg-background shadow-2xl z-[70] transform transition-transform duration-300 ease-out ${
-          showAnimation ? 'translate-x-0' : 'translate-x-full'
-        }`}
+        className={`fixed top-0 right-0 h-full w-full sm:w-96 bg-background shadow-2xl z-[70] transform transition-transform duration-300 ease-out ${showAnimation ? 'translate-x-0' : 'translate-x-full'
+          }`}
       >
         <div className="h-full flex flex-col overflow-hidden pt-20">
           {/* Header */}
@@ -167,14 +165,14 @@ const MiniCart: React.FC<MiniCartProps> = ({
                       publicId={addedProduct.product.cloudinaryImages[0].publicId}
                       secureUrl={addedProduct.product.cloudinaryImages[0].secureUrl}
                       responsiveUrls={addedProduct.product.cloudinaryImages[0].responsiveUrls}
-                      alt={getProductName(addedProduct)}
+                      alt={getProductName(addedProduct.product)}
                       className="w-16 h-16 rounded object-cover border"
                       size="thumbnail"
                     />
                   ) : (
                     <img
                       src={addedProduct.product.images?.[0] || '/placeholder.svg'}
-                      alt={getProductName(addedProduct)}
+                      alt={getProductName(addedProduct.product)}
                       className="w-16 h-16 rounded object-cover border"
                     />
                   )}
@@ -187,7 +185,7 @@ const MiniCart: React.FC<MiniCartProps> = ({
                 </div>
                 <div className="flex-1 min-w-0">
                   <h4 className="font-medium text-sm line-clamp-2">
-                    {getProductName(addedProduct)}
+                    {getProductName(addedProduct.product)}
                   </h4>
                   {(addedProduct.selectedSize || addedProduct.selectedColor) && (
                     <div className="flex gap-1 mt-1">
@@ -230,15 +228,15 @@ const MiniCart: React.FC<MiniCartProps> = ({
                 <span className="text-sm font-medium">
                   {cartItems.length} {t.itemsInCart}
                 </span>
-              <Button
-                variant="link"
-                size="sm"
-                className="h-auto p-0 text-xs"
-                onClick={handleViewCart}
-              >
-                {language === 'vi' ? 'Xem tất cả' : language === 'ja' ? 'すべて見る' : 'View all'}
-                <ArrowRight className="h-3 w-3 ml-1" />
-              </Button>
+                <Button
+                  variant="link"
+                  size="sm"
+                  className="h-auto p-0 text-xs"
+                  onClick={handleViewCart}
+                >
+                  {language === 'vi' ? 'Xem tất cả' : language === 'ja' ? 'すべて見る' : 'View all'}
+                  <ArrowRight className="h-3 w-3 ml-1" />
+                </Button>
               </div>
 
               {cartItems.slice(0, 3).map((item) => (
@@ -251,20 +249,20 @@ const MiniCart: React.FC<MiniCartProps> = ({
                       publicId={item.product.cloudinaryImages[0].publicId}
                       secureUrl={item.product.cloudinaryImages[0].secureUrl}
                       responsiveUrls={item.product.cloudinaryImages[0].responsiveUrls}
-                      alt={getProductName(item)}
+                      alt={getProductName(item.product)}
                       className="w-12 h-12 rounded object-cover border"
                       size="thumbnail"
                     />
                   ) : (
                     <img
                       src={item.product.images?.[0] || '/placeholder.svg'}
-                      alt={getProductName(item)}
+                      alt={getProductName(item.product)}
                       className="w-12 h-12 rounded object-cover border"
                     />
                   )}
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium line-clamp-1">
-                      {getProductName(item)}
+                      {getProductName(item.product)}
                     </p>
                     <p className="text-xs text-muted-foreground">
                       Qty: {item.quantity} × {formatCurrency(

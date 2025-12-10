@@ -18,12 +18,61 @@ import { useAuth } from "@/contexts";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { ShoppingBag } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { CartItem } from "@/types/cart";
+import { CartItem } from "@/lib/api";
 import CloudinaryImage from "@/components/CloudinaryImage";
+
+// Static mapping for category images
+const CATEGORY_IMAGES: Record<string, string> = {
+  // Slugs
+  'tops': '/images/categories/haori.png',
+  'bottoms': '/images/categories/quan.png',
+  'accessories': '/images/categories/phukien.png',
+  'kimono': '/images/categories/kimono.png',
+  'yukata': '/images/categories/hakama.png',
+  'hakama': '/images/categories/hakama.png',
+  'haori': '/images/categories/haori.png',
+  'obi-belts': '/images/categories/obi.png',
+  'obi': '/images/categories/obi.png',
+
+  // Names/Titles (for robustness)
+  'Áo': '/images/categories/haori.png',
+  'Quần': '/images/categories/quan.png',
+  'Phụ kiện': '/images/categories/phukien.png',
+  'Obi & Đai': '/images/categories/obi.png',
+  'Obi': '/images/categories/obi.png',
+  'Haori': '/images/categories/haori.png',
+  'Hakama': '/images/categories/hakama.png',
+  'Kimono': '/images/categories/kimono.png'
+};
 
 // Helper function to render category image
 const renderCategoryImage = (category: Category) => {
-  // Priority: Cloudinary images > Legacy image > Placeholder
+  // Priority 1: Static mapping from codebase (ensures correct local images)
+  // Check by slug
+  if (category.slug && CATEGORY_IMAGES[category.slug]) {
+    return (
+      <img
+        src={CATEGORY_IMAGES[category.slug]}
+        alt={category.name}
+        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+        loading="lazy"
+      />
+    );
+  }
+
+  // Check by name
+  if (category.name && CATEGORY_IMAGES[category.name]) {
+    return (
+      <img
+        src={CATEGORY_IMAGES[category.name]}
+        alt={category.name}
+        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+        loading="lazy"
+      />
+    );
+  }
+
+  // Priority 2: Cloudinary images
   if (category.cloudinaryImages && category.cloudinaryImages.length > 0) {
     const cloudinaryImage = category.cloudinaryImages[0];
     return (
@@ -38,8 +87,9 @@ const renderCategoryImage = (category: Category) => {
       />
     );
   }
-  
-  if (category.image) {
+
+  // Priority 3: Legacy image from DB (if not placeholder)
+  if (category.image && !category.image.includes('placeholder')) {
     return (
       <img
         src={category.image}
@@ -49,13 +99,13 @@ const renderCategoryImage = (category: Category) => {
       />
     );
   }
-  
-  // Fallback to placeholder
+
+  // Priority 4: Fallback
   return (
     <img
       src="/placeholder.svg"
       alt={category.name}
-      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 opacity-50"
       loading="lazy"
     />
   );
@@ -63,24 +113,24 @@ const renderCategoryImage = (category: Category) => {
 
 const Index = () => {
   const navigate = useNavigate();
-  
+
   // Data state
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   // Cart state
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  
+
   // Filter states
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedPriceRange, setSelectedPriceRange] = useState('all');
   const [selectedColor, setSelectedColor] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
-  
+
   // View state
   const [showCart, setShowCart] = useState(false);
-  
+
   const { toast } = useToast();
   const { isAuthenticated } = useAuth();
   const { language } = useLanguage();
@@ -94,27 +144,27 @@ const Index = () => {
           api.getProducts({ isActive: true, limit: 50 }),
           api.getCategories({ isActive: true })
         ]);
-        
-        logger.debug('Data loaded', { 
+
+        logger.debug('Data loaded', {
           productCount: productsResponse.products?.length || 0,
           categoryCount: categoriesResponse.categories?.length || 0
         });
-        
+
         // Handle response structures
         const productsData = productsResponse.products || [];
         const categoriesData = categoriesResponse.categories || [];
-        
+
         setProducts(productsData);
         setCategories(categoriesData);
       } catch (error) {
         logger.error('Error loading data', error);
         toast({
-          title: language === 'vi' ? "Lỗi tải dữ liệu" : 
-                 language === 'ja' ? "データ読み込みエラー" : 
-                 "Data Loading Error",
+          title: language === 'vi' ? "Lỗi tải dữ liệu" :
+            language === 'ja' ? "データ読み込みエラー" :
+              "Data Loading Error",
           description: language === 'vi' ? "Không thể tải sản phẩm và danh mục" :
-                       language === 'ja' ? "商品とカテゴリを読み込めませんでした" :
-                       "Could not load products and categories",
+            language === 'ja' ? "商品とカテゴリを読み込めませんでした" :
+              "Could not load products and categories",
           variant: "destructive",
         });
       } finally {
@@ -136,12 +186,12 @@ const Index = () => {
       try {
         const response = await api.getCart();
         if (response && response.items) {
-          const cartItemsData = response.items.map((item: { 
-            productId: string; 
-            quantity: number; 
-            size?: string; 
-            color?: string; 
-            product: Product; 
+          const cartItemsData = response.items.map((item: {
+            productId: string;
+            quantity: number;
+            size?: string;
+            color?: string;
+            product: Product;
           }) => ({
             product: item.product,
             quantity: item.quantity,
@@ -171,36 +221,36 @@ const Index = () => {
     if (!products || products.length === 0) {
       return [];
     }
-    
+
     return products.filter(product => {
       // Category filter
       if (selectedCategory !== 'all') {
-        const categorySlug = typeof product.categoryId === 'string' 
-          ? null 
+        const categorySlug = typeof product.categoryId === 'string'
+          ? null
           : product.categoryId?.slug;
         if (categorySlug !== selectedCategory) {
           return false;
         }
       }
-      
+
       // Price filter
       if (selectedPriceRange !== 'all') {
         if (selectedPriceRange === 'under50' && product.price >= 50000) return false;
         if (selectedPriceRange === '50-100' && (product.price < 50000 || product.price > 100000)) return false;
         if (selectedPriceRange === 'over100' && product.price <= 100000) return false;
       }
-      
+
       // Color filter
       if (selectedColor !== 'all' && !product.colors.includes(selectedColor)) {
         return false;
       }
-      
+
       // Search filter
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
         const searchFields = [
           product.name,
-          product.nameEn, 
+          product.nameEn,
           product.nameJa,
           product.description,
           product.descriptionEn,
@@ -208,7 +258,7 @@ const Index = () => {
         ].filter(Boolean);
         return searchFields.some(field => field.toLowerCase().includes(query));
       }
-      
+
       return true;
     });
   }, [products, selectedCategory, selectedPriceRange, selectedColor, searchQuery]);
@@ -218,24 +268,24 @@ const Index = () => {
       // For demo purposes, use default color and size
       const selectedColor = product.colors[0];
       const selectedSize = product.sizes[0];
-      
+
       // Add to cart via API if authenticated
       if (isAuthenticated) {
         await api.addToCart(product._id, 1);
         // Dispatch custom event to notify Header to refresh cart count
         window.dispatchEvent(new CustomEvent('cartUpdated'));
       }
-      
-      const existingItem = cartItems.find(item => 
-        item.product._id === product._id && 
-        item.selectedColor === selectedColor && 
+
+      const existingItem = cartItems.find(item =>
+        item.product._id === product._id &&
+        item.selectedColor === selectedColor &&
         item.selectedSize === selectedSize
       );
 
       if (existingItem) {
-        setCartItems(items => 
-          items.map(item => 
-            item === existingItem 
+        setCartItems(items =>
+          items.map(item =>
+            item === existingItem
               ? { ...item, quantity: item.quantity + 1 }
               : item
           )
@@ -250,22 +300,22 @@ const Index = () => {
       }
 
       toast({
-        title: language === 'vi' ? "Đã thêm vào giỏ hàng" : 
-               language === 'ja' ? "カートに追加されました" : 
-               "Added to Cart",
+        title: language === 'vi' ? "Đã thêm vào giỏ hàng" :
+          language === 'ja' ? "カートに追加されました" :
+            "Added to Cart",
         description: language === 'vi' ? `${getProductName(product)} đã được thêm vào giỏ hàng` :
-                     language === 'ja' ? `${getProductName(product)}がカートに追加されました` :
-                     `${getProductName(product)} has been added to your cart.`,
+          language === 'ja' ? `${getProductName(product)}がカートに追加されました` :
+            `${getProductName(product)} has been added to your cart.`,
       });
     } catch (error) {
       logger.error('Error adding to cart', error);
       toast({
-        title: language === 'vi' ? "Lỗi" : 
-               language === 'ja' ? "エラー" : 
-               "Error",
+        title: language === 'vi' ? "Lỗi" :
+          language === 'ja' ? "エラー" :
+            "Error",
         description: language === 'vi' ? "Không thể thêm vào giỏ hàng" :
-                     language === 'ja' ? "カートに追加できませんでした" :
-                     "Could not add to cart",
+          language === 'ja' ? "カートに追加できませんでした" :
+            "Could not add to cart",
         variant: "destructive",
       });
     }
@@ -277,7 +327,7 @@ const Index = () => {
       // For now, we'll handle quantity 0 directly
       try {
         if (isAuthenticated) {
-          const item = cartItems.find(item => 
+          const item = cartItems.find(item =>
             `${item.product._id}-${item.selectedColor}-${item.selectedSize}` === itemId
           );
           if (item) {
@@ -288,7 +338,7 @@ const Index = () => {
           }
         }
         setCartItems(items =>
-          items.filter(item => 
+          items.filter(item =>
             `${item.product._id}-${item.selectedColor}-${item.selectedSize}` !== itemId
           )
         );
@@ -297,16 +347,16 @@ const Index = () => {
       }
       return;
     }
-    
+
     try {
       // Update cart via API if authenticated
       if (isAuthenticated) {
-        const item = cartItems.find(item => 
+        const item = cartItems.find(item =>
           `${item.product._id}-${item.selectedColor}-${item.selectedSize}` === itemId
         );
         if (item) {
           await api.updateCartItem(item.product._id, quantity);
-          
+
           // Wait a bit to ensure API call is complete, then dispatch event
           setTimeout(() => {
             logger.debug('Dispatching cartUpdated event (update quantity)');
@@ -314,7 +364,7 @@ const Index = () => {
           }, 100);
         }
       }
-      
+
       setCartItems(items =>
         items.map(item =>
           `${item.product._id}-${item.selectedColor}-${item.selectedSize}` === itemId
@@ -325,12 +375,12 @@ const Index = () => {
     } catch (error) {
       logger.error('Error updating cart quantity', error);
       toast({
-        title: language === 'vi' ? "Lỗi" : 
-               language === 'ja' ? "エラー" : 
-               "Error",
+        title: language === 'vi' ? "Lỗi" :
+          language === 'ja' ? "エラー" :
+            "Error",
         description: language === 'vi' ? "Không thể cập nhật số lượng" :
-                     language === 'ja' ? "数量を更新できませんでした" :
-                     "Could not update quantity",
+          language === 'ja' ? "数量を更新できませんでした" :
+            "Could not update quantity",
         variant: "destructive",
       });
     }
@@ -340,12 +390,12 @@ const Index = () => {
     try {
       // Remove from cart via API if authenticated
       if (isAuthenticated) {
-        const item = cartItems.find(item => 
+        const item = cartItems.find(item =>
           `${item.product._id}-${item.selectedColor}-${item.selectedSize}` === itemId
         );
         if (item) {
           await api.removeFromCart(item.product._id);
-          
+
           // Wait a bit to ensure API call is complete, then dispatch event
           setTimeout(() => {
             logger.debug('Dispatching cartUpdated event (remove item)');
@@ -353,21 +403,21 @@ const Index = () => {
           }, 100);
         }
       }
-      
+
       setCartItems(items =>
-        items.filter(item => 
+        items.filter(item =>
           `${item.product._id}-${item.selectedColor}-${item.selectedSize}` !== itemId
         )
       );
     } catch (error) {
       logger.error('Error removing from cart', error);
       toast({
-        title: language === 'vi' ? "Lỗi" : 
-               language === 'ja' ? "エラー" : 
-               "Error",
+        title: language === 'vi' ? "Lỗi" :
+          language === 'ja' ? "エラー" :
+            "Error",
         description: language === 'vi' ? "Không thể xóa khỏi giỏ hàng" :
-                     language === 'ja' ? "カートから削除できませんでした" :
-                     "Could not remove from cart",
+          language === 'ja' ? "カートから削除できませんでした" :
+            "Could not remove from cart",
         variant: "destructive",
       });
     }
@@ -376,12 +426,12 @@ const Index = () => {
   const handleCheckout = () => {
     if (cartItems.length === 0) {
       toast({
-        title: language === 'vi' ? "Giỏ hàng trống" : 
-               language === 'ja' ? "カートが空です" : 
-               "Empty Cart",
+        title: language === 'vi' ? "Giỏ hàng trống" :
+          language === 'ja' ? "カートが空です" :
+            "Empty Cart",
         description: language === 'vi' ? "Vui lòng thêm sản phẩm vào giỏ hàng trước khi thanh toán" :
-                     language === 'ja' ? "チェックアウトする前に商品をカートに追加してください" :
-                     "Please add items to your cart before checkout",
+          language === 'ja' ? "チェックアウトする前に商品をカートに追加してください" :
+            "Please add items to your cart before checkout",
         variant: "destructive",
       });
       return;
@@ -389,12 +439,12 @@ const Index = () => {
 
     if (!isAuthenticated) {
       toast({
-        title: language === 'vi' ? "Cần đăng nhập" : 
-               language === 'ja' ? "ログインが必要です" : 
-               "Login Required",
+        title: language === 'vi' ? "Cần đăng nhập" :
+          language === 'ja' ? "ログインが必要です" :
+            "Login Required",
         description: language === 'vi' ? "Vui lòng đăng nhập để tiếp tục thanh toán" :
-                     language === 'ja' ? "チェックアウトを続行するにはログインしてください" :
-                     "Please login to continue checkout",
+          language === 'ja' ? "チェックアウトを続行するにはログインしてください" :
+            "Please login to continue checkout",
         variant: "destructive",
       });
       return;
@@ -402,7 +452,7 @@ const Index = () => {
 
     // Close cart sidebar
     setShowCart(false);
-    
+
     // Navigate to checkout page
     navigate('/checkout');
   };
@@ -419,12 +469,12 @@ const Index = () => {
   const addToWishlist = async (product: Product) => {
     if (!isAuthenticated) {
       toast({
-        title: language === 'vi' ? "Cần đăng nhập" : 
-               language === 'ja' ? "ログインが必要です" : 
-               "Login Required",
+        title: language === 'vi' ? "Cần đăng nhập" :
+          language === 'ja' ? "ログインが必要です" :
+            "Login Required",
         description: language === 'vi' ? "Vui lòng đăng nhập để thêm sản phẩm vào danh sách yêu thích" :
-                     language === 'ja' ? "お気に入りリストに商品を追加するにはログインしてください" :
-                     "Please login to add products to wishlist",
+          language === 'ja' ? "お気に入りリストに商品を追加するにはログインしてください" :
+            "Please login to add products to wishlist",
         variant: "destructive",
       });
       return;
@@ -432,24 +482,24 @@ const Index = () => {
 
     try {
       await api.addToWishlist(product._id);
-      
+
       toast({
-        title: language === 'vi' ? "Đã thêm vào danh sách yêu thích" : 
-               language === 'ja' ? "お気に入りに追加されました" : 
-               "Added to Wishlist",
+        title: language === 'vi' ? "Đã thêm vào danh sách yêu thích" :
+          language === 'ja' ? "お気に入りに追加されました" :
+            "Added to Wishlist",
         description: language === 'vi' ? `${getProductName(product)} đã được thêm vào danh sách yêu thích` :
-                     language === 'ja' ? `${getProductName(product)}がお気に入りに追加されました` :
-                     `${getProductName(product)} has been added to wishlist`,
+          language === 'ja' ? `${getProductName(product)}がお気に入りに追加されました` :
+            `${getProductName(product)} has been added to wishlist`,
       });
     } catch (error) {
       logger.error('Error adding to wishlist', error);
       toast({
-        title: language === 'vi' ? "Lỗi" : 
-               language === 'ja' ? "エラー" : 
-               "Error",
+        title: language === 'vi' ? "Lỗi" :
+          language === 'ja' ? "エラー" :
+            "Error",
         description: language === 'vi' ? "Không thể thêm vào danh sách yêu thích" :
-                     language === 'ja' ? "お気に入りに追加できませんでした" :
-                     "Could not add to wishlist",
+          language === 'ja' ? "お気に入りに追加できませんでした" :
+            "Could not add to wishlist",
         variant: "destructive",
       });
     }
@@ -458,7 +508,7 @@ const Index = () => {
   const addToCompare = (product: Product) => {
     const savedCompareList = localStorage.getItem('koshiro_compare_list');
     let compareList: Product[] = [];
-    
+
     if (savedCompareList) {
       try {
         compareList = JSON.parse(savedCompareList);
@@ -469,12 +519,12 @@ const Index = () => {
 
     if (compareList.length >= 4) {
       toast({
-        title: language === 'vi' ? "Giới hạn so sánh" : 
-               language === 'ja' ? "比較制限" : 
-               "Compare Limit",
+        title: language === 'vi' ? "Giới hạn so sánh" :
+          language === 'ja' ? "比較制限" :
+            "Compare Limit",
         description: language === 'vi' ? "Bạn chỉ có thể so sánh tối đa 4 sản phẩm" :
-                     language === 'ja' ? "最大4つの商品を比較できます" :
-                     "You can compare up to 4 products",
+          language === 'ja' ? "最大4つの商品を比較できます" :
+            "You can compare up to 4 products",
         variant: "destructive",
       });
       return;
@@ -482,12 +532,12 @@ const Index = () => {
 
     if (compareList.find(p => p._id === product._id)) {
       toast({
-        title: language === 'vi' ? "Sản phẩm đã có" : 
-               language === 'ja' ? "商品は既に追加済み" : 
-               "Product Already Added",
+        title: language === 'vi' ? "Sản phẩm đã có" :
+          language === 'ja' ? "商品は既に追加済み" :
+            "Product Already Added",
         description: language === 'vi' ? "Sản phẩm này đã có trong danh sách so sánh" :
-                     language === 'ja' ? "この商品は既に比較リストにあります" :
-                     "This product is already in the compare list",
+          language === 'ja' ? "この商品は既に比較リストにあります" :
+            "This product is already in the compare list",
         variant: "destructive",
       });
       return;
@@ -495,14 +545,14 @@ const Index = () => {
 
     const newCompareList = [...compareList, product];
     localStorage.setItem('koshiro_compare_list', JSON.stringify(newCompareList));
-    
+
     toast({
-      title: language === 'vi' ? "Đã thêm vào so sánh" : 
-             language === 'ja' ? "比較リストに追加" : 
-             "Added to Compare",
+      title: language === 'vi' ? "Đã thêm vào so sánh" :
+        language === 'ja' ? "比較リストに追加" :
+          "Added to Compare",
       description: language === 'vi' ? "Sản phẩm đã được thêm vào danh sách so sánh" :
-                   language === 'ja' ? "商品が比較リストに追加されました" :
-                   "Product has been added to compare list",
+        language === 'ja' ? "商品が比較リストに追加されました" :
+          "Product has been added to compare list",
     });
   };
 
@@ -534,7 +584,7 @@ const Index = () => {
             }} />
           </div>
         </div>
-        
+
         {/* Content */}
         <div className="container relative z-10 text-center">
           <div className="max-w-4xl mx-auto px-6">
@@ -552,7 +602,7 @@ const Index = () => {
                 <div className="absolute inset-0 bg-white/10 rounded-full blur-xl scale-110 opacity-50 animate-pulse"></div>
               </div>
             </div>
-            
+
             {/* Japanese-inspired Typography with Modern Touch */}
             <div className="mb-8">
               <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight mb-6">
@@ -560,24 +610,24 @@ const Index = () => {
                   {language === 'vi' ? 'KOSHIRO' : language === 'ja' ? 'コシロ' : 'KOSHIRO'}
                 </span>
                 <span className="block text-2xl md:text-3xl lg:text-4xl font-semibold text-white/95 mt-4 tracking-widest drop-shadow-lg">
-                  {language === 'vi' ? 'THỜI TRANG NHẬT BẢN' : 
-                   language === 'ja' ? '日本ファッション' : 
-                   'JAPANESE FASHION'}
+                  {language === 'vi' ? 'THỜI TRANG NHẬT BẢN' :
+                    language === 'ja' ? '日本ファッション' :
+                      'JAPANESE FASHION'}
                 </span>
               </h1>
             </div>
-            
+
             {/* Minimalist Description */}
             <p className="text-xl md:text-2xl lg:text-3xl text-white/90 max-w-3xl mx-auto mb-12 leading-relaxed font-medium drop-shadow-md">
               {language === 'vi' ? 'Tìm kiếm sự cân bằng hoàn hảo giữa truyền thống và hiện đại' :
-               language === 'ja' ? '伝統と現代の完璧なバランスを探す' :
-               'Finding the perfect balance between tradition and modernity'}
+                language === 'ja' ? '伝統と現代の完璧なバランスを探す' :
+                  'Finding the perfect balance between tradition and modernity'}
             </p>
-            
+
             {/* Modern Zen CTA Button */}
-            <Button 
-              variant="outline" 
-              size="lg" 
+            <Button
+              variant="outline"
+              size="lg"
               className="border-2 border-white/40 text-white hover:bg-white hover:text-stone-900 px-10 py-6 rounded-xl font-bold text-lg tracking-wide transition-all duration-300 backdrop-blur-sm bg-white/15 shadow-2xl hover:shadow-white/20 hover:scale-105"
               onClick={() => {
                 const collectionSection = document.querySelector('[data-section="collection"]');
@@ -590,7 +640,7 @@ const Index = () => {
             </Button>
           </div>
         </div>
-        
+
         {/* Custom Scroll Wheel Indicator */}
         <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 z-20">
           <div className="relative flex flex-col items-center justify-center">
@@ -605,13 +655,13 @@ const Index = () => {
             {/* Scroll Animation Lines - Centered below mouse */}
             <div className="relative mt-2 flex flex-col items-center">
               <div className="w-1 h-6 bg-gradient-to-b from-white/70 via-white/40 to-white/10 animate-scroll-indicator rounded-full"></div>
-              <div className="w-1 h-5 bg-gradient-to-b from-white/50 via-white/30 to-white/5 animate-scroll-indicator rounded-full mt-1" style={{animationDelay: '0.3s'}}></div>
-              <div className="w-1 h-4 bg-gradient-to-b from-white/40 via-white/20 to-white/5 animate-scroll-indicator rounded-full mt-1" style={{animationDelay: '0.6s'}}></div>
+              <div className="w-1 h-5 bg-gradient-to-b from-white/50 via-white/30 to-white/5 animate-scroll-indicator rounded-full mt-1" style={{ animationDelay: '0.3s' }}></div>
+              <div className="w-1 h-4 bg-gradient-to-b from-white/40 via-white/20 to-white/5 animate-scroll-indicator rounded-full mt-1" style={{ animationDelay: '0.6s' }}></div>
             </div>
           </div>
         </div>
       </section>
-      
+
       <main className="py-24">
         <div className="container space-y-32">
 
@@ -622,13 +672,13 @@ const Index = () => {
                 <div className="max-w-4xl mx-auto text-center">
                   <div className="mb-12">
                     <h2 className="text-3xl md:text-4xl font-bold mb-6 tracking-wide bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-                      {language === 'vi' ? 'Triết Lý Thiết Kế' : 
-                       language === 'ja' ? 'デザイン哲学' : 
-                       'Design Philosophy'}
+                      {language === 'vi' ? 'Triết Lý Thiết Kế' :
+                        language === 'ja' ? 'デザイン哲学' :
+                          'Design Philosophy'}
                     </h2>
                     <div className="w-20 h-px bg-primary mx-auto mb-8"></div>
                   </div>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     {/* Zen */}
                     <div className="group p-6 rounded-xl border-2 border-muted hover:border-primary transition-all duration-300 hover:shadow-lg bg-muted/30">
@@ -640,8 +690,8 @@ const Index = () => {
                       </h3>
                       <p className="text-muted-foreground font-medium leading-relaxed">
                         {language === 'vi' ? 'Tìm kiếm sự cân bằng và hài hòa trong mọi thiết kế' :
-                         language === 'ja' ? 'すべてのデザインでバランスと調和を求める' :
-                         'Seeking balance and harmony in every design'}
+                          language === 'ja' ? 'すべてのデザインでバランスと調和を求める' :
+                            'Seeking balance and harmony in every design'}
                       </p>
                     </div>
 
@@ -655,8 +705,8 @@ const Index = () => {
                       </h3>
                       <p className="text-muted-foreground font-medium leading-relaxed">
                         {language === 'vi' ? 'Vẻ đẹp trong sự không hoàn hảo và tính tự nhiên' :
-                         language === 'ja' ? '不完全さと自然さの中の美しさ' :
-                         'Beauty in imperfection and naturalness'}
+                          language === 'ja' ? '不完全さと自然さの中の美しさ' :
+                            'Beauty in imperfection and naturalness'}
                       </p>
                     </div>
 
@@ -670,8 +720,8 @@ const Index = () => {
                       </h3>
                       <p className="text-muted-foreground font-medium leading-relaxed">
                         {language === 'vi' ? 'Loại bỏ những gì không cần thiết, giữ lại bản chất' :
-                         language === 'ja' ? '不要なものを取り除き、本質を保つ' :
-                         'Removing the unnecessary, keeping the essential'}
+                          language === 'ja' ? '不要なものを取り除き、本質を保つ' :
+                            'Removing the unnecessary, keeping the essential'}
                       </p>
                     </div>
                   </div>
@@ -691,13 +741,13 @@ const Index = () => {
                   <div className="w-16 h-px bg-primary mx-auto mb-6"></div>
                   <p className="text-muted-foreground mt-6 max-w-xl mx-auto font-medium text-lg">
                     {language === 'vi' ? 'Những thiết kế mới nhất được tạo ra với tinh thần Wabi-sabi' :
-                     language === 'ja' ? '侘寂の精神で作られた最新デザイン' :
-                     'Latest designs created with the spirit of Wabi-sabi'}
+                      language === 'ja' ? '侘寂の精神で作られた最新デザイン' :
+                        'Latest designs created with the spirit of Wabi-sabi'}
                   </p>
                 </div>
               </CardContent>
             </Card>
-            
+
             {(() => {
               const newProducts = products.filter(product => {
                 const createdDate = new Date(product.createdAt || '');
@@ -706,7 +756,7 @@ const Index = () => {
                 const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
                 return diffDays <= 30;
               }).slice(0, 4);
-              
+
               if (isLoading) {
                 return (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -722,11 +772,11 @@ const Index = () => {
                   </div>
                 );
               }
-              
+
               return newProducts.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                   {newProducts.map((product, index) => (
-                    <div 
+                    <div
                       key={product._id}
                       style={{
                         animationDelay: `${index * 100}ms`,
@@ -749,7 +799,7 @@ const Index = () => {
                 <div className="text-center py-16">
                   <p className="text-stone-500 dark:text-stone-500 font-light">
                     {language === 'vi' ? 'Hiện tại không có sản phẩm mới' :
-                     language === 'ja' ? '現在新着商品はありません' : 'No new arrivals currently available'}
+                      language === 'ja' ? '現在新着商品はありません' : 'No new arrivals currently available'}
                   </p>
                 </div>
               );
@@ -762,20 +812,20 @@ const Index = () => {
               <CardContent className="p-8">
                 <div className="text-center">
                   <h2 className="text-3xl md:text-4xl font-bold mb-4 tracking-wide bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-                    {language === 'vi' ? 'Danh Mục Nổi Bật' : 
-                     language === 'ja' ? '注目のカテゴリー' : 
-                     'Featured Categories'}
+                    {language === 'vi' ? 'Danh Mục Nổi Bật' :
+                      language === 'ja' ? '注目のカテゴリー' :
+                        'Featured Categories'}
                   </h2>
                   <div className="w-16 h-px bg-primary mx-auto mb-6"></div>
                   <p className="text-muted-foreground mt-6 max-w-xl mx-auto font-medium text-lg">
                     {language === 'vi' ? 'Khám phá các bộ sưu tập được tuyển chọn cẩn thận' :
-                     language === 'ja' ? '厳選されたコレクションをご覧ください' :
-                     'Discover our carefully curated collections'}
+                      language === 'ja' ? '厳選されたコレクションをご覧ください' :
+                        'Discover our carefully curated collections'}
                   </p>
                 </div>
               </CardContent>
             </Card>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {isLoading ? (
                 [...Array(6)].map((_, index) => (
@@ -785,47 +835,47 @@ const Index = () => {
                 ))
               ) : (
                 categories.slice(0, 6).map((category, index) => (
-                <Card 
-                  key={category._id}
-                  className="group cursor-pointer rounded-xl border-2 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden hover:scale-[1.02] hover:border-primary"
-                  style={{
-                    animationDelay: `${index * 150}ms`,
-                    animation: 'fadeInUp 0.6s ease-out forwards',
-                    opacity: 0,
-                    transform: 'translateY(20px)'
-                  }}
-                  onClick={() => navigate(`/category/${category.slug}`)}
-                >
-                  <div className="aspect-[4/3] relative overflow-hidden">
-                    {renderCategoryImage(category)}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-transparent"></div>
-                    <div className="absolute bottom-6 left-6 right-6">
-                      <h3 className="text-white text-xl font-bold mb-2">
-                        {language === 'vi' ? category.name : 
-                         language === 'ja' ? category.nameJa || category.name : 
-                         category.nameEn || category.name}
-                      </h3>
-                      <p className="text-white/90 text-sm font-medium">
-                        {language === 'vi' ? 'Khám phá bộ sưu tập' :
-                         language === 'ja' ? 'コレクションを見る' :
-                         'Explore collection'}
-                      </p>
+                  <Card
+                    key={category._id}
+                    className="group cursor-pointer rounded-xl border-2 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden hover:scale-[1.02] hover:border-primary"
+                    style={{
+                      animationDelay: `${index * 150}ms`,
+                      animation: 'fadeInUp 0.6s ease-out forwards',
+                      opacity: 0,
+                      transform: 'translateY(20px)'
+                    }}
+                    onClick={() => navigate(`/category/${category.slug}`)}
+                  >
+                    <div className="aspect-[4/3] relative overflow-hidden">
+                      {renderCategoryImage(category)}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-transparent"></div>
+                      <div className="absolute bottom-6 left-6 right-6">
+                        <h3 className="text-white text-xl font-bold mb-2">
+                          {language === 'vi' ? category.name :
+                            language === 'ja' ? category.nameJa || category.name :
+                              category.nameEn || category.name}
+                        </h3>
+                        <p className="text-white/90 text-sm font-medium">
+                          {language === 'vi' ? 'Khám phá bộ sưu tập' :
+                            language === 'ja' ? 'コレクションを見る' :
+                              'Explore collection'}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                </Card>
+                  </Card>
                 ))
               )}
             </div>
-            
+
             <div className="text-center mt-12">
               <Button
                 onClick={() => navigate('/categories')}
                 variant="outline"
                 className="px-8 py-3 rounded-xl border-2 font-semibold hover:bg-primary hover:text-primary-foreground transition-all duration-300 shadow-lg hover:shadow-xl"
               >
-                {language === 'vi' ? 'Xem Tất Cả Danh Mục' : 
-                 language === 'ja' ? 'すべてのカテゴリーを見る' : 
-                 'View All Categories'}
+                {language === 'vi' ? 'Xem Tất Cả Danh Mục' :
+                  language === 'ja' ? 'すべてのカテゴリーを見る' :
+                    'View All Categories'}
               </Button>
             </div>
           </section>
@@ -841,8 +891,8 @@ const Index = () => {
                   <div className="w-16 h-px bg-primary mx-auto mb-6"></div>
                   <p className="text-muted-foreground mt-6 max-w-2xl mx-auto font-medium text-lg">
                     {language === 'vi' ? 'Mỗi sản phẩm đều kể một câu chuyện về vẻ đẹp không hoàn hảo' :
-                     language === 'ja' ? '各商品は不完全な美しさについての物語を語る' :
-                     'Each product tells a story about imperfect beauty'}
+                      language === 'ja' ? '各商品は不完全な美しさについての物語を語る' :
+                        'Each product tells a story about imperfect beauty'}
                   </p>
                 </div>
               </CardContent>
@@ -863,22 +913,22 @@ const Index = () => {
 
             {/* Products Grid */}
             <div>
-            {isLoading ? (
-              <div className="text-center py-20">
-                <div className="relative">
-                  <div className="w-12 h-12 border-2 border-stone-200 dark:border-stone-700 rounded-full mx-auto mb-6"></div>
-                  <div className="w-12 h-12 border-2 border-stone-400 dark:border-stone-500 border-t-transparent rounded-full animate-spin absolute top-0 left-1/2 transform -translate-x-1/2"></div>
+              {isLoading ? (
+                <div className="text-center py-20">
+                  <div className="relative">
+                    <div className="w-12 h-12 border-2 border-stone-200 dark:border-stone-700 rounded-full mx-auto mb-6"></div>
+                    <div className="w-12 h-12 border-2 border-stone-400 dark:border-stone-500 border-t-transparent rounded-full animate-spin absolute top-0 left-1/2 transform -translate-x-1/2"></div>
+                  </div>
+                  <p className="text-stone-500 dark:text-stone-500 font-light animate-pulse">
+                    {language === 'vi' ? 'Đang tải sản phẩm...' :
+                      language === 'ja' ? '商品を読み込み中...' : 'Loading products...'}
+                  </p>
                 </div>
-                <p className="text-stone-500 dark:text-stone-500 font-light animate-pulse">
-                  {language === 'vi' ? 'Đang tải sản phẩm...' :
-                   language === 'ja' ? '商品を読み込み中...' : 'Loading products...'}
-                </p>
-              </div>
               ) : filteredProducts.length === 0 ? (
                 <div className="text-center py-20">
                   <p className="text-stone-500 dark:text-stone-500 font-light">
                     {language === 'vi' ? 'Không tìm thấy sản phẩm nào.' :
-                     language === 'ja' ? '商品が見つかりません。' : 'No products found.'}
+                      language === 'ja' ? '商品が見つかりません。' : 'No products found.'}
                   </p>
                 </div>
               ) : (
@@ -916,21 +966,21 @@ const Index = () => {
                       />
                     </div>
                   </div>
-                  
+
                   <div className="mb-12">
                     <h2 className="text-3xl md:text-4xl font-bold mb-6 tracking-wide bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-                      {language === 'vi' ? 'Kết Nối Với Chúng Tôi' : 
-                       language === 'ja' ? '私たちとつながる' : 
-                       'Connect With Us'}
+                      {language === 'vi' ? 'Kết Nối Với Chúng Tôi' :
+                        language === 'ja' ? '私たちとつながる' :
+                          'Connect With Us'}
                     </h2>
                     <div className="w-20 h-px bg-primary mx-auto mb-8"></div>
                     <p className="text-muted-foreground font-medium text-lg leading-relaxed">
                       {language === 'vi' ? 'Nhận thông tin về những thiết kế mới và câu chuyện đằng sau mỗi sản phẩm' :
-                       language === 'ja' ? '新しいデザインと各商品の背景ストーリーについての情報を受け取る' :
-                       'Receive updates on new designs and the stories behind each product'}
+                        language === 'ja' ? '新しいデザインと各商品の背景ストーリーについての情報を受け取る' :
+                          'Receive updates on new designs and the stories behind each product'}
                     </p>
                   </div>
-                  
+
                   <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
                     <input
                       type="email"
@@ -969,11 +1019,11 @@ const Index = () => {
       {showCart && (
         <div className="fixed inset-0 z-50 overflow-hidden">
           {/* Backdrop */}
-          <div 
+          <div
             className="absolute inset-0 bg-black/20 backdrop-blur-sm"
             onClick={() => setShowCart(false)}
           />
-          
+
           {/* Sidebar */}
           <div className="absolute right-0 top-0 h-full w-full sm:max-w-md bg-background rounded-l-2xl shadow-2xl overflow-hidden transform transition-transform duration-300 ease-out border-l-2 border-muted">
             <div className="h-full">
@@ -988,7 +1038,7 @@ const Index = () => {
           </div>
         </div>
       )}
-      
+
       <Footer />
     </div>
   );

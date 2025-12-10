@@ -1,15 +1,15 @@
-import { Category } from "@/types/category";
+import { Category } from "@/lib/api";
 
 export const mockCategories: Category[] = [
   {
-    id: "1",
+    _id: "1",
     name: "Áo",
     nameEn: "Tops",
     nameJa: "トップス",
     description: "Các loại áo thời trang Nhật Bản",
     descriptionEn: "Japanese fashion tops",
     descriptionJa: "日本のファッショントップス",
-    image: "/placeholder.svg",
+    image: "/images/categories/haori.png",
     slug: "tops",
     isActive: true,
     createdAt: "2024-01-01T00:00:00Z",
@@ -17,14 +17,14 @@ export const mockCategories: Category[] = [
     productCount: 8
   },
   {
-    id: "2",
+    _id: "2",
     name: "Quần",
     nameEn: "Bottoms",
     nameJa: "ボトムス",
     description: "Các loại quần thời trang Nhật Bản",
     descriptionEn: "Japanese fashion bottoms",
     descriptionJa: "日本のファッションボトムス",
-    image: "/placeholder.svg",
+    image: "/images/categories/quan.png",
     slug: "bottoms",
     isActive: true,
     createdAt: "2024-01-01T00:00:00Z",
@@ -32,14 +32,14 @@ export const mockCategories: Category[] = [
     productCount: 6
   },
   {
-    id: "3",
+    _id: "3",
     name: "Phụ kiện",
     nameEn: "Accessories",
     nameJa: "アクセサリー",
     description: "Phụ kiện thời trang Nhật Bản",
     descriptionEn: "Japanese fashion accessories",
     descriptionJa: "日本のファッションアクセサリー",
-    image: "/placeholder.svg",
+    image: "/images/categories/phukien.png",
     slug: "accessories",
     isActive: true,
     createdAt: "2024-01-01T00:00:00Z",
@@ -47,14 +47,14 @@ export const mockCategories: Category[] = [
     productCount: 4
   },
   {
-    id: "4",
+    _id: "4",
     name: "Kimono",
     nameEn: "Kimono",
     nameJa: "着物",
     description: "Trang phục truyền thống Kimono",
     descriptionEn: "Traditional Kimono attire",
     descriptionJa: "伝統的な着物",
-    image: "/placeholder.svg",
+    image: "/images/categories/kimono.png",
     slug: "kimono",
     isActive: true,
     createdAt: "2024-01-01T00:00:00Z",
@@ -62,18 +62,33 @@ export const mockCategories: Category[] = [
     productCount: 3
   },
   {
-    id: "5",
-    name: "Yukata",
-    nameEn: "Yukata",
-    nameJa: "浴衣",
-    description: "Trang phục mùa hè Yukata",
-    descriptionEn: "Summer Yukata attire",
-    descriptionJa: "夏の浴衣",
-    image: "/placeholder.svg",
-    slug: "yukata",
+    _id: "5",
+    name: "Hakama",
+    nameEn: "Hakama",
+    nameJa: "袴",
+    description: "Trang phục truyền thống Hakama",
+    descriptionEn: "Traditional Hakama attire",
+    descriptionJa: "伝統的な袴",
+    image: "/images/categories/hakama.png",
+    slug: "hakama",
     isActive: true,
     createdAt: "2024-01-01T00:00:00Z",
     updatedAt: "2024-01-01T00:00:00Z",
     productCount: 2
+  },
+  {
+    _id: "6",
+    name: "Obi",
+    nameEn: "Obi",
+    nameJa: "帯",
+    description: "Đai lưng truyền thống Obi",
+    descriptionEn: "Traditional Obi belt",
+    descriptionJa: "伝統的な帯",
+    image: "/images/categories/obi.png",
+    slug: "obi",
+    isActive: true,
+    createdAt: "2024-01-01T00:00:00Z",
+    updatedAt: "2024-01-01T00:00:00Z",
+    productCount: 5
   }
 ]; 

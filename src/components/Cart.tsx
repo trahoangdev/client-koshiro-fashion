@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Minus, Plus, Trash2, ShoppingBag, X, Lock } from "lucide-react";
 import { formatCurrency } from "@/lib/currency";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { CartItem } from "@/types/cart";
+import { CartItem } from "@/lib/api";
 
 interface CartProps {
   cartItems: CartItem[];
@@ -77,8 +77,8 @@ const Cart = ({
   };
 
   const subtotal = cartItems.reduce((sum, item) => {
-    const itemPrice = item.product.salePrice && item.product.salePrice < item.product.price 
-      ? item.product.salePrice 
+    const itemPrice = item.product.salePrice && item.product.salePrice < item.product.price
+      ? item.product.salePrice
       : item.product.price;
     return sum + (itemPrice * item.quantity);
   }, 0);
@@ -107,10 +107,10 @@ const Cart = ({
             <ShoppingBag className="mx-auto h-16 w-16 text-muted-foreground mb-4" />
             <h3 className="text-xl font-semibold mb-2">{t.empty}</h3>
             <p className="text-muted-foreground mb-6">{t.emptyDesc}</p>
-                         <Button variant="default" onClick={onClose}>
-               <ShoppingBag className="h-4 w-4 mr-2" />
-               {t.continueShopping}
-             </Button>
+            <Button variant="default" onClick={onClose}>
+              <ShoppingBag className="h-4 w-4 mr-2" />
+              {t.continueShopping}
+            </Button>
           </div>
         </div>
       </div>
@@ -141,7 +141,7 @@ const Cart = ({
               alt={getProductName(item)}
               className="w-20 h-20 object-cover rounded"
             />
-            
+
             <div className="flex-1 space-y-2">
               <h4 className="font-medium">{getProductName(item)}</h4>
               <div className="flex gap-2">
@@ -150,14 +150,14 @@ const Cart = ({
               </div>
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
-                                     <span className="font-semibold">
-                     {item.product.salePrice && item.product.salePrice < item.product.price ? formatCurrency(item.product.salePrice, language) : formatCurrency(item.product.price, language)}
-                   </span>
-                   {item.product.salePrice && item.product.salePrice < item.product.price && (
-                     <div className="flex items-center space-x-2">
-                       <span className="text-sm text-muted-foreground line-through">
-                         {formatCurrency(item.product.price, language)}
-                       </span>
+                  <span className="font-semibold">
+                    {item.product.salePrice && item.product.salePrice < item.product.price ? formatCurrency(item.product.salePrice, language) : formatCurrency(item.product.price, language)}
+                  </span>
+                  {item.product.salePrice && item.product.salePrice < item.product.price && (
+                    <div className="flex items-center space-x-2">
+                      <span className="text-sm text-muted-foreground line-through">
+                        {formatCurrency(item.product.price, language)}
+                      </span>
                       <Badge variant="destructive" className="text-xs">
                         -{Math.round(((item.product.price - item.product.salePrice) / item.product.price) * 100)}%
                       </Badge>
@@ -202,9 +202,9 @@ const Cart = ({
       <div className="border-t p-4 space-y-4">
         <div className="flex justify-between">
           <span>{t.subtotal}</span>
-                     <span className="font-semibold">
-             {formatCurrency(subtotal, language)}
-           </span>
+          <span className="font-semibold">
+            {formatCurrency(subtotal, language)}
+          </span>
         </div>
         <div className="flex justify-between">
           <span>{t.shipping}</span>
@@ -213,14 +213,14 @@ const Cart = ({
         <Separator />
         <div className="flex justify-between text-lg font-semibold">
           <span>{t.total}</span>
-                     <span>
-             {formatCurrency(total, language)}
-           </span>
+          <span>
+            {formatCurrency(total, language)}
+          </span>
         </div>
-                 <Button variant="default" size="lg" className="w-full font-semibold" onClick={onCheckout}>
-           <Lock className="h-4 w-4 mr-2" />
-           {t.checkout}
-         </Button>
+        <Button variant="default" size="lg" className="w-full font-semibold" onClick={onCheckout}>
+          <Lock className="h-4 w-4 mr-2" />
+          {t.checkout}
+        </Button>
       </div>
     </div>
   );

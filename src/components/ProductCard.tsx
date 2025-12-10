@@ -25,12 +25,12 @@ const getImageSource = (product: Product, index: number = 0): string => {
   if (product.cloudinaryImages && product.cloudinaryImages.length > index) {
     return product.cloudinaryImages[index].responsiveUrls.medium;
   }
-  
+
   // Fallback to legacy images
   if (product.images && product.images.length > index) {
     return product.images[index];
   }
-  
+
   return '/placeholder.svg';
 };
 
@@ -51,7 +51,7 @@ const renderProductImage = (product: Product, index: number, alt: string, classN
       />
     );
   }
-  
+
   // Fallback to legacy images
   if (product.images && product.images.length > index) {
     return (
@@ -63,7 +63,7 @@ const renderProductImage = (product: Product, index: number, alt: string, classN
       />
     );
   }
-  
+
   // Placeholder
   return (
     <img
@@ -95,7 +95,7 @@ const getColorHex = (colorName: string): string => {
     'Xám nhạt': '#d1d5db',
     'Bạc': '#c0c0c0',
     'Vàng kim': '#ffd700',
-    
+
     // English colors
     'Red': '#ef4444',
     'Blue': '#3b82f6',
@@ -113,7 +113,7 @@ const getColorHex = (colorName: string): string => {
     'Light Gray': '#d1d5db',
     'Silver': '#c0c0c0',
     'Gold': '#ffd700',
-    
+
     // Japanese colors
     '赤': '#ef4444',
     '青': '#3b82f6',
@@ -132,12 +132,12 @@ const getColorHex = (colorName: string): string => {
     'シルバー': '#c0c0c0',
     'ゴールド': '#ffd700',
   };
-  
+
   // Check if it's already a hex color
   if (colorName.startsWith('#')) {
     return colorName;
   }
-  
+
   // Return mapped color or default gray
   return colorMap[colorName] || '#6b7280';
 };
@@ -187,7 +187,7 @@ const ProductCard = ({ product, viewMode = 'grid', onAddToCart, onAddToWishlist,
   const handleAddToWishlist = (e: React.MouseEvent) => {
     e.stopPropagation();
     onAddToWishlist?.(product);
-    
+
     // Show toast notification using centralized translation
     toast({
       title: t('success'),
@@ -198,13 +198,13 @@ const ProductCard = ({ product, viewMode = 'grid', onAddToCart, onAddToWishlist,
   const handleAddToCompare = (e: React.MouseEvent) => {
     e.stopPropagation();
     onAddToCompare?.(product);
-    
+
     // Show toast notification
     toast({
       title: language === 'vi' ? "Thành công" : language === 'ja' ? "成功" : "Success",
-      description: language === 'vi' ? "Đã thêm vào danh sách so sánh" : 
-                   language === 'ja' ? "比較リストに追加されました" : 
-                   "Added to compare list",
+      description: language === 'vi' ? "Đã thêm vào danh sách so sánh" :
+        language === 'ja' ? "比較リストに追加されました" :
+          "Added to compare list",
     });
   };
 
@@ -221,26 +221,26 @@ const ProductCard = ({ product, viewMode = 'grid', onAddToCart, onAddToWishlist,
     return (
       <Card className="group overflow-hidden border-stone-200/60 dark:border-stone-700/60 hover:shadow-2xl hover:shadow-primary/10 hover:border-primary/20 dark:hover:border-primary/30 transition-all duration-500 cursor-pointer rounded-xl bg-gradient-to-br from-white via-white to-stone-50/50 dark:from-stone-800 dark:via-stone-800 dark:to-stone-900/50 backdrop-blur-sm hover:scale-[1.01]" onClick={handleCardClick}>
         <div className="flex">
-          <div className="relative w-48 h-48 flex-shrink-0 rounded-l-xl overflow-hidden bg-gradient-to-br from-stone-100 to-stone-200 dark:from-stone-700 dark:to-stone-800">
+          <div className="relative w-48 min-h-48 flex-shrink-0 rounded-l-xl overflow-hidden bg-gradient-to-br from-stone-100 to-stone-200 dark:from-stone-700 dark:to-stone-800">
             {/* Gradient Overlay on Hover */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-10"></div>
             {/* Primary Image - Default */}
             {renderProductImage(product, 0, productName, "w-full h-full object-cover transition-all duration-700 group-hover:opacity-0 group-hover:scale-110")}
-            
+
             {/* Secondary Image - On Hover */}
             {getImageSource(product, 1) !== '/placeholder.svg' && (
               <div className="absolute inset-0 w-full h-full transition-all duration-700 opacity-0 group-hover:opacity-100">
                 {renderProductImage(product, 1, productName, "w-full h-full object-cover transition-transform duration-700 group-hover:scale-110")}
               </div>
             )}
-            
+
             {/* Fallback: If no second image, show zoom effect on first image */}
             {getImageSource(product, 1) === '/placeholder.svg' && (
               <div className="absolute inset-0 w-full h-full transition-all duration-700 opacity-0 group-hover:opacity-100">
                 {renderProductImage(product, 0, productName, "w-full h-full object-cover transition-transform duration-700 group-hover:scale-125")}
               </div>
             )}
-            
+
             {/* Badges Container - Left side only to avoid covering action buttons */}
             <div className="absolute top-3 left-3 z-30 flex flex-col gap-2 max-w-[120px]">
               {/* Stock Status - Highest priority */}
@@ -249,35 +249,35 @@ const ProductCard = ({ product, viewMode = 'grid', onAddToCart, onAddToWishlist,
                   {language === 'vi' ? 'Hết hàng' : language === 'ja' ? '在庫切れ' : 'Out of Stock'}
                 </Badge>
               )}
-              
+
               {/* Sale Badge - Show when on sale and in stock */}
               {product.stock > 0 && isOnSale && discountPercentage > 0 && (
                 <Badge variant="destructive" className="bg-gradient-to-r from-red-500 to-red-600 text-white border-0 backdrop-blur-md shadow-lg font-semibold text-xs px-2.5 py-1 hover:from-red-600 hover:to-red-700 transition-all duration-300">
                   -{discountPercentage}% {language === 'vi' ? 'GIẢM' : language === 'ja' ? 'セール' : 'OFF'}
                 </Badge>
               )}
-              
+
               {/* Limited Edition Badge - When not on sale and not stock issue */}
               {product.stock > 0 && !isOnSale && product.isLimitedEdition && (
                 <Badge className="bg-gradient-to-r from-purple-500 to-purple-600 text-white border-0 backdrop-blur-md shadow-lg font-semibold text-xs px-2.5 py-1 hover:from-purple-600 hover:to-purple-700 transition-all duration-300">
                   {language === 'vi' ? 'Giới hạn' : language === 'ja' ? '限定' : 'Limited'}
                 </Badge>
               )}
-              
+
               {/* Featured Badge - When not on sale and not stock issue */}
               {product.stock > 0 && !isOnSale && product.isFeatured && (
                 <Badge variant="default" className="bg-gradient-to-r from-stone-700 to-stone-800 dark:from-stone-300 dark:to-stone-400 text-white dark:text-stone-900 border-0 backdrop-blur-md shadow-lg font-semibold text-xs px-2.5 py-1 hover:from-stone-800 hover:to-stone-900 dark:hover:from-stone-400 dark:hover:to-stone-500 transition-all duration-300">
                   {language === 'vi' ? 'Nổi bật' : language === 'ja' ? 'おすすめ' : 'Featured'}
                 </Badge>
               )}
-              
+
               {/* New Badge - When not on sale and not stock issue */}
               {product.stock > 0 && !isOnSale && product.isNew && (
                 <Badge className="bg-gradient-to-r from-green-500 to-emerald-600 text-white border-0 backdrop-blur-md shadow-lg font-semibold text-xs px-2.5 py-1 hover:from-green-600 hover:to-emerald-700 transition-all duration-300 animate-pulse">
                   {language === 'vi' ? 'MỚI' : language === 'ja' ? '新着' : 'NEW'}
                 </Badge>
               )}
-              
+
               {/* Best Seller Badge - When not on sale and not stock issue */}
               {product.stock > 0 && !isOnSale && product.isBestSeller && (
                 <Badge className="bg-gradient-to-r from-orange-500 to-amber-600 text-white border-0 backdrop-blur-md shadow-lg font-semibold text-xs px-2.5 py-1 hover:from-orange-600 hover:to-amber-700 transition-all duration-300">
@@ -312,29 +312,28 @@ const ProductCard = ({ product, viewMode = 'grid', onAddToCart, onAddToWishlist,
               )}
             </div>
           </div>
-          
+
           <CardContent className="flex-1 p-5 pb-4 bg-gradient-to-b from-transparent to-stone-50/30 dark:to-stone-900/30 overflow-hidden relative z-10">
             <div className="flex flex-col h-full min-h-0">
               <div className="space-y-3 flex-1 min-h-0 overflow-hidden">
                 <h3 className="font-semibold text-lg leading-tight mb-2.5 text-stone-900 dark:text-stone-100 group-hover:text-primary dark:group-hover:text-primary transition-colors duration-300 line-clamp-2 min-h-[3rem]">{productName}</h3>
                 <div className="text-muted-foreground text-sm line-clamp-3 flex-shrink-0">
-                  <MarkdownRenderer 
+                  <MarkdownRenderer
                     content={productDescription || 'Premium Japanese fashion item with authentic design and quality materials.'}
                     className="text-sm"
                   />
                 </div>
-                
+
                 {/* Rating - Enhanced */}
                 <div className="flex items-center gap-2 flex-shrink-0">
                   <div className="flex items-center gap-0.5">
                     {[1, 2, 3, 4, 5].map((star) => (
                       <Star
                         key={star}
-                        className={`h-3.5 w-3.5 transition-all duration-300 ${
-                          star <= 4 // Mock rating of 4 stars
+                        className={`h-3.5 w-3.5 transition-all duration-300 ${star <= 4 // Mock rating of 4 stars
                             ? 'text-yellow-400 fill-current group-hover:text-yellow-500 group-hover:scale-110'
                             : 'text-gray-300 dark:text-gray-600'
-                        }`}
+                          }`}
                       />
                     ))}
                   </div>
@@ -342,7 +341,7 @@ const ProductCard = ({ product, viewMode = 'grid', onAddToCart, onAddToWishlist,
                     (4.0)
                   </span>
                 </div>
-                  
+
                 {/* Colors - Enhanced */}
                 <div className="flex-shrink-0">
                   <p className="text-xs font-medium text-stone-700 dark:text-stone-300 mb-1.5">
@@ -353,15 +352,15 @@ const ProductCard = ({ product, viewMode = 'grid', onAddToCart, onAddToWishlist,
                     {product.colors && product.colors.length > 0 ? (
                       <>
                         {product.colors.slice(0, 4).map((color, index) => (
-                      <div
+                          <div
                             key={index}
                             className="w-5 h-5 rounded-full border-2 border-white dark:border-stone-700 shadow-md hover:scale-125 hover:shadow-lg transition-all duration-300 cursor-pointer flex-shrink-0"
-                        style={{ 
+                            style={{
                               backgroundColor: getColorHex(color)
                             }}
                             title={color}
-                      />
-                    ))}
+                          />
+                        ))}
                         {product.colors.length > 4 && (
                           <span className="text-xs font-medium text-muted-foreground flex items-center flex-shrink-0">
                             +{product.colors.length - 4}
@@ -381,19 +380,19 @@ const ProductCard = ({ product, viewMode = 'grid', onAddToCart, onAddToWishlist,
                     )}
                   </div>
                 </div>
-                
+
                 {/* Stock Status */}
                 <p className="text-sm font-medium text-muted-foreground flex-shrink-0">
-                  {product.stock > 0 ? 
-                    (language === 'vi' ? `${product.stock} còn lại` : 
-                     language === 'ja' ? `残り${product.stock}個` : 
-                     `${product.stock} left`) : 
-                    (language === 'vi' ? 'Hết hàng' : 
-                     language === 'ja' ? '在庫切れ' : 
-                     'Out of stock')}
+                  {product.stock > 0 ?
+                    (language === 'vi' ? `${product.stock} còn lại` :
+                      language === 'ja' ? `残り${product.stock}個` :
+                        `${product.stock} left`) :
+                    (language === 'vi' ? 'Hết hàng' :
+                      language === 'ja' ? '在庫切れ' :
+                        'Out of stock')}
                 </p>
               </div>
-              
+
               <div className="flex items-center justify-between pt-3 border-t border-stone-200/50 dark:border-stone-700/50 flex-shrink-0 gap-2">
                 <div className="flex items-center space-x-2 min-w-0 flex-shrink">
                   <span className="text-2xl font-bold bg-gradient-to-r from-red-600 to-red-500 bg-clip-text text-transparent">
@@ -405,17 +404,17 @@ const ProductCard = ({ product, viewMode = 'grid', onAddToCart, onAddToWishlist,
                     </span>
                   )}
                 </div>
-                  
-                  <Button
-                    onClick={handleAddToCart}
-                    disabled={product.stock <= 0}
-                    className="bg-gradient-to-r from-stone-700 to-stone-800 dark:from-stone-600 dark:to-stone-700 hover:from-stone-800 hover:to-stone-900 dark:hover:from-stone-500 dark:hover:to-stone-600 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 font-medium hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
-                    size="sm"
-                    variant="default"
-                  >
-                    <ShoppingBag className="mr-2 h-4 w-4 flex-shrink-0" />
-                    <span className="truncate">{language === 'vi' ? 'Thêm vào giỏ' : language === 'ja' ? 'カートに追加' : 'Add to Cart'}</span>
-                  </Button>
+
+                <Button
+                  onClick={handleAddToCart}
+                  disabled={product.stock <= 0}
+                  className="bg-gradient-to-r from-stone-700 to-stone-800 dark:from-stone-600 dark:to-stone-700 hover:from-stone-800 hover:to-stone-900 dark:hover:from-stone-500 dark:hover:to-stone-600 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 font-medium hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+                  size="sm"
+                  variant="default"
+                >
+                  <ShoppingBag className="mr-2 h-4 w-4 flex-shrink-0" />
+                  <span className="truncate">{language === 'vi' ? 'Thêm vào giỏ' : language === 'ja' ? 'カートに追加' : 'Add to Cart'}</span>
+                </Button>
               </div>
             </div>
           </CardContent>
@@ -432,21 +431,21 @@ const ProductCard = ({ product, viewMode = 'grid', onAddToCart, onAddToWishlist,
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-10"></div>
         {/* Primary Image - Default */}
         {renderProductImage(product, 0, productName, "w-full h-full object-cover transition-all duration-700 group-hover:opacity-0 group-hover:scale-110")}
-        
+
         {/* Secondary Image - On Hover */}
         {getImageSource(product, 1) !== '/placeholder.svg' && (
           <div className="absolute inset-0 w-full h-full transition-all duration-700 opacity-0 group-hover:opacity-100">
             {renderProductImage(product, 1, productName, "w-full h-full object-cover transition-transform duration-700 group-hover:scale-110")}
           </div>
         )}
-        
+
         {/* Fallback: If no second image, show zoom effect on first image */}
         {getImageSource(product, 1) === '/placeholder.svg' && (
           <div className="absolute inset-0 w-full h-full transition-all duration-700 opacity-0 group-hover:opacity-100">
             {renderProductImage(product, 0, productName, "w-full h-full object-cover transition-transform duration-700 group-hover:scale-125")}
           </div>
         )}
-        
+
         {/* Badges Container - Left side only to avoid covering action buttons */}
         <div className="absolute top-3 left-3 z-30 flex flex-col gap-2">
           {/* Stock Status - Highest priority */}
@@ -455,35 +454,35 @@ const ProductCard = ({ product, viewMode = 'grid', onAddToCart, onAddToWishlist,
               {language === 'vi' ? 'Hết hàng' : language === 'ja' ? '在庫切れ' : 'Out of Stock'}
             </Badge>
           )}
-          
+
           {/* Sale Badge - Show when on sale and in stock */}
           {product.stock > 0 && isOnSale && discountPercentage > 0 && (
             <Badge variant="destructive" className="bg-gradient-to-r from-red-500 to-red-600 text-white border-0 backdrop-blur-md shadow-lg font-semibold text-xs px-2.5 py-1 hover:from-red-600 hover:to-red-700 transition-all duration-300">
               -{discountPercentage}% {language === 'vi' ? 'GIẢM' : language === 'ja' ? 'セール' : 'OFF'}
             </Badge>
           )}
-          
+
           {/* Limited Edition Badge - When not on sale */}
           {product.stock > 0 && !isOnSale && product.isLimitedEdition && (
             <Badge className="bg-gradient-to-r from-purple-500 to-purple-600 text-white border-0 backdrop-blur-md shadow-lg font-semibold text-xs px-2.5 py-1 hover:from-purple-600 hover:to-purple-700 transition-all duration-300">
               {language === 'vi' ? 'Giới hạn' : language === 'ja' ? '限定' : 'Limited'}
             </Badge>
           )}
-          
+
           {/* Featured Badge */}
           {product.stock > 0 && product.isFeatured && (
             <Badge variant="default" className="bg-gradient-to-r from-stone-700 to-stone-800 dark:from-stone-300 dark:to-stone-400 text-white dark:text-stone-900 border-0 backdrop-blur-md shadow-lg font-semibold text-xs px-2.5 py-1 hover:from-stone-800 hover:to-stone-900 dark:hover:from-stone-400 dark:hover:to-stone-500 transition-all duration-300">
               {language === 'vi' ? 'Nổi bật' : language === 'ja' ? 'おすすめ' : 'Featured'}
             </Badge>
           )}
-          
+
           {/* New Badge */}
           {product.stock > 0 && product.isNew && (
             <Badge className="bg-gradient-to-r from-green-500 to-emerald-600 text-white border-0 backdrop-blur-md shadow-lg font-semibold text-xs px-2.5 py-1 hover:from-green-600 hover:to-emerald-700 transition-all duration-300 animate-pulse">
               {language === 'vi' ? 'MỚI' : language === 'ja' ? '新着' : 'NEW'}
             </Badge>
           )}
-          
+
           {/* Best Seller Badge */}
           {product.stock > 0 && product.isBestSeller && (
             <Badge className="bg-gradient-to-r from-orange-500 to-amber-600 text-white border-0 backdrop-blur-md shadow-lg font-semibold text-xs px-2.5 py-1 hover:from-orange-600 hover:to-amber-700 transition-all duration-300">
@@ -491,7 +490,7 @@ const ProductCard = ({ product, viewMode = 'grid', onAddToCart, onAddToWishlist,
             </Badge>
           )}
         </div>
-        
+
         {/* Action Icons - Enhanced Style */}
         <div className="absolute top-2 right-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 z-30">
           {onAddToWishlist && (
@@ -518,34 +517,33 @@ const ProductCard = ({ product, viewMode = 'grid', onAddToCart, onAddToWishlist,
           )}
         </div>
       </div>
-      
+
       {/* Content Section - Flexible height with proper spacing */}
       <CardContent className="p-4 pb-4 flex-1 flex flex-col min-h-0 bg-gradient-to-b from-transparent to-stone-50/30 dark:to-stone-900/30 overflow-hidden relative z-10">
         <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
           {/* Product Name */}
           <h3 className="font-semibold text-base leading-tight mb-2 text-stone-900 dark:text-stone-100 group-hover:text-primary dark:group-hover:text-primary transition-colors duration-300 line-clamp-2 flex-shrink-0">
-                {productName}
+            {productName}
           </h3>
-            
+
           {/* Product Description - Compact */}
           <div className="text-muted-foreground text-xs line-clamp-2 mb-2 leading-relaxed flex-shrink-0">
-            <MarkdownRenderer 
+            <MarkdownRenderer
               content={productDescription || 'Premium Japanese fashion item with authentic design and quality materials.'}
               className="text-xs"
             />
           </div>
-            
+
           {/* Rating - Enhanced */}
           <div className="flex items-center gap-2 mb-2 flex-shrink-0">
             <div className="flex items-center gap-0.5">
-                {[1, 2, 3, 4, 5].map((star) => (
+              {[1, 2, 3, 4, 5].map((star) => (
                 <Star
                   key={star}
-                  className={`h-3.5 w-3.5 transition-all duration-300 ${
-                    star <= 4 // Mock rating of 4 stars
+                  className={`h-3.5 w-3.5 transition-all duration-300 ${star <= 4 // Mock rating of 4 stars
                       ? 'text-yellow-400 fill-current group-hover:text-yellow-500 group-hover:scale-110'
                       : 'text-gray-300 dark:text-gray-600'
-                  }`}
+                    }`}
                 />
               ))}
             </div>
@@ -553,26 +551,26 @@ const ProductCard = ({ product, viewMode = 'grid', onAddToCart, onAddToWishlist,
               (4.0)
             </span>
           </div>
-              
+
           {/* Colors - Enhanced */}
           <div className="mb-2 flex-shrink-0">
             <p className="text-xs font-medium text-stone-700 dark:text-stone-300 mb-1.5">
               {language === 'vi' ? 'Màu sắc' : language === 'ja' ? '色' : 'Colors'}:
             </p>
-              <div className="flex gap-2 flex-wrap">
+            <div className="flex gap-2 flex-wrap">
               {/* Show actual colors if available */}
               {product.colors && product.colors.length > 0 ? (
                 <>
                   {product.colors.slice(0, 4).map((color, index) => (
-                  <div
+                    <div
                       key={index}
                       className="w-5 h-5 rounded-full border-2 border-white dark:border-stone-700 shadow-md hover:scale-125 hover:shadow-lg transition-all duration-300 cursor-pointer flex-shrink-0"
-                    style={{ 
+                      style={{
                         backgroundColor: getColorHex(color)
                       }}
                       title={color}
-                  />
-                ))}
+                    />
+                  ))}
                   {product.colors.length > 4 && (
                     <span className="text-xs font-medium text-muted-foreground flex items-center flex-shrink-0">
                       +{product.colors.length - 4}
@@ -593,21 +591,21 @@ const ProductCard = ({ product, viewMode = 'grid', onAddToCart, onAddToWishlist,
             </div>
           </div>
         </div>
-        
+
         {/* Price and Button - Fixed at bottom */}
         <div className="mt-auto pt-3 pb-0 border-t border-stone-200/50 dark:border-stone-700/50 flex-shrink-0">
           {/* Price */}
           <div className="flex items-center gap-2 mb-2 flex-wrap">
             <span className="text-xl font-bold bg-gradient-to-r from-red-600 to-red-500 bg-clip-text text-transparent">
-                {formatCurrency(displayPrice, language)}
+              {formatCurrency(displayPrice, language)}
+            </span>
+            {originalDisplayPrice && originalDisplayPrice > displayPrice && (
+              <span className="text-sm text-muted-foreground line-through opacity-60 flex-shrink-0">
+                {formatCurrency(originalDisplayPrice, language)}
               </span>
-              {originalDisplayPrice && originalDisplayPrice > displayPrice && (
-                <span className="text-sm text-muted-foreground line-through opacity-60 flex-shrink-0">
-                  {formatCurrency(originalDisplayPrice, language)}
-                </span>
-              )}
+            )}
           </div>
-          
+
           {/* Add to Cart Button - Enhanced */}
           <Button
             onClick={handleAddToCart}
@@ -622,7 +620,7 @@ const ProductCard = ({ product, viewMode = 'grid', onAddToCart, onAddToWishlist,
         </div>
       </CardContent>
     </Card>
-    );
+  );
 };
 
 // Memoize component to prevent unnecessary re-renders

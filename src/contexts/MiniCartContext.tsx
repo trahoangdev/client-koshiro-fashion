@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
-import { CartItem } from '@/types/cart';
+import { CartItem } from '@/lib/api';
 import { Product } from '@/lib/api';
 
 interface MiniCartContextType {
@@ -30,13 +30,12 @@ export const MiniCartProvider: React.FC<MiniCartProviderProps> = ({ children }) 
 
   const openMiniCart = useCallback((product: Product, quantity: number = 1, size?: string, color?: string) => {
     const cartItem: CartItem = {
-      productId: product._id,
       product,
       quantity,
-      selectedSize: size,
-      selectedColor: color,
+      selectedSize: size || '',
+      selectedColor: color || '',
     };
-    
+
     setAddedProduct(cartItem);
     setIsOpen(true);
   }, []);

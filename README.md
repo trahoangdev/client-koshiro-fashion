@@ -1,93 +1,114 @@
+# Koshiro Fashion Client
 
-# Koshiro Fashion – E-commerce Platform
+A modern, Japanese-inspired e-commerce frontend built with React, TypeScript, and Vite. This application features a premium, responsive design with comprehensive shopping functionality.
 
-A modern e-commerce website built with React, TypeScript, and Tailwind CSS.
+## 🚀 Technologies
 
-## Project Overview
+- **Framework**: [React](https://react.dev/) + [Vite](https://vitejs.dev/)
+- **Language**: [TypeScript](https://www.typescriptlang.org/)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+- **UI Components**: [shadcn/ui](https://ui.shadcn.com/)
+- **Icons**: [Lucide React](https://lucide.dev/)
+- **State Management**: [TanStack Query (React Query)](https://tanstack.com/query/latest)
+- **Routing**: [React Router DOM](https://reactrouter.com/)
+- **Forms**: [React Hook Form](https://react-hook-form.com/) + [Zod](https://zod.dev/)
+- **Internationalization**: Custom `LanguageContext` (En, Vi, Ja)
 
-This is a Japanese-style fashion e-commerce website featuring a clean, modern design with dark/light theme support.
+## ✨ Key Features
 
-## Technologies Used
+- **Storefront**:
+  - 🎨 **Premium UI/UX**: Minimalist, Japanese-aesthetic design with glassmorphism and smooth animations.
+  - 📱 **Fully Responsive**: Optimized for all devices, including a custom portal-based **Enhanced Mobile Menu**.
+  - 🛍️ **Product Catalog**: Advanced filtering, search with autocomplete, and detailed product views.
+  - 🛒 **Shopping Cart**: Real-time cart management with a slide-out mini-cart.
+  - ❤️ **Wishlist**: Save favorite items for later.
 
-- **Frontend**: React 18 with TypeScript
-- **Styling**: Tailwind CSS with shadcn/ui components
-- **Build Tool**: Vite
-- **Routing**: React Router DOM
-- **State Management**: React Query (TanStack Query)
-- **Form Handling**: React Hook Form with Zod validation
-- **Icons**: Lucide React
-- **UI Components**: Radix UI primitives with shadcn/ui
+- **Localization**:
+  - 🌍 **Multi-language Support**: Seamless switching between English, Vietnamese, and Japanese.
+  - 🇯🇵 **Cultural Adaptation**: Specialized content for different regions.
 
-## Getting Started
+- **User Experience**:
+  - 🌓 **Dark/Light Mode**: System-aware theme switching.
+  - ⚡ **Performance**: Optimized load times and interaction states.
+  - 🔒 **Authentication**: Secure login/registration flows with JWT integration.
+
+- **Customer Dashboard**:
+  - 📦 **Order Tracking**: Real-time status updates.
+  - 👤 **Profile Management**: Address book, order history, and settings.
+
+## 🛠️ Installation & Setup
 
 ### Prerequisites
+- Node.js (v18+)
+- npm or pnpm
 
-- Node.js (version 18 or higher)
-- npm or yarn
+### Steps
 
-### Installation
+1.  **Clone the repository**
+    ```bash
+    git clone <repository-url>
+    cd Client
+    ```
 
-1. Clone the repository:
-```bash
-git clone <repository-url>
-cd koshiro-japan-style-fashion
+2.  **Install dependencies**
+    ```bash
+    npm install
+    # or
+    pnpm install
+    ```
+
+3.  **Environment Configuration**
+    Create a `.env` file in the root directory:
+    ```env
+    VITE_API_URL=http://localhost:3000/api
+    ```
+
+4.  **Run Development Server**
+    ```bash
+    npm run dev
+    ```
+    The app will be available at `http://localhost:8080` (or similar).
+
+5.  **Build for Production**
+    ```bash
+    npm run build
+    ```
+
+## 📂 Project Structure
+
+```
+Client/
+├── src/
+│   ├── components/    # Reusable UI components
+│   │   ├── ui/        # Shadcn base components
+│   │   └── ...        # Feature components (Header, Footer, etc.)
+│   ├── contexts/      # Global state (Auth, Language, Cart, Theme)
+│   ├── hooks/         # Custom React hooks
+│   ├── lib/           # Utilities (API, Logger, Helpers)
+│   ├── pages/         # Route components (Home, Product, Cart, etc.)
+│   ├── types/         # TypeScript definitions
+│   └── data/          # Static data assets
+├── public/            # Static assets (images, fonts)
+└── ...config files
 ```
 
-2. Install dependencies:
-```bash
-npm install
-```
+## 🔄 Recent Updates
 
-3. Start the development server:
-```bash
-npm run dev
-```
+- **Enhanced Mobile Menu**: Completely redesigned mobile navigation using React Portals to solve z-index stacking issues. Features include expandable submenus, quick actions, and improved touch targets.
+- **Server Integration**: Robust API integration with the Koshiro backend, including synchronized cart state.
+- **Logger**: Centralized logging utility for consistent debugging and monitoring.
 
-4. Open your browser and navigate to `http://localhost:8080`
+## 🤝 Contributing
 
-## Available Scripts
+1.  Fork the repository
+2.  Create a feature branch (`git checkout -b feature/AmazingFeature`)
+3.  Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4.  Push to the branch (`git push origin feature/AmazingFeature`)
+5.  Open a Pull Request
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run build:dev` - Build for development
-- `npm run lint` - Run ESLint
-- `npm run preview` - Preview production build
+## 📄 License
 
-## Project Structure
+Distributed under the MIT License. See `LICENSE` for more information.
 
-```
-src/
-├── components/     # Reusable UI components
-├── pages/         # Page components
-├── hooks/         # Custom React hooks
-├── lib/           # Utility functions
-├── types/         # TypeScript type definitions
-├── data/          # Static data and mock data
-└── assets/        # Images and static assets
-```
-
-## Features
-
-- 🛍️ Product catalog with filtering
-- 🛒 Shopping cart functionality
-- 🌙 Dark/Light theme toggle
-- 📱 Responsive design
-- ⚡ Fast development with Vite
-- 🎨 Modern UI with shadcn/ui components
-- 🔍 Product search and filtering
-- 👤 User profile management
-- 📊 Admin dashboard (in development)
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Submit a pull request
-
-## License
-
-This project is open source and available under the [MIT License](LICENSE).
-
-
-Made with love by trahoangdev
+---
+*Made with ❤️ by the Koshiro Engineering Team (trahoangdev)*

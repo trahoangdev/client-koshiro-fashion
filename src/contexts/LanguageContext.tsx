@@ -37,7 +37,7 @@ const translations = {
     yes: 'Có',
     no: 'Không',
     ok: 'OK',
-    
+
     // Notifications
     addedToWishlist: 'Đã thêm vào danh sách yêu thích',
     removedFromWishlist: 'Đã xóa khỏi danh sách yêu thích',
@@ -49,7 +49,7 @@ const translations = {
     loginSuccess: 'Đăng nhập thành công',
     logoutSuccess: 'Đăng xuất thành công',
     registrationSuccess: 'Đăng ký thành công',
-    
+
     // Errors
     errorLoading: 'Lỗi tải dữ liệu',
     errorSaving: 'Lỗi lưu dữ liệu',
@@ -60,7 +60,16 @@ const translations = {
     unauthorized: 'Không có quyền truy cập',
     notFound: 'Không tìm thấy',
     validationError: 'Lỗi xác thực',
-    
+
+    // Cart Operations
+    pleaseLoginToAddToCart: 'Vui lòng đăng nhập để thêm vào giỏ hàng',
+    pleaseLogin: 'Vui lòng đăng nhập',
+    unableToAddToCart: 'Không thể thêm vào giỏ hàng',
+    unableToRemoveFromCart: 'Không thể xóa khỏi giỏ hàng',
+    quantityMustBeGreaterThanZero: 'Số lượng phải lớn hơn 0',
+    quantityUpdated: 'Đã cập nhật số lượng',
+    unableToUpdateQuantity: 'Không thể cập nhật số lượng',
+
     // Form validation
     required: 'Trường này là bắt buộc',
     invalidEmail: 'Email không hợp lệ',
@@ -68,7 +77,7 @@ const translations = {
     passwordTooShort: 'Mật khẩu quá ngắn',
     passwordMismatch: 'Mật khẩu không khớp',
     invalidFormat: 'Định dạng không hợp lệ',
-    
+
     // Status
     pending: 'Chờ xử lý',
     processing: 'Đang xử lý',
@@ -80,18 +89,18 @@ const translations = {
     inactive: 'Không hoạt động',
     inStock: 'Còn hàng',
     outOfStock: 'Hết hàng',
-    
+
     // Currency
     currency: 'VND',
     currencySymbol: '₫',
-    
+
     // Date/Time
     today: 'Hôm nay',
     yesterday: 'Hôm qua',
     thisWeek: 'Tuần này',
     thisMonth: 'Tháng này',
     thisYear: 'Năm nay',
-    
+
     // Navigation
     home: 'Trang chủ',
     products: 'Sản phẩm',
@@ -107,7 +116,21 @@ const translations = {
     logout: 'Đăng xuất',
     login: 'Đăng nhập',
     register: 'Đăng ký',
-    
+    tops: 'Áo',
+    bottoms: 'Quần',
+    accessories: 'Phụ kiện',
+    kimono: 'Kimono',
+    yukata: 'Yukata',
+    hakama: 'Hakama',
+    sale: 'Khuyến mãi',
+    account: 'Tài khoản',
+    addresses: 'Địa chỉ',
+    payment: 'Thanh toán',
+    notifications: 'Thông báo',
+    guest: 'Khách',
+    about: 'Giới thiệu',
+    contact: 'Liên hệ',
+
     // Admin specific
     manageProducts: 'Quản lý sản phẩm',
     manageCategories: 'Quản lý danh mục',
@@ -118,7 +141,7 @@ const translations = {
     recentOrders: 'Đơn hàng gần đây',
     fromLastMonth: 'từ tháng trước',
     revenue: 'Doanh thu',
-    
+
     // Actions
     viewDetails: 'Xem chi tiết',
     addToCart: 'Thêm vào giỏ hàng',
@@ -131,7 +154,40 @@ const translations = {
     updateQuantity: 'Cập nhật số lượng',
     clearCart: 'Xóa giỏ hàng',
     clearWishlist: 'Xóa danh sách yêu thích',
-    
+
+    // Mobile Menu & Additional
+    menu: 'Menu',
+    mainMenu: 'Menu Chính',
+    quickActions: 'Thao Tác Nhanh',
+    helpSupport: 'Trợ Giúp & Hỗ Trợ',
+    specialOffers: 'Ưu Đãi Đặc Biệt',
+    viewAll: 'Xem tất cả',
+    compare: 'So sánh',
+    trackOrder: 'Theo Dõi Đơn Hàng',
+    reviews: 'Đánh Giá',
+    sizeGuide: 'Hướng Dẫn Kích Thước',
+    faq: 'Câu Hỏi Thường Gặp',
+    shippingInfo: 'Thông Tin Giao Hàng',
+    returnPolicy: 'Chính Sách Đổi Trả',
+    firstOrderDiscount: 'Giảm Giá Đơn Hàng Đầu',
+    firstOrderDescription: 'Giảm 20% cho đơn hàng đầu tiên',
+    shopNow: 'Mua Ngay',
+    stayUpdated: 'Cập Nhật Tin Tức',
+    newsletterDescription: 'Nhận xu hướng thời trang và ưu đãi mới nhất',
+    subscribeNewsletter: 'Đăng Ký Bản Tin',
+    premiumMember: 'Thành Viên Cao Cấp',
+    welcomeKoshiro: 'Chào mừng đến với Koshiro',
+    signInAccess: 'Đăng nhập để truy cập tài khoản',
+    madeWithLove: 'Được tạo với',
+    inJapan: 'tại Nhật Bản',
+    authenticJapanese: 'Thời Trang Nhật Bản Chính Hiệu',
+    language: 'Ngôn ngữ',
+    newArrivals: 'Hàng Mới Về',
+    trending: 'Đang Thịnh Hành',
+    exclusive: 'Ưu Đãi Độc Quyền',
+    flashSale: 'Flash Sale',
+    limitedTime: 'Thời Gian Có Hạn',
+
     // Messages
     noData: 'Không có dữ liệu',
     noResults: 'Không tìm thấy kết quả',
@@ -140,25 +196,25 @@ const translations = {
     noOrders: 'Không có đơn hàng',
     noProducts: 'Không có sản phẩm',
     noUsers: 'Không có người dùng',
-    
+
     // Confirmation
     confirmDelete: 'Bạn có chắc chắn muốn xóa?',
     confirmClear: 'Bạn có chắc chắn muốn xóa tất cả?',
     confirmLogout: 'Bạn có chắc chắn muốn đăng xuất?',
     confirmCancel: 'Bạn có chắc chắn muốn hủy?',
-    
+
     // Success messages
     saveSuccess: 'Lưu thành công',
     deleteSuccess: 'Xóa thành công',
     updateSuccess: 'Cập nhật thành công',
     createSuccess: 'Tạo thành công',
-    
+
     // Info messages
     processingRequest: 'Đang xử lý yêu cầu...',
     pleaseWait: 'Vui lòng chờ...',
     loadingData: 'Đang tải dữ liệu...',
     savingData: 'Đang lưu dữ liệu...',
-    
+
     // Time
     justNow: 'Vừa xong',
     minutesAgo: 'phút trước',
@@ -191,7 +247,7 @@ const translations = {
     yes: 'Yes',
     no: 'No',
     ok: 'OK',
-    
+
     // Notifications
     addedToWishlist: 'Added to wishlist',
     removedFromWishlist: 'Removed from wishlist',
@@ -203,7 +259,7 @@ const translations = {
     loginSuccess: 'Login successful',
     logoutSuccess: 'Logout successful',
     registrationSuccess: 'Registration successful',
-    
+
     // Errors
     errorLoading: 'Error loading data',
     errorSaving: 'Error saving data',
@@ -214,7 +270,16 @@ const translations = {
     unauthorized: 'Unauthorized',
     notFound: 'Not found',
     validationError: 'Validation error',
-    
+
+    // Cart Operations
+    pleaseLoginToAddToCart: 'Please login to add to cart',
+    pleaseLogin: 'Please login',
+    unableToAddToCart: 'Unable to add to cart',
+    unableToRemoveFromCart: 'Unable to remove from cart',
+    quantityMustBeGreaterThanZero: 'Quantity must be greater than 0',
+    quantityUpdated: 'Quantity updated',
+    unableToUpdateQuantity: 'Unable to update quantity',
+
     // Form validation
     required: 'This field is required',
     invalidEmail: 'Invalid email',
@@ -222,7 +287,7 @@ const translations = {
     passwordTooShort: 'Password too short',
     passwordMismatch: 'Passwords do not match',
     invalidFormat: 'Invalid format',
-    
+
     // Status
     pending: 'Pending',
     processing: 'Processing',
@@ -234,18 +299,18 @@ const translations = {
     inactive: 'Inactive',
     inStock: 'In Stock',
     outOfStock: 'Out of Stock',
-    
+
     // Currency
     currency: 'USD',
     currencySymbol: '$',
-    
+
     // Date/Time
     today: 'Today',
     yesterday: 'Yesterday',
     thisWeek: 'This Week',
     thisMonth: 'This Month',
     thisYear: 'This Year',
-    
+
     // Navigation
     home: 'Home',
     products: 'Products',
@@ -261,7 +326,21 @@ const translations = {
     logout: 'Logout',
     login: 'Login',
     register: 'Register',
-    
+    tops: 'Tops',
+    bottoms: 'Bottoms',
+    accessories: 'Accessories',
+    kimono: 'Kimono',
+    yukata: 'Yukata',
+    hakama: 'Hakama',
+    sale: 'Sale',
+    account: 'Account',
+    addresses: 'Addresses',
+    payment: 'Payment',
+    notifications: 'Notifications',
+    guest: 'Guest',
+    about: 'About',
+    contact: 'Contact',
+
     // Admin specific
     manageProducts: 'Manage Products',
     manageCategories: 'Manage Categories',
@@ -272,7 +351,7 @@ const translations = {
     recentOrders: 'Recent Orders',
     fromLastMonth: 'from last month',
     revenue: 'Revenue',
-    
+
     // Actions
     viewDetails: 'View Details',
     addToCart: 'Add to Cart',
@@ -285,7 +364,40 @@ const translations = {
     updateQuantity: 'Update Quantity',
     clearCart: 'Clear Cart',
     clearWishlist: 'Clear Wishlist',
-    
+
+    // Mobile Menu & Additional
+    menu: 'Menu',
+    mainMenu: 'Main Menu',
+    quickActions: 'Quick Actions',
+    helpSupport: 'Help & Support',
+    specialOffers: 'Special Offers',
+    viewAll: 'View All',
+    compare: 'Compare',
+    trackOrder: 'Track Order',
+    reviews: 'Reviews',
+    sizeGuide: 'Size Guide',
+    faq: 'FAQ',
+    shippingInfo: 'Shipping Info',
+    returnPolicy: 'Return Policy',
+    firstOrderDiscount: 'First Order Discount',
+    firstOrderDescription: 'Get 20% off your first purchase',
+    shopNow: 'Shop Now',
+    stayUpdated: 'Stay Updated',
+    newsletterDescription: 'Get latest fashion trends & deals',
+    subscribeNewsletter: 'Subscribe Newsletter',
+    premiumMember: 'Premium Member',
+    welcomeKoshiro: 'Welcome to Koshiro',
+    signInAccess: 'Sign in to access your account',
+    madeWithLove: 'Made with',
+    inJapan: 'in Japan',
+    authenticJapanese: 'Authentic Japanese Fashion',
+    language: 'Language',
+    newArrivals: 'New Arrivals',
+    trending: 'Trending Now',
+    exclusive: 'Exclusive Offers',
+    flashSale: 'Flash Sale',
+    limitedTime: 'Limited Time',
+
     // Messages
     noData: 'No data',
     noResults: 'No results found',
@@ -294,25 +406,25 @@ const translations = {
     noOrders: 'No orders',
     noProducts: 'No products',
     noUsers: 'No users',
-    
+
     // Confirmation
     confirmDelete: 'Are you sure you want to delete?',
     confirmClear: 'Are you sure you want to clear all?',
     confirmLogout: 'Are you sure you want to logout?',
     confirmCancel: 'Are you sure you want to cancel?',
-    
+
     // Success messages
     saveSuccess: 'Saved successfully',
     deleteSuccess: 'Deleted successfully',
     updateSuccess: 'Updated successfully',
     createSuccess: 'Created successfully',
-    
+
     // Info messages
     processingRequest: 'Processing request...',
     pleaseWait: 'Please wait...',
     loadingData: 'Loading data...',
     savingData: 'Saving data...',
-    
+
     // Time
     justNow: 'Just now',
     minutesAgo: 'minutes ago',
@@ -345,7 +457,7 @@ const translations = {
     yes: 'はい',
     no: 'いいえ',
     ok: 'OK',
-    
+
     // Notifications
     addedToWishlist: 'お気に入りに追加されました',
     removedFromWishlist: 'お気に入りから削除されました',
@@ -357,7 +469,7 @@ const translations = {
     loginSuccess: 'ログインしました',
     logoutSuccess: 'ログアウトしました',
     registrationSuccess: '登録が完了しました',
-    
+
     // Errors
     errorLoading: 'データの読み込みエラー',
     errorSaving: 'データの保存エラー',
@@ -368,7 +480,16 @@ const translations = {
     unauthorized: '認証が必要です',
     notFound: '見つかりません',
     validationError: '検証エラー',
-    
+
+    // Cart Operations
+    pleaseLoginToAddToCart: 'カートに追加するにはログインしてください',
+    pleaseLogin: 'ログインしてください',
+    unableToAddToCart: 'カートに追加できません',
+    unableToRemoveFromCart: 'カートから削除できません',
+    quantityMustBeGreaterThanZero: '数量は0より大きくなければなりません',
+    quantityUpdated: '数量を更新しました',
+    unableToUpdateQuantity: '数量を更新できません',
+
     // Form validation
     required: 'この項目は必須です',
     invalidEmail: '無効なメールアドレス',
@@ -376,7 +497,7 @@ const translations = {
     passwordTooShort: 'パスワードが短すぎます',
     passwordMismatch: 'パスワードが一致しません',
     invalidFormat: '無効な形式',
-    
+
     // Status
     pending: '保留中',
     processing: '処理中',
@@ -388,18 +509,18 @@ const translations = {
     inactive: '非アクティブ',
     inStock: '在庫あり',
     outOfStock: '在庫切れ',
-    
+
     // Currency
     currency: 'JPY',
     currencySymbol: '¥',
-    
+
     // Date/Time
     today: '今日',
     yesterday: '昨日',
     thisWeek: '今週',
     thisMonth: '今月',
     thisYear: '今年',
-    
+
     // Navigation
     home: 'ホーム',
     products: '商品',
@@ -415,7 +536,21 @@ const translations = {
     logout: 'ログアウト',
     login: 'ログイン',
     register: '登録',
-    
+    tops: 'トップス',
+    bottoms: 'ボトムス',
+    accessories: 'アクセサリー',
+    kimono: '着物',
+    yukata: '浴衣',
+    hakama: '袴',
+    sale: 'セール',
+    account: 'アカウント',
+    addresses: '住所',
+    payment: '支払い',
+    notifications: '通知',
+    guest: 'ゲスト',
+    about: '会社概要',
+    contact: 'お問い合わせ',
+
     // Admin specific
     manageProducts: '商品を管理',
     manageCategories: 'カテゴリを管理',
@@ -426,7 +561,7 @@ const translations = {
     recentOrders: '最近の注文',
     fromLastMonth: '先月から',
     revenue: '収益',
-    
+
     // Actions
     viewDetails: '詳細を見る',
     addToCart: 'カートに追加',
@@ -439,7 +574,40 @@ const translations = {
     updateQuantity: '数量を更新',
     clearCart: 'カートを空にする',
     clearWishlist: 'お気に入りを空にする',
-    
+
+    // Mobile Menu & Additional
+    menu: 'メニュー',
+    mainMenu: 'メインメニュー',
+    quickActions: 'クイックアクション',
+    helpSupport: 'ヘルプとサポート',
+    specialOffers: '特別オファー',
+    viewAll: 'すべて表示',
+    compare: '比較',
+    trackOrder: '注文追跡',
+    reviews: 'レビュー',
+    sizeGuide: 'サイズガイド',
+    faq: 'よくある質問',
+    shippingInfo: '配送情報',
+    returnPolicy: '返品ポリシー',
+    firstOrderDiscount: '初回注文割引',
+    firstOrderDescription: '初回購入で20%オフ',
+    shopNow: '今すぐ購入',
+    stayUpdated: '最新情報を取得',
+    newsletterDescription: '最新のファッショントレンドとお得な情報を入手',
+    subscribeNewsletter: 'ニュースレターを購読',
+    premiumMember: 'プレミアムメンバー',
+    welcomeKoshiro: 'Koshiroへようこそ',
+    signInAccess: 'アカウントにアクセスするにはログインしてください',
+    madeWithLove: '愛を込めて作成',
+    inJapan: '日本で',
+    authenticJapanese: '本格的な日本ファッション',
+    language: '言語',
+    newArrivals: '新着商品',
+    trending: 'トレンド',
+    exclusive: '限定オファー',
+    flashSale: 'フラッシュセール',
+    limitedTime: '期間限定',
+
     // Messages
     noData: 'データがありません',
     noResults: '結果が見つかりません',
@@ -448,25 +616,25 @@ const translations = {
     noOrders: '注文がありません',
     noProducts: '商品がありません',
     noUsers: 'ユーザーがありません',
-    
+
     // Confirmation
     confirmDelete: '削除してもよろしいですか？',
     confirmClear: 'すべて削除してもよろしいですか？',
     confirmLogout: 'ログアウトしてもよろしいですか？',
     confirmCancel: 'キャンセルしてもよろしいですか？',
-    
+
     // Success messages
     saveSuccess: '保存しました',
     deleteSuccess: '削除しました',
     updateSuccess: '更新しました',
     createSuccess: '作成しました',
-    
+
     // Info messages
     processingRequest: 'リクエストを処理中...',
     pleaseWait: 'お待ちください...',
     loadingData: 'データを読み込み中...',
     savingData: 'データを保存中...',
-    
+
     // Time
     justNow: '今',
     minutesAgo: '分前',
