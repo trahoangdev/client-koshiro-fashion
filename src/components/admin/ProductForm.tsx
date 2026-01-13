@@ -36,7 +36,7 @@ import { Category, api, Color } from "@/lib/api";
 import MDEditor from '@uiw/react-md-editor';
 import '@uiw/react-md-editor/markdown-editor.css';
 import '@/styles/markdown-editor.css';
-import CloudinaryImageUpload from './CloudinaryImageUpload';
+import CloudinaryImageUpload from '@/components/shared/CloudinaryImageUpload';
 
 interface CloudinaryImage {
   publicId: string;

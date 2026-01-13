@@ -26,7 +26,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Category } from "@/lib/api";
-import CloudinaryImageUpload from './CloudinaryImageUpload';
+import CloudinaryImageUpload from '@/components/shared/CloudinaryImageUpload';
 
 interface CloudinaryImage {
   publicId: string;

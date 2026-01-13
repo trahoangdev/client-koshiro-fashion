@@ -77,7 +77,7 @@ import { User as UserType } from "@/lib/api";
 import { formatCurrency } from "@/lib/currency";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { api } from "@/lib/api";
-import UserForm from "../components/UserForm";
+import UserForm from "@/components/admin/UserForm";
 import { exportImportService } from "@/lib/exportImportService";
 
 interface UserStats {
