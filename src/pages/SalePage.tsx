@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSettings } from "@/contexts/SettingsContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import EnhancedProductGrid from "@/components/EnhancedProductGrid";
 import { api, Product } from "@/lib/api";
@@ -29,6 +30,7 @@ const SalePage = () => {
   const [activeTab, setActiveTab] = useState<string>('all');
   const { language } = useLanguage();
   const { toast } = useToast();
+  const { settings } = useSettings();
 
   // Load sale products
   useEffect(() => {
@@ -256,7 +258,7 @@ const SalePage = () => {
               {/* Banner Background with Gradient */}
               <div className="absolute inset-0">
                 <img
-                  src="/images/banners/banner-04.png"
+                  src={settings?.banners?.sale || "/images/banners/banner-04.png"}
                   alt="Sale Banner"
                   className="w-full h-full object-cover"
                 />

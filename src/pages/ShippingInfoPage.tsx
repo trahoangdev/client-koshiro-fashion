@@ -1,5 +1,6 @@
 import React from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useSettings } from "@/contexts/SettingsContext";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Truck,
@@ -17,6 +18,7 @@ import {
 
 const ShippingInfoPage = () => {
   const { language } = useLanguage();
+  const { settings } = useSettings();
 
   const translations = {
     en: {
@@ -356,7 +358,7 @@ const ShippingInfoPage = () => {
               {/* Banner Background */}
               <div className="absolute inset-0">
                 <img
-                  src="/images/banners/banner-07.png"
+                  src={settings?.banners?.shipping || "/images/banners/banner-07.png"}
                   alt="Shipping Information Banner"
                   className="w-full h-full object-cover"
                 />

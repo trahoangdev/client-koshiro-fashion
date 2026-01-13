@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useSettings } from "@/contexts/SettingsContext";
 import { useToast } from "@/hooks/use-toast";
 import { api, Order } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,7 @@ import {
 
 const OrderTrackingPage = () => {
   const { language } = useLanguage();
+  const { settings } = useSettings();
   const { toast } = useToast();
   const [orderNumber, setOrderNumber] = useState("");
   const [order, setOrder] = useState<Order | null>(null);
@@ -182,7 +184,7 @@ const OrderTrackingPage = () => {
               {/* Banner Background */}
               <div className="absolute inset-0">
                 <img
-                  src="/images/banners/banner-03.png"
+                  src={settings?.banners?.tracking || "/images/banners/banner-03.png"}
                   alt="Order Tracking Banner"
                   className="w-full h-full object-cover"
                 />

@@ -1,5 +1,6 @@
 import React from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useSettings } from "@/contexts/SettingsContext";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   RotateCcw,
@@ -16,6 +17,7 @@ import {
 
 const ReturnsPage = () => {
   const { language } = useLanguage();
+  const { settings } = useSettings();
 
   const translations = {
     en: {
@@ -409,7 +411,7 @@ const ReturnsPage = () => {
               {/* Banner Background */}
               <div className="absolute inset-0">
                 <img
-                  src="/images/banners/banner-08.png"
+                  src={settings?.banners?.returns || "/images/banners/banner-08.png"}
                   alt="Returns & Refunds Banner"
                   className="w-full h-full object-cover"
                 />

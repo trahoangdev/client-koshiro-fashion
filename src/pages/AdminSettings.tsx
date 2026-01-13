@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { 
+import {
   Settings,
   Save,
   RefreshCw,
@@ -8,7 +8,7 @@ import {
   Globe,
   Shield,
   Database,
-  Palette,
+
   Mail,
   CreditCard,
   Truck,
@@ -49,7 +49,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { 
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -102,84 +102,10 @@ interface SystemSettings {
     enableTracking: boolean;
     shippingZones: Array<{ name: string; cost: number }>;
   };
-  appearance: {
-    theme: string;
-    primaryColor: string;
-    logoUrl: string;
-    faviconUrl: string;
-  };
+
 }
 
-// Helper function to get contrast color (black or white)
-const getContrastColor = (hexColor: string): string => {
-  // Remove # if present
-  const hex = hexColor.replace('#', '');
-  
-  // Convert to RGB
-  const r = parseInt(hex.substring(0, 2), 16);
-  const g = parseInt(hex.substring(2, 4), 16);
-  const b = parseInt(hex.substring(4, 6), 16);
-  
-  // Calculate luminance
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  
-  // Return black or white based on luminance
-  return luminance > 0.5 ? '#000000' : '#ffffff';
-};
 
-// Helper function to apply primary color preview (immediate update)
-const applyPrimaryColorPreview = (hexColor: string) => {
-  try {
-    // Convert hex to HSL
-    const hex = hexColor.replace('#', '');
-    let r: number, g: number, b: number;
-    if (hex.length === 3) {
-      const expanded = hex.split('').map(char => char + char).join('');
-      r = parseInt(expanded.substring(0, 2), 16) / 255;
-      g = parseInt(expanded.substring(2, 4), 16) / 255;
-      b = parseInt(expanded.substring(4, 6), 16) / 255;
-    } else {
-      r = parseInt(hex.substring(0, 2), 16) / 255;
-      g = parseInt(hex.substring(2, 4), 16) / 255;
-      b = parseInt(hex.substring(4, 6), 16) / 255;
-    }
-    
-    const max = Math.max(r, g, b);
-    const min = Math.min(r, g, b);
-    let h = 0, s = 0;
-    const l = (max + min) / 2;
-    
-    if (max !== min) {
-      const d = max - min;
-      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-      
-      switch (max) {
-        case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
-        case g: h = ((b - r) / d + 2) / 6; break;
-        case b: h = ((r - g) / d + 4) / 6; break;
-        default: h = 0;
-      }
-    }
-    
-    h = Math.round(h * 360);
-    s = Math.round(s * 100);
-    const lightness = Math.round(l * 100);
-    
-    const hsl = `${h} ${s}% ${lightness}%`;
-    
-    // Apply to CSS variables immediately
-    document.documentElement.style.setProperty('--primary', hsl);
-    
-    // Calculate foreground color based on lightness
-    const foregroundLightness = lightness < 50 ? 98 : 15;
-    document.documentElement.style.setProperty('--primary-foreground', `${h} ${s} ${foregroundLightness}%`);
-    
-    // Also update ring color (for focus states)
-    document.documentElement.style.setProperty('--ring', hsl);
-  } catch (err) {
-    console.error('Error applying primary color preview', err);
-  }
-};
 
 export default function AdminSettings() {
   const { toast } = useToast();
@@ -228,12 +154,7 @@ export default function AdminSettings() {
         { name: "Other Cities", cost: 80000 }
       ]
     },
-    appearance: {
-      theme: "light",
-      primaryColor: "#000000",
-      logoUrl: "/logo.png",
-      faviconUrl: "/favicon.ico"
-    }
+
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -255,7 +176,7 @@ export default function AdminSettings() {
     try {
       setIsLoading(true);
       const response = await api.getSettings();
-      
+
       // Map API response to SystemSettings format
       if (response) {
         setSettings({
@@ -296,20 +217,15 @@ export default function AdminSettings() {
             shippingZones: response.shippingZones && response.shippingZones.length > 0
               ? response.shippingZones
               : [
-                  { name: 'Ho Chi Minh City', cost: 30000 },
-                  { name: 'Hanoi', cost: 50000 },
-                  { name: 'Other Cities', cost: 80000 }
-                ]
+                { name: 'Ho Chi Minh City', cost: 30000 },
+                { name: 'Hanoi', cost: 50000 },
+                { name: 'Other Cities', cost: 80000 }
+              ]
           },
-          appearance: {
-            theme: response.theme || 'light',
-            primaryColor: response.primaryColor || '#000000',
-            logoUrl: response.logoUrl || '/logo.png',
-            faviconUrl: response.faviconUrl || '/favicon.ico'
-          }
+
         });
       }
-      
+
       setIsLoading(false);
     } catch (error) {
       console.error('Error loading settings:', error);
@@ -325,7 +241,7 @@ export default function AdminSettings() {
   const handleSaveSettings = async () => {
     try {
       setIsSaving(true);
-      
+
       // Convert SystemSettings format to API Settings format
       const settingsToSave = {
         // General Settings
@@ -337,44 +253,40 @@ export default function AdminSettings() {
         timezone: settings.general.timezone,
         currency: settings.general.currency,
         language: settings.general.language,
-        
+
         // Notification Settings
         emailNotifications: settings.notifications.emailNotifications,
         orderNotifications: settings.notifications.orderNotifications,
         stockNotifications: settings.notifications.stockNotifications,
         customerNotifications: settings.notifications.customerNotifications,
         adminNotifications: settings.notifications.adminNotifications,
-        
+
         // Security Settings
         sessionTimeout: settings.security.sessionTimeout,
         passwordMinLength: settings.security.passwordMinLength,
         requireTwoFactor: settings.security.requireTwoFactor,
         maxLoginAttempts: settings.security.maxLoginAttempts,
         enableCaptcha: settings.security.enableCaptcha,
-        
+
         // Payment Settings
         stripeEnabled: settings.payment.stripeEnabled,
         paypalEnabled: settings.payment.paypalEnabled,
         cashOnDelivery: settings.payment.cashOnDelivery,
         bankTransfer: settings.payment.bankTransfer,
-        
+
         // Shipping Settings
         freeShippingThreshold: settings.shipping.freeShippingThreshold,
         defaultShippingCost: settings.shipping.defaultShippingCost,
         enableTracking: settings.shipping.enableTracking,
         shippingZones: settings.shipping.shippingZones,
-        
-        // Appearance Settings
-        theme: settings.appearance.theme,
-        primaryColor: settings.appearance.primaryColor,
-        logoUrl: settings.appearance.logoUrl,
-        faviconUrl: settings.appearance.faviconUrl
+
+
       };
-      
+
       // Type assertion needed because settingsToSave is a partial update
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const updatedSettings = await api.updateSettings(settingsToSave as any);
-      
+
       // Reload settings to ensure sync with server
       if (updatedSettings) {
         setSettings({
@@ -415,52 +327,17 @@ export default function AdminSettings() {
             shippingZones: updatedSettings.shippingZones && updatedSettings.shippingZones.length > 0
               ? updatedSettings.shippingZones
               : settings.shipping.shippingZones
-          },
-          appearance: {
-            theme: updatedSettings.theme || settings.appearance.theme,
-            primaryColor: updatedSettings.primaryColor || settings.appearance.primaryColor,
-            logoUrl: updatedSettings.logoUrl || settings.appearance.logoUrl,
-            faviconUrl: updatedSettings.faviconUrl || settings.appearance.faviconUrl
           }
         });
       }
-      
+
       toast({
         title: language === 'vi' ? 'Thành công' : language === 'ja' ? '成功' : 'Success',
         description: language === 'vi' ? 'Cài đặt đã được lưu thành công' : language === 'ja' ? '設定が正常に保存されました' : 'Settings saved successfully',
       });
-      
+
       // Trigger settings refresh in SettingsProvider
       window.dispatchEvent(new CustomEvent('settingsUpdated'));
-      
-      // Apply primary color immediately if changed
-      if (updatedSettings?.primaryColor) {
-        applyPrimaryColorPreview(updatedSettings.primaryColor);
-      }
-      
-      // Apply logo immediately if changed
-      if (updatedSettings?.logoUrl && typeof document !== 'undefined') {
-        // Update all logo images in the page
-        const logoImages = document.querySelectorAll('img[alt*="Koshiro"], img[alt*="Japan"], img[src*="logo"]');
-        logoImages.forEach((img: HTMLImageElement) => {
-          if (img.src && (img.src.includes('koshino_logo') || img.src.includes('logo') || img.alt?.includes(updatedSettings.websiteName || ''))) {
-            img.src = updatedSettings.logoUrl;
-          }
-        });
-      }
-      
-      // Apply favicon immediately if changed
-      if (updatedSettings?.faviconUrl && typeof document !== 'undefined') {
-        const favicon = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
-        if (favicon) {
-          favicon.href = updatedSettings.faviconUrl;
-        } else {
-          const link = document.createElement('link');
-          link.rel = 'icon';
-          link.href = updatedSettings.faviconUrl;
-          document.head.appendChild(link);
-        }
-      }
     } catch (error) {
       console.error('Error saving settings:', error);
       toast({
@@ -492,7 +369,7 @@ export default function AdminSettings() {
       security: "Security",
       payment: "Payment",
       shipping: "Shipping",
-      appearance: "Appearance",
+
       save: "Save Changes",
       reset: "Reset to Default",
       loading: "Loading settings...",
@@ -522,10 +399,7 @@ export default function AdminSettings() {
       defaultShippingCost: "Default Shipping Cost",
       enableTracking: "Enable Order Tracking",
       shippingZones: "Shipping Zones",
-      theme: "Theme",
-      primaryColor: "Primary Color",
-      logoUrl: "Logo URL",
-      faviconUrl: "Favicon URL",
+
       systemStatus: "System Status",
       databaseStatus: "Database Status",
       serverStatus: "Server Status",
@@ -546,7 +420,7 @@ export default function AdminSettings() {
       security: "Bảo Mật",
       payment: "Thanh Toán",
       shipping: "Vận Chuyển",
-      appearance: "Giao Diện",
+
       save: "Lưu Thay Đổi",
       reset: "Đặt Lại Mặc Định",
       loading: "Đang tải cài đặt...",
@@ -576,10 +450,7 @@ export default function AdminSettings() {
       defaultShippingCost: "Phí Vận Chuyển Mặc Định",
       enableTracking: "Bật Theo Dõi Đơn Hàng",
       shippingZones: "Khu Vực Vận Chuyển",
-      theme: "Giao Diện",
-      primaryColor: "Màu Chủ Đạo",
-      logoUrl: "URL Logo",
-      faviconUrl: "URL Favicon",
+
       systemStatus: "Trạng Thái Hệ Thống",
       databaseStatus: "Trạng Thái Cơ Sở Dữ Liệu",
       serverStatus: "Trạng Thái Máy Chủ",
@@ -600,7 +471,7 @@ export default function AdminSettings() {
       security: "セキュリティ",
       payment: "決済",
       shipping: "配送",
-      appearance: "外観",
+
       save: "変更を保存",
       reset: "デフォルトにリセット",
       loading: "設定を読み込み中...",
@@ -630,10 +501,7 @@ export default function AdminSettings() {
       defaultShippingCost: "デフォルト送料",
       enableTracking: "注文追跡を有効化",
       shippingZones: "配送地域",
-      theme: "テーマ",
-      primaryColor: "プライマリカラー",
-      logoUrl: "ロゴURL",
-      faviconUrl: "ファビコンURL",
+
       systemStatus: "システムステータス",
       databaseStatus: "データベースステータス",
       serverStatus: "サーバーステータス",
@@ -742,7 +610,7 @@ export default function AdminSettings() {
 
         {/* Settings Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="general" className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
               {tl.general}
@@ -763,10 +631,7 @@ export default function AdminSettings() {
               <Truck className="h-4 w-4" />
               {tl.shipping}
             </TabsTrigger>
-            <TabsTrigger value="appearance" className="flex items-center gap-2">
-              <Palette className="h-4 w-4" />
-              {tl.appearance}
-            </TabsTrigger>
+
           </TabsList>
 
           <TabsContent value="general" className="space-y-4">
@@ -1295,310 +1160,7 @@ export default function AdminSettings() {
             </div>
           </TabsContent>
 
-          <TabsContent value="appearance" className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Palette className="h-5 w-5" />
-                    Theme & Colors
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="theme">{tl.theme}</Label>
-                    <Select
-                      value={settings.appearance.theme}
-                      onValueChange={(value) => setSettings(prev => ({
-                        ...prev,
-                        appearance: { ...prev.appearance, theme: value }
-                      }))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="light">Light</SelectItem>
-                        <SelectItem value="dark">Dark</SelectItem>
-                        <SelectItem value="auto">Auto</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="primaryColor">{tl.primaryColor}</Label>
-                    <p className="text-sm text-muted-foreground mb-3">
-                      {language === 'vi' ? 'Chọn màu chủ đạo cho theme của website. Màu này sẽ được áp dụng vào các nút, liên kết và các phần tử tương tác.' :
-                       language === 'ja' ? 'ウェブサイトのテーマのプライマリカラーを選択します。この色はボタン、リンク、インタラクティブ要素に適用されます。' :
-                       'Choose the primary color for your website theme. This color will be applied to buttons, links, and interactive elements.'}
-                    </p>
-                    <div className="flex items-center gap-3">
-                      {/* Color Picker */}
-                      <div className="relative">
-                        <Input
-                          type="color"
-                          id="primaryColor"
-                          value={settings.appearance.primaryColor}
-                          onChange={(e) => {
-                            const newColor = e.target.value;
-                            setSettings(prev => ({
-                              ...prev,
-                              appearance: { ...prev.appearance, primaryColor: newColor }
-                            }));
-                            // Apply color immediately for preview
-                            applyPrimaryColorPreview(newColor);
-                          }}
-                          className="w-16 h-16 rounded-lg border-2 cursor-pointer hover:border-primary transition-all"
-                          title={settings.appearance.primaryColor}
-                        />
-                      </div>
-                      
-                      {/* Hex Input */}
-                      <div className="flex-1">
-                        <Input
-                          type="text"
-                          value={settings.appearance.primaryColor}
-                          onChange={(e) => {
-                            const newColor = e.target.value;
-                            if (/^#[0-9A-Fa-f]{6}$/.test(newColor)) {
-                              setSettings(prev => ({
-                                ...prev,
-                                appearance: { ...prev.appearance, primaryColor: newColor }
-                              }));
-                              // Apply color immediately for preview
-                              applyPrimaryColorPreview(newColor);
-                            } else if (newColor.length <= 7) {
-                              setSettings(prev => ({
-                                ...prev,
-                                appearance: { ...prev.appearance, primaryColor: newColor }
-                              }));
-                            }
-                          }}
-                          placeholder="#000000"
-                          className="font-mono"
-                        />
-                      </div>
-                      
-                      {/* Color Preview Swatches */}
-                      <div className="flex flex-col gap-1">
-                        <div
-                          className="w-12 h-12 rounded-lg border-2 shadow-md"
-                          style={{ backgroundColor: settings.appearance.primaryColor }}
-                          title={`Primary: ${settings.appearance.primaryColor}`}
-                        />
-                        <div className="text-xs text-muted-foreground text-center">
-                          {settings.appearance.primaryColor}
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {/* Color Presets */}
-                    <div className="mt-4">
-                      <Label className="text-sm mb-2 block">{language === 'vi' ? 'Màu sẵn có:' : language === 'ja' ? 'プリセット:' : 'Color Presets:'}</Label>
-                      <div className="grid grid-cols-8 gap-2">
-                        {['#000000', '#1a1a1a', '#2563eb', '#dc2626', '#16a34a', '#ca8a04', '#9333ea', '#ec4899'].map((presetColor) => (
-                          <button
-                            key={presetColor}
-                            type="button"
-                            onClick={() => {
-                              setSettings(prev => ({
-                                ...prev,
-                                appearance: { ...prev.appearance, primaryColor: presetColor }
-                              }));
-                              applyPrimaryColorPreview(presetColor);
-                            }}
-                            className={`w-10 h-10 rounded-lg border-2 transition-all hover:scale-110 hover:shadow-lg ${
-                              settings.appearance.primaryColor === presetColor 
-                                ? 'border-primary ring-2 ring-primary ring-offset-2 scale-110' 
-                                : 'border-muted hover:border-primary/50'
-                            }`}
-                            style={{ backgroundColor: presetColor }}
-                            title={presetColor}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                    
-                    {/* Live Preview */}
-                    <div className="mt-4 p-4 rounded-lg border bg-muted/30">
-                      <p className="text-sm font-medium mb-3">{language === 'vi' ? 'Xem trước:' : language === 'ja' ? 'プレビュー:' : 'Live Preview:'}</p>
-                      <div className="flex flex-wrap gap-2">
-                        <Button 
-                          size="sm" 
-                          style={{ backgroundColor: settings.appearance.primaryColor, color: getContrastColor(settings.appearance.primaryColor) }}
-                        >
-                          {language === 'vi' ? 'Nút chính' : language === 'ja' ? 'プライマリボタン' : 'Primary Button'}
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          style={{ borderColor: settings.appearance.primaryColor, color: settings.appearance.primaryColor }}
-                        >
-                          {language === 'vi' ? 'Nút outline' : language === 'ja' ? 'アウトライン' : 'Outline Button'}
-                        </Button>
-                        <a 
-                          href="#" 
-                          className="text-sm underline px-2 py-1 rounded"
-                          style={{ color: settings.appearance.primaryColor }}
-                          onClick={(e) => e.preventDefault()}
-                        >
-                          {language === 'vi' ? 'Liên kết' : language === 'ja' ? 'リンク' : 'Link'}
-                        </a>
-                        <div 
-                          className="text-xs px-2 py-1 rounded-full"
-                          style={{ backgroundColor: `${settings.appearance.primaryColor}20`, color: settings.appearance.primaryColor }}
-                        >
-                          {language === 'vi' ? 'Badge' : language === 'ja' ? 'バッジ' : 'Badge'}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <FileText className="h-5 w-5" />
-                    Branding
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  {/* Logo URL */}
-                  <div className="space-y-3">
-                    <div className="space-y-2">
-                      <Label htmlFor="logoUrl">{tl.logoUrl}</Label>
-                      <p className="text-sm text-muted-foreground">
-                        {language === 'vi' ? 'URL logo của website. Logo sẽ hiển thị ở Header và Footer. Hỗ trợ định dạng PNG, JPG, SVG.' :
-                         language === 'ja' ? 'ウェブサイトのロゴURL。ロゴはヘッダーとフッターに表示されます。PNG、JPG、SVG形式をサポート。' :
-                         'Logo URL for your website. Logo will appear in Header and Footer. Supports PNG, JPG, SVG formats.'}
-                      </p>
-                      <Input
-                        id="logoUrl"
-                        value={settings.appearance.logoUrl}
-                        onChange={(e) => {
-                          const newLogoUrl = e.target.value;
-                          setSettings(prev => ({
-                            ...prev,
-                            appearance: { ...prev.appearance, logoUrl: newLogoUrl }
-                          }));
-                          // Apply logo immediately for preview
-                          if (newLogoUrl && typeof document !== 'undefined') {
-                            const logoImages = document.querySelectorAll('img[alt*="Koshiro"], img[alt*="Japan"]');
-                            logoImages.forEach((img: HTMLImageElement) => {
-                              if (img.src && (img.src.includes('koshino_logo') || img.src.includes('logo'))) {
-                                img.src = newLogoUrl;
-                              }
-                            });
-                          }
-                        }}
-                        placeholder="/logo.png hoặc https://example.com/logo.png"
-                        className="font-mono"
-                      />
-                    </div>
-                    
-                    {/* Logo Preview */}
-                    <div className="mt-4 p-4 rounded-lg border bg-muted/30">
-                      <p className="text-sm font-medium mb-3">{language === 'vi' ? 'Xem trước Logo:' : language === 'ja' ? 'ロゴプレビュー:' : 'Logo Preview:'}</p>
-                      <div className="flex items-center gap-4">
-                        <div className="space-y-2">
-                          <p className="text-xs text-muted-foreground">{language === 'vi' ? 'Light Mode:' : language === 'ja' ? 'ライトモード:' : 'Light Mode:'}</p>
-                          <div className="p-3 bg-white rounded-lg border shadow-sm">
-                            <img
-                              src={settings.appearance.logoUrl || "/koshino_logo_dark.png"}
-                              alt="Logo Preview"
-                              className="h-12 w-auto max-w-[200px] object-contain"
-                              onError={(e) => {
-                                const target = e.target as HTMLImageElement;
-                                target.src = "/koshino_logo_dark.png";
-                              }}
-                            />
-                          </div>
-                        </div>
-                        <div className="space-y-2">
-                          <p className="text-xs text-muted-foreground">{language === 'vi' ? 'Dark Mode:' : language === 'ja' ? 'ダークモード:' : 'Dark Mode:'}</p>
-                          <div className="p-3 bg-stone-900 rounded-lg border shadow-sm">
-                            <img
-                              src={settings.appearance.logoUrl || "/koshino_logo.png"}
-                              alt="Logo Preview"
-                              className="h-12 w-auto max-w-[200px] object-contain"
-                              onError={(e) => {
-                                const target = e.target as HTMLImageElement;
-                                target.src = "/koshino_logo.png";
-                              }}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <Separator />
-                  
-                  {/* Favicon URL */}
-                  <div className="space-y-3">
-                    <div className="space-y-2">
-                      <Label htmlFor="faviconUrl">{tl.faviconUrl}</Label>
-                      <p className="text-sm text-muted-foreground">
-                        {language === 'vi' ? 'URL favicon của website. Favicon sẽ hiển thị trên tab trình duyệt. Khuyến nghị kích thước 32x32 hoặc 16x16 pixels.' :
-                         language === 'ja' ? 'ウェブサイトのファビコンURL。ファビコンはブラウザタブに表示されます。推奨サイズ：32x32または16x16ピクセル。' :
-                         'Favicon URL for your website. Favicon will appear in browser tab. Recommended size: 32x32 or 16x16 pixels.'}
-                      </p>
-                      <Input
-                        id="faviconUrl"
-                        value={settings.appearance.faviconUrl}
-                        onChange={(e) => {
-                          const newFaviconUrl = e.target.value;
-                          setSettings(prev => ({
-                            ...prev,
-                            appearance: { ...prev.appearance, faviconUrl: newFaviconUrl }
-                          }));
-                          // Apply favicon immediately for preview
-                          if (newFaviconUrl && typeof document !== 'undefined') {
-                            const favicon = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
-                            if (favicon) {
-                              favicon.href = newFaviconUrl;
-                            } else {
-                              const link = document.createElement('link');
-                              link.rel = 'icon';
-                              link.href = newFaviconUrl;
-                              document.head.appendChild(link);
-                            }
-                          }
-                        }}
-                        placeholder="/favicon.ico hoặc https://example.com/favicon.ico"
-                        className="font-mono"
-                      />
-                    </div>
-                    
-                    {/* Favicon Preview */}
-                    <div className="mt-4 p-4 rounded-lg border bg-muted/30">
-                      <p className="text-sm font-medium mb-3">{language === 'vi' ? 'Xem trước Favicon:' : language === 'ja' ? 'ファビコンブレビュー:' : 'Favicon Preview:'}</p>
-                      <div className="flex items-center gap-4">
-                        <div className="p-3 bg-white rounded-lg border shadow-sm flex items-center justify-center">
-                          <img
-                            src={settings.appearance.faviconUrl || "/favicon.ico"}
-                            alt="Favicon Preview"
-                            className="h-8 w-8 object-contain"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.src = "/favicon.ico";
-                            }}
-                          />
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-sm text-muted-foreground">
-                            {language === 'vi' ? 'Favicon này sẽ xuất hiện trên tab trình duyệt' :
-                             language === 'ja' ? 'このファビコンはブラウザタブに表示されます' :
-                             'This favicon will appear in browser tab'}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
         </Tabs>
       </div>
     </AdminLayout>

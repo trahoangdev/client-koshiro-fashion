@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { useSettings } from "@/contexts/SettingsContext";
 import EnhancedProductGrid from "@/components/EnhancedProductGrid";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +15,7 @@ import { Grid3X3, List, Filter } from "lucide-react";
 const ProductsPage = () => {
   const { language } = useLanguage();
   const { toast } = useToast();
+  const { settings } = useSettings();
 
   // Data state
   const [products, setProducts] = useState<Product[]>([]);
@@ -340,7 +342,7 @@ const ProductsPage = () => {
               {/* Banner Background */}
               <div className="absolute inset-0">
                 <img
-                  src="/images/banners/banner-01.png"
+                  src={settings?.banners?.products || "/images/banners/banner-01.png"}
                   alt="Products Banner"
                   className="w-full h-full object-cover"
                 />

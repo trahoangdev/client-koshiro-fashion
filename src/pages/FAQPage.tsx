@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useSettings } from "@/contexts/SettingsContext";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   HelpCircle,
@@ -18,6 +19,7 @@ import {
 
 const FAQPage = () => {
   const { language } = useLanguage();
+  const { settings } = useSettings();
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   const translations = {
@@ -427,7 +429,7 @@ const FAQPage = () => {
               {/* Banner Background */}
               <div className="absolute inset-0">
                 <img
-                  src="/images/banners/banner-05.png"
+                  src={settings?.banners?.faq || "/images/banners/banner-05.png"}
                   alt="FAQ Banner"
                   className="w-full h-full object-cover"
                 />

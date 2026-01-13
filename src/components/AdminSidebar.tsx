@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { 
-  LayoutDashboard, 
-  Package, 
-  Tag, 
-  ShoppingCart, 
-  Users, 
+import {
+  LayoutDashboard,
+  Package,
+  Tag,
+  ShoppingCart,
+  Users,
   Settings,
   LogOut,
   Globe,
@@ -30,10 +30,10 @@ import {
   Link
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
   DropdownMenuLabel
@@ -215,6 +215,14 @@ function AdminSidebar({ isOpen, onToggle }: AdminSidebarProps) {
       titleJa: "システム",
       items: [
         {
+          id: "public",
+          label: "Quản lý Public",
+          labelEn: "Public Config",
+          labelJa: "公共設定",
+          icon: Palette,
+          path: "/admin/public"
+        },
+        {
           id: "notifications",
           label: "Thông báo",
           labelEn: "Notifications",
@@ -222,14 +230,6 @@ function AdminSidebar({ isOpen, onToggle }: AdminSidebarProps) {
           icon: Bell,
           path: "/admin/notifications",
           badge: unreadCount > 0 ? unreadCount.toString() : undefined
-        },
-        {
-          id: "roles",
-          label: "Vai trò & Quyền",
-          labelEn: "Roles & Permissions",
-          labelJa: "ロール・権限",
-          icon: Shield,
-          path: "/admin/roles"
         },
         {
           id: "api",
@@ -263,12 +263,12 @@ function AdminSidebar({ isOpen, onToggle }: AdminSidebarProps) {
     setLanguage(lang);
     localStorage.setItem("adminLanguage", lang);
     toast({
-      title: language === 'vi' ? "Ngôn ngữ đã thay đổi" : 
-             language === 'ja' ? "言語が変更されました" : 
-             "Language changed",
+      title: language === 'vi' ? "Ngôn ngữ đã thay đổi" :
+        language === 'ja' ? "言語が変更されました" :
+          "Language changed",
       description: language === 'vi' ? "Giao diện đã được cập nhật" :
-                   language === 'ja' ? "インターフェースが更新されました" :
-                   "Interface has been updated",
+        language === 'ja' ? "インターフェースが更新されました" :
+          "Interface has been updated",
     });
   };
 
@@ -276,9 +276,9 @@ function AdminSidebar({ isOpen, onToggle }: AdminSidebarProps) {
     logout();
     navigate("/admin/login");
     toast({
-      title: language === 'vi' ? "Đăng xuất thành công" : 
-             language === 'ja' ? "ログアウトしました" : 
-             "Logged out successfully",
+      title: language === 'vi' ? "Đăng xuất thành công" :
+        language === 'ja' ? "ログアウトしました" :
+          "Logged out successfully",
     });
   };
 
@@ -331,7 +331,7 @@ function AdminSidebar({ isOpen, onToggle }: AdminSidebarProps) {
     <>
       {/* Backdrop for mobile */}
       {isOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/50 z-40 lg:hidden"
           onClick={onToggle}
         />
@@ -347,14 +347,14 @@ function AdminSidebar({ isOpen, onToggle }: AdminSidebarProps) {
           <div className="flex items-center justify-between p-4 border-b">
             <div className="flex items-center space-x-3">
               <div className="flex items-center space-x-2">
-                <img 
-                  src="/koshino_logo_dark.png" 
-                  alt="KOSHIRO" 
+                <img
+                  src="/koshino_logo_dark.png"
+                  alt="KOSHIRO"
                   className="h-6 w-auto dark:hidden"
                 />
-                <img 
-                  src="/koshino_logo.png" 
-                  alt="KOSHIRO" 
+                <img
+                  src="/koshino_logo.png"
+                  alt="KOSHIRO"
                   className="h-6 w-auto hidden dark:block"
                 />
               </div>
@@ -396,9 +396,8 @@ function AdminSidebar({ isOpen, onToggle }: AdminSidebarProps) {
                     <Button
                       key={item.id}
                       variant={isActive(item.path) ? "secondary" : "ghost"}
-                      className={`w-full justify-start h-10 px-3 relative ${
-                        isActive(item.path) ? "bg-secondary text-secondary-foreground" : "hover:bg-muted"
-                      }`}
+                      className={`w-full justify-start h-10 px-3 relative ${isActive(item.path) ? "bg-secondary text-secondary-foreground" : "hover:bg-muted"
+                        }`}
                       onClick={() => handleMenuClick(item.path)}
                     >
                       <item.icon className="h-4 w-4 mr-3" />
@@ -502,9 +501,9 @@ function AdminSidebar({ isOpen, onToggle }: AdminSidebarProps) {
             </div>
 
             {/* Logout */}
-            <Button 
-              variant="outline" 
-              className="w-full justify-start" 
+            <Button
+              variant="outline"
+              className="w-full justify-start"
               onClick={handleLogout}
             >
               <LogOut className="h-4 w-4 mr-3" />

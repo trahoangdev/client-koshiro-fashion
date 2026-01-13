@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useSettings } from "@/contexts/SettingsContext";
 import { api, Category } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 
@@ -94,6 +95,7 @@ const getCategoryType = (categoryName: string): string => {
 
 export default function SizeGuidePage() {
   const { language } = useLanguage();
+  const { settings } = useSettings();
   const { toast } = useToast();
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -329,7 +331,7 @@ export default function SizeGuidePage() {
               {/* Banner Background */}
               <div className="absolute inset-0">
                 <img
-                  src="/images/banners/banner-11.png"
+                  src={settings?.banners?.sizeGuide || "/images/banners/banner-11.png"}
                   alt="Size Guide Banner"
                   className="w-full h-full object-cover"
                 />

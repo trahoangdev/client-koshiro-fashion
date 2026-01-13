@@ -60,6 +60,7 @@ const AdminUsers = lazy(() => import("./pages/AdminUsers"));
 const AdminActivity = lazy(() => import("./pages/AdminActivity"));
 const AdminReviews = lazy(() => import("./pages/AdminReviews"));
 const AdminSettings = lazy(() => import("./pages/AdminSettings"));
+const AdminPublicPage = lazy(() => import("./pages/AdminPublicPage"));
 const AdminPromotionsPage = lazy(() => import("./pages/AdminPromotionsPage"));
 const AdminInventoryPage = lazy(() => import("./pages/AdminInventoryPage"));
 const AdminShippingPage = lazy(() => import("./pages/AdminShippingPage"));
@@ -383,6 +384,16 @@ function App() {
                             <ProtectedAdminRoute>
                               <Suspense fallback={<PageLoader />}>
                                 <AdminSettings />
+                              </Suspense>
+                            </ProtectedAdminRoute>
+                          }
+                        />
+                        <Route
+                          path="/admin/public"
+                          element={
+                            <ProtectedAdminRoute>
+                              <Suspense fallback={<PageLoader />}>
+                                <AdminPublicPage />
                               </Suspense>
                             </ProtectedAdminRoute>
                           }

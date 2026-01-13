@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Heart, ShoppingCart, Trash2, ArrowLeft } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useSettings } from "@/contexts/SettingsContext";
 import { useToast } from "@/hooks/use-toast";
 import { api, Product } from "@/lib/api";
 import { formatCurrency } from "@/lib/currency";
@@ -22,6 +23,7 @@ const WishlistPage = () => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [refreshWishlistTrigger, setRefreshWishlistTrigger] = useState(0);
   const { language } = useLanguage();
+  const { settings } = useSettings();
   const { toast } = useToast();
   const { isAuthenticated } = useAuth();
 
@@ -308,7 +310,7 @@ const WishlistPage = () => {
               {/* Banner Background */}
               <div className="absolute inset-0">
                 <img
-                  src="/images/banners/banner-13.png"
+                  src={settings?.banners?.wishlist || "/images/banners/banner-13.png"}
                   alt="Wishlist Banner"
                   className="w-full h-full object-cover"
                 />

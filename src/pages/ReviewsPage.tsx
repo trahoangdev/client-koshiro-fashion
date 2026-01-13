@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useSettings } from "@/contexts/SettingsContext";
 import { useToast } from "@/hooks/use-toast";
 import { api, Review, CreateReviewRequest } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,7 @@ import { useAuth } from "@/contexts";
 
 const ReviewsPage = () => {
   const { language } = useLanguage();
+  const { settings } = useSettings();
   const { toast } = useToast();
   const { isAuthenticated, user } = useAuth();
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -259,7 +261,7 @@ const ReviewsPage = () => {
               {/* Banner Background */}
               <div className="absolute inset-0">
                 <img
-                  src="/images/banners/banner-12.png"
+                  src={settings?.banners?.reviews || "/images/banners/banner-12.png"}
                   alt="Reviews Banner"
                   className="w-full h-full object-cover"
                 />

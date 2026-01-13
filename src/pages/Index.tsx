@@ -13,7 +13,7 @@ import { api, Product, Category } from "@/lib/api";
 import { formatCurrency } from "@/lib/currency";
 import { logger } from "@/lib/logger";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts";
+import { useAuth, useSettings } from "@/contexts";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { ShoppingBag } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -132,6 +132,7 @@ const Index = () => {
 
   const { toast } = useToast();
   const { isAuthenticated } = useAuth();
+  const { settings } = useSettings();
   const { language } = useLanguage();
 
   // Load data from API
@@ -566,7 +567,7 @@ const Index = () => {
         {/* Background Image */}
         <div className="absolute inset-0">
           <img
-            src="/images/banners/banner-01.png"
+            src={settings?.banners?.home || "/images/banners/banner-01.png"}
             alt="Koshiro Fashion Background"
             className="w-full h-full object-cover object-center"
             loading="eager"

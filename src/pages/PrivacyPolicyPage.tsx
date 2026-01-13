@@ -1,5 +1,6 @@
 import React from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useSettings } from "@/contexts/SettingsContext";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
@@ -18,6 +19,7 @@ import {
 
 const PrivacyPolicyPage = () => {
   const { language } = useLanguage();
+  const { settings } = useSettings();
 
   const translations = {
     en: {
@@ -276,7 +278,7 @@ const PrivacyPolicyPage = () => {
               {/* Banner Background */}
               <div className="absolute inset-0">
                 <img
-                  src="/images/banners/banner-10.png"
+                  src={settings?.banners?.privacy || "/images/banners/banner-10.png"}
                   alt="Privacy Policy Banner"
                   className="w-full h-full object-cover"
                 />

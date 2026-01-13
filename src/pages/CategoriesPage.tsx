@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSettings } from "@/contexts/SettingsContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -62,6 +63,7 @@ const CategoriesPage = () => {
   const { language } = useLanguage();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { settings } = useSettings();
 
   // Load categories
   useEffect(() => {
@@ -235,7 +237,7 @@ const CategoriesPage = () => {
               {/* Banner Background with Gradient */}
               <div className="absolute inset-0">
                 <img
-                  src="/images/banners/banner-04.png"
+                  src={settings?.banners?.categories || "/images/banners/banner-04.png"}
                   alt="Categories Banner"
                   className="w-full h-full object-cover"
                 />

@@ -1,4 +1,5 @@
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useSettings } from "@/contexts/SettingsContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -7,6 +8,7 @@ import { Link } from "react-router-dom";
 
 const AboutPage = () => {
   const { language } = useLanguage();
+  const { settings } = useSettings();
 
   const translations = {
     en: {
@@ -106,7 +108,7 @@ const AboutPage = () => {
               {/* Banner Background */}
               <div className="absolute inset-0">
                 <img
-                  src="/images/banners/banner-04.png"
+                  src={settings?.banners?.about || "/images/banners/banner-04.png"}
                   alt="About Us Banner"
                   className="w-full h-full object-cover"
                 />

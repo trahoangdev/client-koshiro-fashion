@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
+import { useSettings } from "@/contexts/SettingsContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
 import { api, Product, Category } from "@/lib/api";
@@ -37,6 +38,7 @@ const SearchPage: React.FC = () => {
   const navigate = useNavigate();
   const { language } = useLanguage();
   const { toast } = useToast();
+  const { settings } = useSettings();
 
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
@@ -359,7 +361,7 @@ const SearchPage: React.FC = () => {
                 {/* Banner Background */}
                 <div className="absolute inset-0">
                   <img
-                    src="/images/banners/banner-04.png"
+                    src={settings?.banners?.search || "/images/banners/banner-04.png"}
                     alt="Search Banner"
                     className="w-full h-full object-cover"
                   />

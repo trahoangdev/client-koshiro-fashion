@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useSettings } from "@/contexts/SettingsContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -18,6 +19,7 @@ const ContactPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const { language } = useLanguage();
+  const { settings } = useSettings();
   const { toast } = useToast();
 
   const translations = {
@@ -147,7 +149,7 @@ const ContactPage = () => {
               {/* Banner Background */}
               <div className="absolute inset-0">
                 <img
-                  src="/images/banners/banner-09.png"
+                  src={settings?.banners?.contact || "/images/banners/banner-09.png"}
                   alt="Contact Us Banner"
                   className="w-full h-full object-cover"
                 />

@@ -1,5 +1,6 @@
 import React from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useSettings } from "@/contexts/SettingsContext";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import {
@@ -18,6 +19,7 @@ import {
 
 const TermsOfServicePage = () => {
   const { language } = useLanguage();
+  const { settings } = useSettings();
 
   const translations = {
     en: {
@@ -278,7 +280,7 @@ const TermsOfServicePage = () => {
               {/* Banner Background */}
               <div className="absolute inset-0">
                 <img
-                  src="/images/banners/banner-06.png"
+                  src={settings?.banners?.terms || "/images/banners/banner-06.png"}
                   alt="Terms of Service Banner"
                   className="w-full h-full object-cover"
                 />

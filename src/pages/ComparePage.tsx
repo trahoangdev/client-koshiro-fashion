@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useSettings } from "@/contexts/SettingsContext";
 import { useToast } from "@/hooks/use-toast";
 import { api, Product } from "@/lib/api";
 import { useCompare } from "@/hooks/useCompare";
@@ -21,6 +22,7 @@ import { formatCurrency } from "@/lib/currency";
 
 const ComparePage = () => {
   const { language } = useLanguage();
+  const { settings } = useSettings();
   const { toast } = useToast();
   const { compareItems: compareList, removeFromCompare, clearCompareList } = useCompare();
 
@@ -154,7 +156,7 @@ const ComparePage = () => {
               {/* Banner Background */}
               <div className="absolute inset-0">
                 <img
-                  src="/images/banners/banner-02.png"
+                  src={settings?.banners?.compare || "/images/banners/banner-02.png"}
                   alt="Compare Products Banner"
                   className="w-full h-full object-cover"
                 />
