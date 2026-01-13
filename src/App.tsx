@@ -9,66 +9,75 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { NotificationsProvider } from "@/contexts/NotificationsContext";
 import { SettingsProvider } from "@/contexts/SettingsContext";
-import ProtectedAdminRoute from "./components/ProtectedAdminRoute";
-import ScrollToTop from "./components/ScrollToTop";
-import ErrorBoundary from "./components/ErrorBoundary";
+import ProtectedAdminRoute from "./components/admin/ProtectedAdminRoute";
+import ScrollToTop from "./components/shared/ScrollToTop";
+import ErrorBoundary from "./components/shared/ErrorBoundary";
 import { Loader2 } from "lucide-react";
 
-// Eager load Index page (homepage) for fast initial load
-import Index from "./pages/Index";
-import Layout from "@/components/Layout";
+// Eager load HomePage (homepage) for fast initial load
+import HomePage from "./pages/user/HomePage";
+import Layout from "@/components/shared/Layout";
 
-// Lazy load all other pages for code splitting
-const Profile = lazy(() => import("./pages/Profile"));
-const ProductDetail = lazy(() => import("./pages/ProductDetail"));
-const CategoryPage = lazy(() => import("./pages/CategoryPage"));
-const CartPage = lazy(() => import("./pages/CartPage"));
-const WishlistPage = lazy(() => import("./pages/WishlistPage"));
-const CheckoutPage = lazy(() => import("./pages/CheckoutPage"));
-const SalePage = lazy(() => import("./pages/SalePage"));
-const AboutPage = lazy(() => import("./pages/AboutPage"));
-const ContactPage = lazy(() => import("./pages/ContactPage"));
-const CategoriesPage = lazy(() => import("./pages/CategoriesPage"));
-const ProductsPage = lazy(() => import("./pages/ProductsPage"));
-const InfoPage = lazy(() => import("./pages/InfoPage"));
-const SearchPage = lazy(() => import("./pages/SearchPage"));
-const OrderTrackingPage = lazy(() => import("./pages/OrderTrackingPage"));
-const ComparePage = lazy(() => import("./pages/ComparePage"));
-const ReviewsPage = lazy(() => import("./pages/ReviewsPage"));
-const LoginPage = lazy(() => import("./pages/LoginPage"));
-const RegisterPage = lazy(() => import("./pages/RegisterPage"));
-const ForgotPasswordPage = lazy(() => import("./pages/ForgotPasswordPage"));
-const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"));
-const SizeGuidePage = lazy(() => import("./pages/SizeGuidePage"));
-const PrivacyPolicyPage = lazy(() => import("./pages/PrivacyPolicyPage"));
-const FAQPage = lazy(() => import("./pages/FAQPage"));
-const TermsOfServicePage = lazy(() => import("./pages/TermsOfServicePage"));
-const ShippingInfoPage = lazy(() => import("./pages/ShippingInfoPage"));
-const ReturnsPage = lazy(() => import("./pages/ReturnsPage"));
-const NotFound = lazy(() => import("./pages/NotFound"));
+// ============================================
+// USER/PUBLIC PAGES - Lazy loaded
+// ============================================
+const Profile = lazy(() => import("./pages/user/Profile"));
+const ProductDetail = lazy(() => import("./pages/user/ProductDetail"));
+const CategoryPage = lazy(() => import("./pages/user/CategoryPage"));
+const CartPage = lazy(() => import("./pages/user/CartPage"));
+const WishlistPage = lazy(() => import("./pages/user/WishlistPage"));
+const CheckoutPage = lazy(() => import("./pages/user/CheckoutPage"));
+const SalePage = lazy(() => import("./pages/user/SalePage"));
+const AboutPage = lazy(() => import("./pages/user/AboutPage"));
+const ContactPage = lazy(() => import("./pages/user/ContactPage"));
+const CategoriesPage = lazy(() => import("./pages/user/CategoriesPage"));
+const ProductsPage = lazy(() => import("./pages/user/ProductsPage"));
+const InfoPage = lazy(() => import("./pages/user/InfoPage"));
+const SearchPage = lazy(() => import("./pages/user/SearchPage"));
+const OrderTrackingPage = lazy(() => import("./pages/user/OrderTrackingPage"));
+const ComparePage = lazy(() => import("./pages/user/ComparePage"));
+const ReviewsPage = lazy(() => import("./pages/user/ReviewsPage"));
+const SizeGuidePage = lazy(() => import("./pages/user/SizeGuidePage"));
+const PrivacyPolicyPage = lazy(() => import("./pages/user/PrivacyPolicyPage"));
+const FAQPage = lazy(() => import("./pages/user/FAQPage"));
+const TermsOfServicePage = lazy(() => import("./pages/user/TermsOfServicePage"));
+const ShippingInfoPage = lazy(() => import("./pages/user/ShippingInfoPage"));
+const ReturnsPage = lazy(() => import("./pages/user/ReturnsPage"));
+const NotFound = lazy(() => import("./pages/user/NotFound"));
 
-// Admin Pages - Lazy loaded
-const AdminLogin = lazy(() => import("./pages/AdminLogin"));
-const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
-const AdminAnalyticsPage = lazy(() => import("./pages/AdminAnalyticsPage"));
-const AdminReportsPage = lazy(() => import("./pages/AdminReportsPage"));
-const AdminNotificationsPage = lazy(() => import("./pages/AdminNotificationsPage"));
-const AdminProducts = lazy(() => import("./pages/AdminProducts"));
-const AdminCategories = lazy(() => import("./pages/AdminCategories"));
-const AdminOrders = lazy(() => import("./pages/AdminOrders"));
-const AdminUsers = lazy(() => import("./pages/AdminUsers"));
-const AdminActivity = lazy(() => import("./pages/AdminActivity"));
-const AdminReviews = lazy(() => import("./pages/AdminReviews"));
-const AdminSettings = lazy(() => import("./pages/AdminSettings"));
-const AdminPromotionsPage = lazy(() => import("./pages/AdminPromotionsPage"));
-const AdminInventoryPage = lazy(() => import("./pages/AdminInventoryPage"));
-const AdminShippingPage = lazy(() => import("./pages/AdminShippingPage"));
-const AdminPaymentsPage = lazy(() => import("./pages/AdminPaymentsPage"));
-const AdminRolesPage = lazy(() => import("./pages/AdminRolesPage"));
-const RoleDetailPage = lazy(() => import("./pages/RoleDetailPage"));
-const PermissionDetailPage = lazy(() => import("./pages/PermissionDetailPage"));
-const AdminApiPage = lazy(() => import("./pages/AdminApiPage"));
-const ProductFormPage = lazy(() => import("./pages/ProductFormPage"));
+// ============================================
+// AUTH PAGES - Lazy loaded
+// ============================================
+const LoginPage = lazy(() => import("./pages/auth/LoginPage"));
+const RegisterPage = lazy(() => import("./pages/auth/RegisterPage"));
+const ForgotPasswordPage = lazy(() => import("./pages/auth/ForgotPasswordPage"));
+const ResetPasswordPage = lazy(() => import("./pages/auth/ResetPasswordPage"));
+
+// ============================================
+// ADMIN PAGES - Lazy loaded
+// ============================================
+const AdminLogin = lazy(() => import("./pages/admin/AdminLogin"));
+const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
+const AdminAnalyticsPage = lazy(() => import("./pages/admin/AdminAnalyticsPage"));
+const AdminReportsPage = lazy(() => import("./pages/admin/AdminReportsPage"));
+const AdminNotificationsPage = lazy(() => import("./pages/admin/AdminNotificationsPage"));
+const AdminProducts = lazy(() => import("./pages/admin/AdminProducts"));
+const AdminCategories = lazy(() => import("./pages/admin/AdminCategories"));
+const AdminOrders = lazy(() => import("./pages/admin/AdminOrders"));
+const AdminUsers = lazy(() => import("./pages/admin/AdminUsers"));
+const AdminActivity = lazy(() => import("./pages/admin/AdminActivity"));
+const AdminReviews = lazy(() => import("./pages/admin/AdminReviews"));
+const AdminSettings = lazy(() => import("./pages/admin/AdminSettings"));
+const AdminPublicPage = lazy(() => import("./pages/admin/AdminPublicPage"));
+const AdminPromotionsPage = lazy(() => import("./pages/admin/AdminPromotionsPage"));
+const AdminInventoryPage = lazy(() => import("./pages/admin/AdminInventoryPage"));
+const AdminShippingPage = lazy(() => import("./pages/admin/AdminShippingPage"));
+const AdminPaymentsPage = lazy(() => import("./pages/admin/AdminPaymentsPage"));
+const AdminRolesPage = lazy(() => import("./pages/admin/AdminRolesPage"));
+const RoleDetailPage = lazy(() => import("./pages/admin/RoleDetailPage"));
+const PermissionDetailPage = lazy(() => import("./pages/admin/PermissionDetailPage"));
+const AdminApiPage = lazy(() => import("./pages/admin/AdminApiPage"));
+const ProductFormPage = lazy(() => import("./pages/admin/ProductFormPage"));
 
 // Loading component
 const PageLoader = () => (
@@ -116,9 +125,11 @@ function App() {
                     <Router>
                       <ScrollToTop />
                       <Routes>
-                        {/* Public Routes with Layout */}
+                        {/* ============================================ */}
+                        {/* PUBLIC/USER ROUTES with Layout */}
+                        {/* ============================================ */}
                         <Route element={<Layout />}>
-                          <Route path="/" element={<Index />} />
+                          <Route path="/" element={<HomePage />} />
                           <Route path="/profile" element={
                             <Suspense fallback={<PageLoader />}>
                               <Profile />
@@ -199,6 +210,7 @@ function App() {
                               <ReviewsPage />
                             </Suspense>
                           } />
+                          {/* AUTH ROUTES */}
                           <Route path="/login" element={
                             <Suspense fallback={<PageLoader />}>
                               <LoginPage />
@@ -219,6 +231,7 @@ function App() {
                               <ResetPasswordPage />
                             </Suspense>
                           } />
+                          {/* INFO PAGES */}
                           <Route path="/size-guide" element={
                             <Suspense fallback={<PageLoader />}>
                               <SizeGuidePage />
@@ -251,7 +264,9 @@ function App() {
                           } />
                         </Route>
 
-                        {/* Admin Routes */}
+                        {/* ============================================ */}
+                        {/* ADMIN ROUTES */}
+                        {/* ============================================ */}
                         <Route path="/admin/login" element={
                           <Suspense fallback={<PageLoader />}>
                             <AdminLogin />
@@ -383,6 +398,16 @@ function App() {
                             <ProtectedAdminRoute>
                               <Suspense fallback={<PageLoader />}>
                                 <AdminSettings />
+                              </Suspense>
+                            </ProtectedAdminRoute>
+                          }
+                        />
+                        <Route
+                          path="/admin/public"
+                          element={
+                            <ProtectedAdminRoute>
+                              <Suspense fallback={<PageLoader />}>
+                                <AdminPublicPage />
                               </Suspense>
                             </ProtectedAdminRoute>
                           }

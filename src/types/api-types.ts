@@ -354,6 +354,7 @@ export interface Settings {
     primaryColor: string;
     logoUrl: string;
     faviconUrl: string;
+    banners?: Record<string, string>;
     enableDarkMode: boolean;
     maintenanceMode: boolean;
     debugMode: boolean;
