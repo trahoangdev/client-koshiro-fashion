@@ -6,6 +6,7 @@ import { useSettings } from '@/contexts/SettingsContext';
 import { useAuth } from '@/contexts';
 import { formatCurrency } from '@/lib/currency';
 import { api, Product } from '@/lib/api';
+import { guestCartService, GuestCartItem } from '@/lib/guestStorage';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -43,8 +44,6 @@ const CartPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
 
-
-
   const getProductImage = (product: Product | undefined) => {
     if (!product) return '/placeholder.svg';
     if (product.cloudinaryImages && product.cloudinaryImages.length > 0) {
@@ -58,48 +57,51 @@ const CartPage: React.FC = () => {
 
   const cartItemsCount = cartItems.reduce((count, item) => count + item.quantity, 0);
 
-  const handleSearch = (query: string) => {
-    // TODO: Implement search functionality
-    logger.debug('Search query', { query });
-  };
-
-  // Load cart from API if authenticated, otherwise show empty
+  // Load cart - from API if authenticated, from localStorage if guest
   useEffect(() => {
     const loadCart = async () => {
-      if (!isAuthenticated) {
-        setCartItems([]);
-        setLoading(false);
-        return;
-      }
-
       try {
         setLoading(true);
-        const response = await api.getCart();
-        if (response && response.items && Array.isArray(response.items)) {
-          const cartItemsData = response.items
-            .filter((item: {
-              productId: string;
-              quantity: number;
-              size?: string;
-              color?: string;
-              product: Product;
-            }) => item && item.product && item.product._id) // Filter out items with missing product data
-            .map((item: {
-              productId: string;
-              quantity: number;
-              size?: string;
-              color?: string;
-              product: Product;
-            }) => ({
-              productId: item.productId,
-              product: item.product,
-              quantity: item.quantity,
-              selectedSize: item.size,
-              selectedColor: item.color
-            }));
-          setCartItems(cartItemsData);
+
+        if (isAuthenticated) {
+          // Load from API for authenticated users
+          const response = await api.getCart();
+          if (response && response.items && Array.isArray(response.items)) {
+            const cartItemsData = response.items
+              .filter((item: {
+                productId: string;
+                quantity: number;
+                size?: string;
+                color?: string;
+                product: Product;
+              }) => item && item.product && item.product._id)
+              .map((item: {
+                productId: string;
+                quantity: number;
+                size?: string;
+                color?: string;
+                product: Product;
+              }) => ({
+                productId: item.productId,
+                product: item.product,
+                quantity: item.quantity,
+                selectedSize: item.size,
+                selectedColor: item.color
+              }));
+            setCartItems(cartItemsData);
+          } else {
+            setCartItems([]);
+          }
         } else {
-          setCartItems([]);
+          // Load from localStorage for guests
+          const guestCart = guestCartService.getCart();
+          setCartItems(guestCart.map(item => ({
+            productId: item.productId,
+            product: item.product,
+            quantity: item.quantity,
+            selectedSize: item.selectedSize,
+            selectedColor: item.selectedColor
+          })));
         }
       } catch (error) {
         logger.error('Error loading cart', error);
@@ -118,31 +120,41 @@ const CartPage: React.FC = () => {
     };
 
     loadCart();
+
+    // Listen for guest cart updates
+    const handleGuestCartUpdate = () => {
+      if (!isAuthenticated) {
+        const guestCart = guestCartService.getCart();
+        setCartItems(guestCart.map(item => ({
+          productId: item.productId,
+          product: item.product,
+          quantity: item.quantity,
+          selectedSize: item.selectedSize,
+          selectedColor: item.selectedColor
+        })));
+      }
+    };
+
+    window.addEventListener('guestCartUpdated', handleGuestCartUpdate);
+    return () => window.removeEventListener('guestCartUpdated', handleGuestCartUpdate);
   }, [isAuthenticated, toast, language]);
 
   const updateQuantity = async (productId: string, newQuantity: number, selectedSize?: string, selectedColor?: string) => {
-    if (!isAuthenticated) {
-      toast({
-        title: language === 'vi' ? "Cần đăng nhập" :
-          language === 'ja' ? "ログインが必要です" :
-            "Login Required",
-        description: language === 'vi' ? "Vui lòng đăng nhập để quản lý giỏ hàng" :
-          language === 'ja' ? "カートを管理するにはログインしてください" :
-            "Please login to manage cart",
-        variant: "destructive",
-      });
-      return;
-    }
+    if (newQuantity < 1) return;
 
     try {
       setUpdating(productId);
-      await api.updateCartItem(productId, newQuantity);
 
-      // Wait a bit to ensure API call is complete, then dispatch event
-      setTimeout(() => {
-        logger.debug('Dispatching cartUpdated event (CartPage update quantity)');
-        window.dispatchEvent(new CustomEvent('cartUpdated'));
-      }, 100);
+      if (isAuthenticated) {
+        // Update via API for authenticated users
+        await api.updateCartItem(productId, newQuantity);
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('cartUpdated'));
+        }, 100);
+      } else {
+        // Update localStorage for guests
+        guestCartService.updateQuantity(productId, newQuantity, selectedSize, selectedColor);
+      }
 
       setCartItems(prev => prev.map(item =>
         item.productId === productId
@@ -175,27 +187,15 @@ const CartPage: React.FC = () => {
   };
 
   const removeItem = async (productId: string, selectedSize?: string, selectedColor?: string) => {
-    if (!isAuthenticated) {
-      toast({
-        title: language === 'vi' ? "Cần đăng nhập" :
-          language === 'ja' ? "ログインが必要です" :
-            "Login Required",
-        description: language === 'vi' ? "Vui lòng đăng nhập để quản lý giỏ hàng" :
-          language === 'ja' ? "カートを管理するにはログインしてください" :
-            "Please login to manage cart",
-        variant: "destructive",
-      });
-      return;
-    }
-
     try {
-      await api.removeFromCart(productId);
-
-      // Wait a bit to ensure API call is complete, then dispatch event
-      setTimeout(() => {
-        logger.debug('Dispatching cartUpdated event (CartPage remove item)');
-        window.dispatchEvent(new CustomEvent('cartUpdated'));
-      }, 100);
+      if (isAuthenticated) {
+        await api.removeFromCart(productId);
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('cartUpdated'));
+        }, 100);
+      } else {
+        guestCartService.removeFromCart(productId, selectedSize, selectedColor);
+      }
 
       setCartItems(prev => prev.filter(item => item.productId !== productId));
 
@@ -222,18 +222,17 @@ const CartPage: React.FC = () => {
   };
 
   const handleClearCart = async () => {
-    if (!isAuthenticated) return;
-
-    // Window.confirm check removed in favor of AlertDialog
-
-
     try {
       setLoading(true);
-      await api.clearCart();
-      setCartItems([]);
 
-      // Dispatch event
-      window.dispatchEvent(new CustomEvent('cartUpdated'));
+      if (isAuthenticated) {
+        await api.clearCart();
+        window.dispatchEvent(new CustomEvent('cartUpdated'));
+      } else {
+        guestCartService.clearCart();
+      }
+
+      setCartItems([]);
 
       toast({
         title: language === 'vi' ? "Thành công" : language === 'ja' ? "成功" : "Success",
@@ -251,16 +250,33 @@ const CartPage: React.FC = () => {
     }
   };
 
+  const handleCheckout = () => {
+    if (!isAuthenticated) {
+      // Redirect to login with return URL
+      toast({
+        title: language === 'vi' ? "Cần đăng nhập" :
+          language === 'ja' ? "ログインが必要です" :
+            "Login Required",
+        description: language === 'vi' ? "Vui lòng đăng nhập để tiến hành thanh toán" :
+          language === 'ja' ? "チェックアウトするにはログインしてください" :
+            "Please login to proceed to checkout",
+      });
+      navigate('/login?redirect=/checkout');
+      return;
+    }
+    navigate('/checkout');
+  };
+
   const calculateSubtotal = () => {
     return cartItems.reduce((total, item) => total + (item.product.price * item.quantity), 0);
   };
 
   const calculateShipping = () => {
-    return calculateSubtotal() > 2000000 ? 0 : 50000; // Free shipping over 2M VND
+    return calculateSubtotal() > 2000000 ? 0 : 50000;
   };
 
   const calculateTax = () => {
-    return calculateSubtotal() * 0.1; // 10% tax
+    return calculateSubtotal() * 0.1;
   };
 
   const calculateTotal = () => {
@@ -270,7 +286,6 @@ const CartPage: React.FC = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-
         <div className="container mx-auto px-4 py-8">
           <div className="flex items-center justify-center h-64">
             <Card className="rounded-xl border-2 shadow-lg p-8">
@@ -288,7 +303,6 @@ const CartPage: React.FC = () => {
   if (cartItems.length === 0) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-2xl mx-auto">
             <Card className="rounded-xl border-2 shadow-xl overflow-hidden">
@@ -298,50 +312,19 @@ const CartPage: React.FC = () => {
                     <ShoppingCart className="h-16 w-16 text-muted-foreground" />
                   </div>
                 </div>
-                {!isAuthenticated ? (
-                  <>
-                    <h1 className="text-3xl font-bold mb-3">
-                      {language === 'vi' ? 'Cần đăng nhập' :
-                        language === 'ja' ? 'ログインが必要です' : 'Login Required'}
-                    </h1>
-                    <p className="text-muted-foreground mb-8 text-lg">
-                      {language === 'vi' ? 'Vui lòng đăng nhập để xem giỏ hàng của bạn' :
-                        language === 'ja' ? 'カートを表示するにはログインしてください' :
-                          'Please login to view your cart'}
-                    </p>
-                    <div className="flex gap-4 justify-center">
-                      <Button
-                        onClick={() => navigate('/login')}
-                        size="lg"
-                        className="rounded-xl font-semibold px-8"
-                      >
-                        {language === 'vi' ? 'Đăng Nhập' :
-                          language === 'ja' ? 'ログイン' : 'Login'}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={() => navigate('/register')}
-                        size="lg"
-                        className="rounded-xl font-semibold px-8"
-                      >
-                        {language === 'vi' ? 'Đăng Ký' :
-                          language === 'ja' ? '登録' : 'Register'}
-                      </Button>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <h1 className="text-3xl font-bold mb-3">{language === 'vi' ? "Giỏ hàng trống" : language === 'ja' ? "カートは空です" : "Your cart is empty"}</h1>
-                    <p className="text-muted-foreground mb-8 text-lg">{language === 'vi' ? "Bạn chưa có sản phẩm nào trong giỏ hàng" : language === 'ja' ? "カートに商品がありません" : "You don't have any items in your cart"}</p>
-                    <Button
-                      onClick={() => navigate('/')}
-                      size="lg"
-                      className="rounded-xl font-semibold px-8"
-                    >
-                      {language === 'vi' ? "Tiếp tục mua sắm" : language === 'ja' ? "買い物を続ける" : "Continue Shopping"}
-                    </Button>
-                  </>
-                )}
+                <h1 className="text-3xl font-bold mb-3">
+                  {language === 'vi' ? "Giỏ hàng trống" : language === 'ja' ? "カートは空です" : "Your cart is empty"}
+                </h1>
+                <p className="text-muted-foreground mb-8 text-lg">
+                  {language === 'vi' ? "Bạn chưa có sản phẩm nào trong giỏ hàng" : language === 'ja' ? "カートに商品がありません" : "You don't have any items in your cart"}
+                </p>
+                <Button
+                  onClick={() => navigate('/')}
+                  size="lg"
+                  className="rounded-xl font-semibold px-8"
+                >
+                  {language === 'vi' ? "Tiếp tục mua sắm" : language === 'ja' ? "買い物を続ける" : "Continue Shopping"}
+                </Button>
               </CardContent>
             </Card>
           </div>
@@ -352,8 +335,6 @@ const CartPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-
-
       <div className="container mx-auto px-4 py-8">
         {/* Hero Section */}
         <section className="text-center mb-8">
@@ -371,11 +352,16 @@ const CartPage: React.FC = () => {
               <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-white via-white to-white/80 bg-clip-text text-transparent">
                 {language === 'vi' ? "Giỏ hàng" : language === 'ja' ? "ショッピングカート" : "Shopping Cart"}
               </h1>
-              <div className="flex justify-center">
+              <div className="flex justify-center gap-2">
                 <Badge variant="secondary" className="bg-white/20 backdrop-blur-sm text-white text-lg px-6 py-2 border border-white/30 font-semibold">
                   <ShoppingCart className="h-5 w-5 mr-2" />
                   {cartItems.length} {language === 'vi' ? "sản phẩm" : language === 'ja' ? "商品" : "items"}
                 </Badge>
+                {!isAuthenticated && (
+                  <Badge variant="outline" className="bg-amber-500/20 backdrop-blur-sm text-amber-100 text-sm px-4 py-2 border border-amber-300/30">
+                    {language === 'vi' ? "Chế độ khách" : language === 'ja' ? "ゲストモード" : "Guest Mode"}
+                  </Badge>
+                )}
               </div>
             </div>
           </div>
@@ -541,9 +527,6 @@ const CartPage: React.FC = () => {
                 <CardTitle className="text-lg font-bold">{language === 'vi' ? "Tóm tắt đơn hàng" : language === 'ja' ? "注文サマリー" : "Order Summary"}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* Promo/Referral Codes */}
-
-
                 <div className="space-y-3 p-3 rounded-lg bg-muted/30">
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-medium text-muted-foreground">{language === 'vi' ? "Tạm tính" : language === 'ja' ? "小計" : "Subtotal"}</span>
@@ -574,11 +557,24 @@ const CartPage: React.FC = () => {
                   <Button
                     className="w-full rounded-xl font-semibold text-lg h-12 shadow-lg hover:shadow-xl transition-all"
                     size="lg"
-                    onClick={() => navigate('/checkout')}
+                    onClick={handleCheckout}
                   >
                     <CreditCard className="h-5 w-5 mr-2" />
-                    {language === 'vi' ? "Thanh toán" : language === 'ja' ? "チェックアウト" : "Proceed to Checkout"}
+                    {!isAuthenticated
+                      ? (language === 'vi' ? "Đăng nhập để thanh toán" : language === 'ja' ? "ログインしてチェックアウト" : "Login to Checkout")
+                      : (language === 'vi' ? "Thanh toán" : language === 'ja' ? "チェックアウト" : "Proceed to Checkout")
+                    }
                   </Button>
+
+                  {!isAuthenticated && (
+                    <p className="text-xs text-center text-muted-foreground">
+                      {language === 'vi'
+                        ? "Giỏ hàng của bạn sẽ được lưu khi đăng nhập"
+                        : language === 'ja'
+                          ? "カートはログイン時に保存されます"
+                          : "Your cart will be saved when you log in"}
+                    </p>
+                  )}
 
                   <div className="flex items-center space-x-2 p-3 rounded-lg bg-muted/30 text-sm">
                     <Truck className="h-4 w-4 text-primary" />
@@ -586,18 +582,14 @@ const CartPage: React.FC = () => {
                       {language === 'vi' ? "Dự kiến giao hàng" : language === 'ja' ? "配送予定日" : "Estimated Delivery"}: {language === 'vi' ? "3-5 ngày làm việc" : language === 'ja' ? "3-5営業日" : "3-5 business days"}
                     </span>
                   </div>
-
-
                 </div>
               </CardContent>
             </Card>
           </div>
         </div>
       </div>
-
-
     </div>
   );
 };
 
-export default CartPage; 
+export default CartPage;

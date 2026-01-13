@@ -4,6 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts';
 import { api, Product, ProductVideo, Color } from '@/lib/api';
+import { guestCartService, guestWishlistService, guestCompareService } from '@/lib/guestStorage';
 import { formatCurrency } from '@/lib/currency';
 import ProductMediaGallery, { MediaItem } from '@/components/shared/ProductMediaGallery';
 import { Button } from '@/components/ui/button';
@@ -475,27 +476,16 @@ const ProductDetail: React.FC = () => {
   const handleAddToCart = async () => {
     if (!product) return;
 
-    if (!isAuthenticated) {
-      toast({
-        title: language === 'vi' ? "Cần đăng nhập" :
-          language === 'ja' ? "ログインが必要です" :
-            "Login Required",
-        description: language === 'vi' ? "Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng" :
-          language === 'ja' ? "商品をカートに追加するにはログインしてください" :
-            "Please login to add products to cart",
-        variant: "destructive",
-      });
-      return;
-    }
-
     try {
-      await api.addToCart(product._id, quantity);
-
-      // Wait a bit to ensure API call is complete, then dispatch event
-      setTimeout(() => {
-        console.log('Dispatching cartUpdated event...');
+      if (isAuthenticated) {
+        // Authenticated user: use API
+        await api.addToCart(product._id, quantity);
         window.dispatchEvent(new CustomEvent('cartUpdated'));
-      }, 100);
+      } else {
+        // Guest user: use localStorage
+        guestCartService.addToCart(product, quantity, selectedSize, selectedColor);
+        window.dispatchEvent(new CustomEvent('guestCartUpdated'));
+      }
 
       toast({
         title: language === 'vi' ? "Đã thêm vào giỏ hàng" :
@@ -522,45 +512,63 @@ const ProductDetail: React.FC = () => {
   const handleAddToWishlist = async () => {
     if (!product) return;
 
-    if (!isAuthenticated) {
-      toast({
-        title: language === 'vi' ? "Cần đăng nhập" :
-          language === 'ja' ? "ログインが必要です" :
-            "Login Required",
-        description: language === 'vi' ? "Vui lòng đăng nhập để thêm sản phẩm vào danh sách yêu thích" :
-          language === 'ja' ? "商品をお気に入りに追加するにはログインしてください" :
-            "Please login to add products to wishlist",
-        variant: "destructive",
-      });
-      return;
-    }
-
     try {
-      if (isInWishlist) {
-        await api.removeFromWishlist(product._id);
-        setIsInWishlist(false);
-        toast({
-          title: language === 'vi' ? "Đã xóa khỏi yêu thích" :
-            language === 'ja' ? "お気に入りから削除されました" :
-              "Removed from Wishlist",
-          description: language === 'vi' ? "Sản phẩm đã được xóa khỏi danh sách yêu thích" :
-            language === 'ja' ? "商品がお気に入りから削除されました" :
-              "Product has been removed from wishlist",
-        });
+      if (isAuthenticated) {
+        // Authenticated user: use API
+        if (isInWishlist) {
+          await api.removeFromWishlist(product._id);
+          setIsInWishlist(false);
+          toast({
+            title: language === 'vi' ? "Đã xóa khỏi yêu thích" :
+              language === 'ja' ? "お気に入りから削除されました" :
+                "Removed from Wishlist",
+            description: language === 'vi' ? "Sản phẩm đã được xóa khỏi danh sách yêu thích" :
+              language === 'ja' ? "商品がお気に入りから削除されました" :
+                "Product has been removed from wishlist",
+          });
+        } else {
+          await api.addToWishlist(product._id);
+          setIsInWishlist(true);
+          toast({
+            title: language === 'vi' ? "Đã thêm vào yêu thích" :
+              language === 'ja' ? "お気に入りに追加されました" :
+                "Added to Wishlist",
+            description: language === 'vi' ? "Sản phẩm đã được thêm vào danh sách yêu thích" :
+              language === 'ja' ? "商品がお気に入りに追加されました" :
+                "Product has been added to wishlist",
+          });
+        }
+        setRefreshWishlistTrigger(prev => prev + 1);
+        window.dispatchEvent(new CustomEvent('wishlistUpdated'));
       } else {
-        await api.addToWishlist(product._id);
-        setIsInWishlist(true);
-        toast({
-          title: language === 'vi' ? "Đã thêm vào yêu thích" :
-            language === 'ja' ? "お気に入りに追加されました" :
-              "Added to Wishlist",
-          description: language === 'vi' ? "Sản phẩm đã được thêm vào danh sách yêu thích" :
-            language === 'ja' ? "商品がお気に入りに追加されました" :
-              "Product has been added to wishlist",
-        });
+        // Guest user: use localStorage
+        const isInGuestWishlist = guestWishlistService.isInWishlist(product._id);
+
+        if (isInGuestWishlist) {
+          guestWishlistService.removeFromWishlist(product._id);
+          setIsInWishlist(false);
+          toast({
+            title: language === 'vi' ? "Đã xóa khỏi yêu thích" :
+              language === 'ja' ? "お気に入りから削除されました" :
+                "Removed from Wishlist",
+            description: language === 'vi' ? "Sản phẩm đã được xóa khỏi danh sách yêu thích" :
+              language === 'ja' ? "商品がお気に入りから削除されました" :
+                "Product has been removed from wishlist",
+          });
+        } else {
+          guestWishlistService.addToWishlist(product);
+          setIsInWishlist(true);
+          toast({
+            title: language === 'vi' ? "Đã thêm vào yêu thích" :
+              language === 'ja' ? "お気に入りに追加されました" :
+                "Added to Wishlist",
+            description: language === 'vi' ? "Sản phẩm đã được thêm vào danh sách yêu thích" :
+              language === 'ja' ? "商品がお気に入りに追加されました" :
+                "Product has been added to wishlist",
+          });
+        }
+        window.dispatchEvent(new CustomEvent('guestWishlistUpdated'));
       }
-      setRefreshWishlistTrigger(prev => prev + 1);
-      window.dispatchEvent(new CustomEvent('wishlistUpdated'));
     } catch (error) {
       console.error('Failed to update wishlist:', error);
       toast({
@@ -578,31 +586,8 @@ const ProductDetail: React.FC = () => {
   const handleAddToCompare = () => {
     if (!product) return;
 
-    const savedCompareList = localStorage.getItem('koshiro_compare_list');
-    let compareList: Product[] = [];
-
-    if (savedCompareList) {
-      try {
-        compareList = JSON.parse(savedCompareList);
-      } catch (error) {
-        console.error('Error parsing compare list:', error);
-      }
-    }
-
-    if (compareList.length >= 4) {
-      toast({
-        title: language === 'vi' ? "Giới hạn so sánh" :
-          language === 'ja' ? "比較制限" :
-            "Compare Limit",
-        description: language === 'vi' ? "Bạn chỉ có thể so sánh tối đa 4 sản phẩm" :
-          language === 'ja' ? "最大4つの商品を比較できます" :
-            "You can compare up to 4 products",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (compareList.find(p => p._id === product._id)) {
+    // Check if already in compare list
+    if (guestCompareService.isInCompare(product._id)) {
       toast({
         title: language === 'vi' ? "Sản phẩm đã có" :
           language === 'ja' ? "商品は既に追加済み" :
@@ -615,9 +600,25 @@ const ProductDetail: React.FC = () => {
       return;
     }
 
-    const newCompareList = [...compareList, product];
-    localStorage.setItem('koshiro_compare_list', JSON.stringify(newCompareList));
-    window.dispatchEvent(new CustomEvent('compareUpdated'));
+    // Check limit
+    const currentItems = guestCompareService.getCompareList();
+    if (currentItems.length >= 4) {
+      toast({
+        title: language === 'vi' ? "Giới hạn so sánh" :
+          language === 'ja' ? "比較制限" :
+            "Compare Limit",
+        description: language === 'vi' ? "Bạn chỉ có thể so sánh tối đa 4 sản phẩm" :
+          language === 'ja' ? "最大4つの商品を比較できます" :
+            "You can compare up to 4 products",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Add to compare
+    guestCompareService.addToCompare(product);
+
+    window.dispatchEvent(new CustomEvent('guestCompareUpdated'));
 
     toast({
       title: language === 'vi' ? "Đã thêm vào so sánh" :
@@ -673,38 +674,36 @@ const ProductDetail: React.FC = () => {
   const handleBuyNow = async () => {
     if (!product) return;
 
-    if (!isAuthenticated) {
-      toast({
-        title: language === 'vi' ? "Cần đăng nhập" :
-          language === 'ja' ? "ログインが必要です" :
-            "Login Required",
-        description: language === 'vi' ? "Vui lòng đăng nhập để mua sản phẩm" :
-          language === 'ja' ? "商品を購入するにはログインしてください" :
-            "Please login to purchase products",
-        variant: "destructive",
-      });
-      return;
-    }
-
     try {
-      // Add to cart first, then navigate to checkout
-      await api.addToCart(product._id, quantity);
-
-      // Wait a bit to ensure API call is complete, then dispatch event
-      setTimeout(() => {
-        console.log('Dispatching cartUpdated event (Buy Now)...');
+      if (isAuthenticated) {
+        // Authenticated user: use API, then go to checkout
+        await api.addToCart(product._id, quantity);
         window.dispatchEvent(new CustomEvent('cartUpdated'));
-      }, 100);
 
-      toast({
-        title: language === 'vi' ? "Đã thêm vào giỏ hàng" :
-          language === 'ja' ? "カートに追加されました" :
-            "Added to Cart",
-        description: language === 'vi' ? "Sản phẩm đã được thêm vào giỏ hàng" :
-          language === 'ja' ? "商品がカートに追加されました" :
-            "Product has been added to cart",
-      });
-      navigate('/checkout');
+        toast({
+          title: language === 'vi' ? "Đã thêm vào giỏ hàng" :
+            language === 'ja' ? "カートに追加されました" :
+              "Added to Cart",
+          description: language === 'vi' ? "Sản phẩm đã được thêm vào giỏ hàng" :
+            language === 'ja' ? "商品がカートに追加されました" :
+              "Product has been added to cart",
+        });
+        navigate('/checkout');
+      } else {
+        // Guest user: add to localStorage cart, then redirect to login with checkout redirect
+        guestCartService.addToCart(product, quantity, selectedSize, selectedColor);
+        window.dispatchEvent(new CustomEvent('guestCartUpdated'));
+
+        toast({
+          title: language === 'vi' ? "Cần đăng nhập để thanh toán" :
+            language === 'ja' ? "チェックアウトにはログインが必要です" :
+              "Login Required for Checkout",
+          description: language === 'vi' ? "Sản phẩm đã được thêm vào giỏ hàng. Vui lòng đăng nhập để thanh toán." :
+            language === 'ja' ? "商品がカートに追加されました。チェックアウトするにはログインしてください。" :
+              "Product added to cart. Please login to proceed to checkout.",
+        });
+        navigate('/login?redirect=/checkout');
+      }
     } catch (error) {
       console.error('Failed to add to cart:', error);
       toast({
@@ -1243,8 +1242,11 @@ const ProductDetail: React.FC = () => {
                                 <Shield className="h-4 w-4" />
                                 {language === 'vi' ? 'Hướng Dẫn Bảo Quản' : language === 'ja' ? 'お手入れ方法' : 'Care Instructions'}
                               </h4>
-                              <div className="text-sm text-muted-foreground whitespace-pre-line">
-                                {getCareInstructions()}
+                              <div className="text-sm text-muted-foreground">
+                                <MarkdownRenderer
+                                  content={getCareInstructions()}
+                                  className="prose prose-sm max-w-none"
+                                />
                               </div>
                             </div>
                           )}

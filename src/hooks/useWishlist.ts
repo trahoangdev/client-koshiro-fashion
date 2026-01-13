@@ -1,13 +1,43 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, Product } from '@/lib/api';
 import { useAuth } from '@/contexts';
-import { useEffect } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+import { guestWishlistService } from '@/lib/guestStorage';
 
 export const WISHLIST_QUERY_KEY = ['wishlist'];
 
 export const useWishlist = () => {
     const { isAuthenticated } = useAuth();
     const queryClient = useQueryClient();
+    const [guestWishlistCount, setGuestWishlistCount] = useState(0);
+
+    // Load guest wishlist count
+    const loadGuestWishlist = useCallback(() => {
+        if (!isAuthenticated) {
+            const guestItems = guestWishlistService.getWishlist();
+            setGuestWishlistCount(guestItems.length);
+        }
+    }, [isAuthenticated]);
+
+    // Listen for guest wishlist updates
+    useEffect(() => {
+        loadGuestWishlist();
+
+        const handleGuestWishlistUpdate = () => {
+            loadGuestWishlist();
+        };
+
+        window.addEventListener('guestWishlistUpdated', handleGuestWishlistUpdate);
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'koshiro_guest_wishlist') {
+                loadGuestWishlist();
+            }
+        });
+
+        return () => {
+            window.removeEventListener('guestWishlistUpdated', handleGuestWishlistUpdate);
+        };
+    }, [loadGuestWishlist]);
 
     const wishlistQuery = useQuery({
         queryKey: WISHLIST_QUERY_KEY,
@@ -40,9 +70,14 @@ export const useWishlist = () => {
         return () => window.removeEventListener('wishlistUpdated', handleWishlistUpdate);
     }, [queryClient]);
 
+    // Return combined count - authenticated or guest
+    const wishlistCount = isAuthenticated
+        ? (wishlistQuery.data?.length || 0)
+        : guestWishlistCount;
+
     return {
         ...wishlistQuery,
         wishlistItems: wishlistQuery.data || [],
-        wishlistCount: wishlistQuery.data?.length || 0,
+        wishlistCount,
     };
 };

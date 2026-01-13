@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,50 +10,45 @@ import { useToast } from "@/hooks/use-toast";
 import { api, Product } from "@/lib/api";
 import { formatCurrency } from "@/lib/currency";
 import { useAuth } from "@/contexts";
-
-interface CartItem {
-  id: string;
-  product: Product;
-  quantity: number;
-}
+import { guestWishlistService, guestCartService, GuestWishlistItem } from "@/lib/guestStorage";
 
 const WishlistPage = () => {
   const [wishlistItems, setWishlistItems] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const [refreshWishlistTrigger, setRefreshWishlistTrigger] = useState(0);
   const { language } = useLanguage();
   const { settings } = useSettings();
   const { toast } = useToast();
   const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
 
-  // Load wishlist from API
+  // Load wishlist - from API if authenticated, from localStorage if guest
   useEffect(() => {
     const loadWishlist = async () => {
-      // Only load wishlist if user is authenticated
-      if (!isAuthenticated) {
-        setWishlistItems([]);
-        return;
-      }
-
       try {
         setIsLoading(true);
-        // Load real wishlist data from API
-        const response = await api.getWishlist();
-        let wishlistData: Product[] = [];
 
-        if (Array.isArray(response)) {
-          wishlistData = response;
-        } else if (response && typeof response === 'object') {
-          const responseObj = response as Record<string, unknown>;
-          if ('data' in responseObj && Array.isArray(responseObj.data)) {
-            wishlistData = responseObj.data as Product[];
-          } else if ('wishlist' in responseObj && Array.isArray(responseObj.wishlist)) {
-            wishlistData = responseObj.wishlist as Product[];
+        if (isAuthenticated) {
+          // Load from API for authenticated users
+          const response = await api.getWishlist();
+          let wishlistData: Product[] = [];
+
+          if (Array.isArray(response)) {
+            wishlistData = response;
+          } else if (response && typeof response === 'object') {
+            const responseObj = response as Record<string, unknown>;
+            if ('data' in responseObj && Array.isArray(responseObj.data)) {
+              wishlistData = responseObj.data as Product[];
+            } else if ('wishlist' in responseObj && Array.isArray(responseObj.wishlist)) {
+              wishlistData = responseObj.wishlist as Product[];
+            }
           }
-        }
 
-        setWishlistItems(wishlistData);
+          setWishlistItems(wishlistData);
+        } else {
+          // Load from localStorage for guests
+          const guestWishlist = guestWishlistService.getWishlist();
+          setWishlistItems(guestWishlist.map(item => item.product));
+        }
       } catch (error) {
         console.error('Error loading wishlist:', error);
         toast({
@@ -65,50 +60,26 @@ const WishlistPage = () => {
               "Could not load wishlist",
           variant: "destructive",
         });
-        setWishlistItems([]); // Set empty array on error
+        setWishlistItems([]);
       } finally {
         setIsLoading(false);
       }
     };
 
     loadWishlist();
-  }, [toast, language, isAuthenticated]);
 
-  // Load cart items from API
-  useEffect(() => {
-    const loadCart = async () => {
-      // Only load cart if user is authenticated
+    // Listen for guest wishlist updates
+    const handleGuestWishlistUpdate = () => {
       if (!isAuthenticated) {
-        setCartItems([]);
-        return;
-      }
-
-      try {
-        const response = await api.getCart();
-        if (response && response.items) {
-          const cartItemsData = response.items.map((item: {
-            productId: string;
-            quantity: number;
-            size?: string;
-            color?: string;
-            product: Product;
-          }) => ({
-            id: item.productId,
-            product: item.product,
-            quantity: item.quantity
-          }));
-          setCartItems(cartItemsData);
-        }
-      } catch (error) {
-        console.error('Error loading cart:', error);
-        // Don't show error toast for cart loading as it's not critical
+        const guestWishlist = guestWishlistService.getWishlist();
+        setWishlistItems(guestWishlist.map(item => item.product));
       }
     };
 
-    loadCart();
-  }, [isAuthenticated]);
+    window.addEventListener('guestWishlistUpdated', handleGuestWishlistUpdate);
+    return () => window.removeEventListener('guestWishlistUpdated', handleGuestWishlistUpdate);
+  }, [toast, language, isAuthenticated]);
 
-  // Helper function to get product name in current language
   const getProductName = (product: Product) => {
     if (language === 'vi') return product.name;
     if (language === 'ja') return product.nameJa || product.name;
@@ -116,35 +87,13 @@ const WishlistPage = () => {
   };
 
   const addToCart = async (product: Product) => {
-    // Only allow adding to cart if user is authenticated
-    if (!isAuthenticated) {
-      toast({
-        title: language === 'vi' ? "Cần đăng nhập" :
-          language === 'ja' ? "ログインが必要です" :
-            "Login Required",
-        description: language === 'vi' ? "Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng" :
-          language === 'ja' ? "商品をカートに追加するにはログインしてください" :
-            "Please login to add products to cart",
-        variant: "destructive",
-      });
-      return;
-    }
-
     try {
-      // Add to cart via API
-      await api.addToCart(product._id, 1);
-
-      setCartItems(prev => {
-        const existingItem = prev.find(item => item.id === product._id);
-        if (existingItem) {
-          return prev.map(item =>
-            item.id === product._id
-              ? { ...item, quantity: item.quantity + 1 }
-              : item
-          );
-        }
-        return [...prev, { id: product._id, product, quantity: 1 }];
-      });
+      if (isAuthenticated) {
+        await api.addToCart(product._id, 1);
+        window.dispatchEvent(new CustomEvent('cartUpdated'));
+      } else {
+        guestCartService.addToCart(product, 1);
+      }
 
       toast({
         title: language === 'vi' ? "Đã thêm vào giỏ hàng" :
@@ -169,22 +118,12 @@ const WishlistPage = () => {
   };
 
   const removeFromWishlist = async (productId: string) => {
-    // Only allow removing from wishlist if user is authenticated
-    if (!isAuthenticated) {
-      toast({
-        title: language === 'vi' ? "Cần đăng nhập" :
-          language === 'ja' ? "ログインが必要です" :
-            "Login Required",
-        description: language === 'vi' ? "Vui lòng đăng nhập để quản lý danh sách yêu thích" :
-          language === 'ja' ? "お気に入りリストを管理するにはログインしてください" :
-            "Please login to manage wishlist",
-        variant: "destructive",
-      });
-      return;
-    }
-
     try {
-      await api.removeFromWishlist(productId);
+      if (isAuthenticated) {
+        await api.removeFromWishlist(productId);
+      } else {
+        guestWishlistService.removeFromWishlist(productId);
+      }
 
       setWishlistItems(prev => prev.filter(item => item._id !== productId));
 
@@ -211,22 +150,12 @@ const WishlistPage = () => {
   };
 
   const clearWishlist = async () => {
-    // Only allow clearing wishlist if user is authenticated
-    if (!isAuthenticated) {
-      toast({
-        title: language === 'vi' ? "Cần đăng nhập" :
-          language === 'ja' ? "ログインが必要です" :
-            "Login Required",
-        description: language === 'vi' ? "Vui lòng đăng nhập để quản lý danh sách yêu thích" :
-          language === 'ja' ? "お気に入りリストを管理するにはログインしてください" :
-            "Please login to manage wishlist",
-        variant: "destructive",
-      });
-      return;
-    }
-
     try {
-      await api.clearWishlist();
+      if (isAuthenticated) {
+        await api.clearWishlist();
+      } else {
+        guestWishlistService.clearWishlist();
+      }
       setWishlistItems([]);
 
       toast({
@@ -251,7 +180,15 @@ const WishlistPage = () => {
     }
   };
 
-  const cartItemsCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  const getProductImage = (product: Product) => {
+    if (product.cloudinaryImages && product.cloudinaryImages.length > 0) {
+      return product.cloudinaryImages[0].secureUrl;
+    }
+    if (product.images && product.images.length > 0) {
+      return product.images[0];
+    }
+    return '/placeholder.svg';
+  };
 
   const translations = {
     en: {
@@ -265,7 +202,8 @@ const WishlistPage = () => {
       addToCart: "Add to Cart",
       remove: "Remove",
       items: "items",
-      loading: "Loading wishlist..."
+      loading: "Loading wishlist...",
+      guestMode: "Guest Mode"
     },
     vi: {
       title: "Danh Sách Yêu Thích",
@@ -278,7 +216,8 @@ const WishlistPage = () => {
       addToCart: "Thêm Vào Giỏ",
       remove: "Xóa",
       items: "sản phẩm",
-      loading: "Đang tải danh sách yêu thích..."
+      loading: "Đang tải danh sách yêu thích...",
+      guestMode: "Chế độ khách"
     },
     ja: {
       title: "お気に入りリスト",
@@ -291,7 +230,8 @@ const WishlistPage = () => {
       addToCart: "カートに追加",
       remove: "削除",
       items: "商品",
-      loading: "お気に入りリストを読み込み中..."
+      loading: "お気に入りリストを読み込み中...",
+      guestMode: "ゲストモード"
     }
   };
 
@@ -299,15 +239,11 @@ const WishlistPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-
-
-
       <main className="py-8">
         <div className="container mx-auto px-4 space-y-8">
           {/* Header */}
           <section className="text-center mb-12">
             <div className="relative overflow-hidden rounded-2xl shadow-2xl">
-              {/* Banner Background */}
               <div className="absolute inset-0">
                 <img
                   src={settings?.banners?.wishlist || "/images/banners/banner-13.png"}
@@ -317,7 +253,6 @@ const WishlistPage = () => {
                 <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/50 to-black/60"></div>
               </div>
 
-              {/* Content */}
               <div className="relative z-10 p-12 md:p-16 text-white">
                 <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-4 bg-gradient-to-r from-white via-white to-white/80 bg-clip-text text-transparent">
                   {t.title}
@@ -328,40 +263,18 @@ const WishlistPage = () => {
                 <p className="text-lg max-w-2xl mx-auto text-white/80 mb-8 leading-relaxed">
                   {t.description}
                 </p>
+                {!isAuthenticated && (
+                  <Badge variant="outline" className="bg-amber-500/20 backdrop-blur-sm text-amber-100 text-sm px-4 py-2 border border-amber-300/30">
+                    {t.guestMode}
+                  </Badge>
+                )}
               </div>
             </div>
           </section>
 
           {/* Wishlist Content */}
           <section>
-            {!isAuthenticated ? (
-              <div className="text-center py-12">
-                <Heart className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                <h2 className="text-2xl font-semibold mb-2">
-                  {language === 'vi' ? 'Cần đăng nhập' :
-                    language === 'ja' ? 'ログインが必要です' : 'Login Required'}
-                </h2>
-                <p className="text-muted-foreground mb-8">
-                  {language === 'vi' ? 'Vui lòng đăng nhập để xem danh sách yêu thích của bạn' :
-                    language === 'ja' ? 'お気に入りリストを表示するにはログインしてください' :
-                      'Please login to view your wishlist'}
-                </p>
-                <div className="space-x-4">
-                  <Link to="/login">
-                    <Button size="lg">
-                      {language === 'vi' ? 'Đăng Nhập' :
-                        language === 'ja' ? 'ログイン' : 'Login'}
-                    </Button>
-                  </Link>
-                  <Link to="/register">
-                    <Button variant="outline" size="lg">
-                      {language === 'vi' ? 'Đăng Ký' :
-                        language === 'ja' ? '登録' : 'Register'}
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            ) : isLoading ? (
+            {isLoading ? (
               <div className="text-center py-12">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
                 <p className="text-muted-foreground">
@@ -412,7 +325,7 @@ const WishlistPage = () => {
                       <CardContent className="p-6">
                         <div className="relative mb-4 rounded-xl overflow-hidden bg-muted">
                           <img
-                            src={product.images[0] || "/src/assets/placeholder.svg"}
+                            src={getProductImage(product)}
                             alt={getProductName(product)}
                             className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
                           />
@@ -488,10 +401,8 @@ const WishlistPage = () => {
           )}
         </div>
       </main>
-
-
     </div>
   );
 };
 
-export default WishlistPage; 
+export default WishlistPage;

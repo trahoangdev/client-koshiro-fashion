@@ -3,6 +3,8 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useSettings } from "@/contexts/SettingsContext";
 import { useToast } from "@/hooks/use-toast";
 import { api, Product } from "@/lib/api";
+import { guestWishlistService } from "@/lib/guestStorage";
+import { useAuth } from "@/contexts";
 import { useCompare } from "@/hooks/useCompare";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,11 +21,13 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { formatCurrency } from "@/lib/currency";
+import MarkdownRenderer from "@/components/shared/MarkdownRenderer";
 
 const ComparePage = () => {
   const { language } = useLanguage();
   const { settings } = useSettings();
   const { toast } = useToast();
+  const { isAuthenticated } = useAuth();
   const { compareItems: compareList, removeFromCompare, clearCompareList } = useCompare();
 
   const handleAddToCart = async (product: Product) => {
@@ -51,8 +55,13 @@ const ComparePage = () => {
 
   const handleAddToWishlist = async (product: Product) => {
     try {
-      await api.addToWishlist(product._id);
-      window.dispatchEvent(new CustomEvent('wishlistUpdated'));
+      if (isAuthenticated) {
+        await api.addToWishlist(product._id);
+        window.dispatchEvent(new CustomEvent('wishlistUpdated'));
+      } else {
+        guestWishlistService.addToWishlist(product);
+        window.dispatchEvent(new CustomEvent('guestWishlistUpdated'));
+      }
       toast({
         title: language === 'vi' ? 'Thành công' : language === 'ja' ? '成功' : 'Success',
         description: language === 'vi' ? 'Đã thêm sản phẩm vào danh sách yêu thích' :
@@ -231,7 +240,7 @@ const ComparePage = () => {
                             </Button>
                             <div className="pt-8">
                               <img
-                                src={product.images[0] || '/placeholder.svg'}
+                                src={product.cloudinaryImages?.[0]?.responsiveUrls?.medium || product.images[0] || '/placeholder.svg'}
                                 alt={getProductName(product)}
                                 className="w-32 h-32 object-cover mx-auto mb-4 rounded-lg border-2 shadow-lg"
                               />
@@ -314,9 +323,13 @@ const ComparePage = () => {
                         <td className="p-4 font-bold">{t.description}</td>
                         {compareList.map((product) => (
                           <td key={product._id} className="p-4 text-center">
-                            <p className="text-sm text-muted-foreground line-clamp-3 font-medium leading-relaxed">
-                              {product.description}
-                            </p>
+                            <div className="text-sm text-muted-foreground line-clamp-3 font-medium leading-relaxed">
+                              <MarkdownRenderer
+                                content={product.description || ''}
+                                stripMarkdown
+                                className="text-sm"
+                              />
+                            </div>
                           </td>
                         ))}
                       </tr>

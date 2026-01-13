@@ -7,15 +7,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { api, Product, Category } from "@/lib/api";
+import { guestCompareService, guestWishlistService } from "@/lib/guestStorage";
 import { logger } from "@/lib/logger";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts";
 import { Grid3X3, List, Filter } from "lucide-react";
 
 const ProductsPage = () => {
   const { language } = useLanguage();
   const { toast } = useToast();
   const { settings } = useSettings();
+  const { isAuthenticated } = useAuth();
 
   // Data state
   const [products, setProducts] = useState<Product[]>([]);
@@ -198,8 +201,13 @@ const ProductsPage = () => {
   // Add to wishlist function
   const addToWishlist = async (product: Product) => {
     try {
-      await api.addToWishlist(product._id);
-      window.dispatchEvent(new CustomEvent('wishlistUpdated'));
+      if (isAuthenticated) {
+        await api.addToWishlist(product._id);
+        window.dispatchEvent(new CustomEvent('wishlistUpdated'));
+      } else {
+        guestWishlistService.addToWishlist(product);
+        window.dispatchEvent(new CustomEvent('guestWishlistUpdated'));
+      }
       toast({
         title: language === 'vi' ? 'Thành công' : language === 'ja' ? '成功' : 'Success',
         description: language === 'vi' ? 'Đã thêm sản phẩm vào danh sách yêu thích' :
@@ -220,31 +228,8 @@ const ProductsPage = () => {
 
   // Add to compare function
   const addToCompare = (product: Product) => {
-    const savedCompareList = localStorage.getItem('koshiro_compare_list');
-    let compareList: Product[] = [];
-
-    if (savedCompareList) {
-      try {
-        compareList = JSON.parse(savedCompareList);
-      } catch (error) {
-        logger.error('Error parsing compare list', error);
-      }
-    }
-
-    if (compareList.length >= 4) {
-      toast({
-        title: language === 'vi' ? "Giới hạn so sánh" :
-          language === 'ja' ? "比較制限" :
-            "Compare Limit",
-        description: language === 'vi' ? "Bạn chỉ có thể so sánh tối đa 4 sản phẩm" :
-          language === 'ja' ? "最大4つの商品を比較できます" :
-            "You can compare up to 4 products",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (compareList.find(p => p._id === product._id)) {
+    // Check if already in compare list
+    if (guestCompareService.isInCompare(product._id)) {
       toast({
         title: language === 'vi' ? "Sản phẩm đã có" :
           language === 'ja' ? "商品は既に追加済み" :
@@ -257,9 +242,23 @@ const ProductsPage = () => {
       return;
     }
 
-    const newCompareList = [...compareList, product];
-    localStorage.setItem('koshiro_compare_list', JSON.stringify(newCompareList));
-    window.dispatchEvent(new CustomEvent('compareUpdated'));
+    // Check limit
+    const currentItems = guestCompareService.getCompareList();
+    if (currentItems.length >= 4) {
+      toast({
+        title: language === 'vi' ? "Giới hạn so sánh" :
+          language === 'ja' ? "比較制限" :
+            "Compare Limit",
+        description: language === 'vi' ? "Bạn chỉ có thể so sánh tối đa 4 sản phẩm" :
+          language === 'ja' ? "最大4つの商品を比較できます" :
+            "You can compare up to 4 products",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Add to compare
+    guestCompareService.addToCompare(product);
 
     toast({
       title: language === 'vi' ? "Đã thêm vào so sánh" :
@@ -335,7 +334,7 @@ const ProductsPage = () => {
 
 
       <main className="py-8">
-        <div className="container space-y-8">
+        <div className="container mx-auto px-4 space-y-8">
           {/* Hero Section with Banner Background */}
           <section className="text-center mb-12">
             <div className="relative overflow-hidden rounded-2xl shadow-2xl">
@@ -371,9 +370,9 @@ const ProductsPage = () => {
             {/* Filters Card */}
             <Card className="rounded-xl border-2 shadow-lg bg-background/95 backdrop-blur-sm">
               <CardHeader className="pb-4">
-                <CardTitle className="flex items-center text-lg font-bold">
-                  <Filter className="h-5 w-5 mr-2 text-primary" />
-                  <span>{t.filters}</span>
+                <CardTitle className="flex items-center space-x-2">
+                  <Filter className="h-5 w-5 text-primary" />
+                  <span className="text-lg font-semibold">{t.filters}</span>
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -385,7 +384,7 @@ const ProductsPage = () => {
                         'Search products...'}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="max-w-md rounded-lg border-2 focus:border-primary transition-all pl-10"
+                    className="max-w-md rounded-lg border-2 focus:border-primary transition-all"
                   />
                 </div>
 
@@ -396,15 +395,15 @@ const ProductsPage = () => {
                       {language === 'vi' ? 'Danh mục' : language === 'ja' ? 'カテゴリー' : 'Category'}
                     </label>
                     <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                      <SelectTrigger className="w-full rounded-lg border-2 focus:border-primary transition-all h-11">
-                        <SelectValue placeholder={language === 'vi' ? 'Tất cả danh mục' : language === 'ja' ? 'すべてのカテゴリー' : 'All Categories'} />
+                      <SelectTrigger className="rounded-lg border-2">
+                        <SelectValue />
                       </SelectTrigger>
-                      <SelectContent className="rounded-lg border-2">
-                        <SelectItem value="all" className="rounded-md">
+                      <SelectContent>
+                        <SelectItem value="all">
                           {language === 'vi' ? 'Tất cả danh mục' : language === 'ja' ? 'すべてのカテゴリー' : 'All Categories'}
                         </SelectItem>
                         {categories.map((category) => (
-                          <SelectItem key={category._id} value={category._id} className="rounded-md">
+                          <SelectItem key={category._id} value={category._id}>
                             {category.name}
                           </SelectItem>
                         ))}
@@ -417,23 +416,23 @@ const ProductsPage = () => {
                       {language === 'vi' ? 'Khoảng giá' : language === 'ja' ? '価格帯' : 'Price Range'}
                     </label>
                     <Select value={selectedPriceRange} onValueChange={setSelectedPriceRange}>
-                      <SelectTrigger className="w-full rounded-lg border-2 focus:border-primary transition-all h-11">
-                        <SelectValue placeholder={language === 'vi' ? 'Tất cả giá' : language === 'ja' ? 'すべての価格' : 'All Prices'} />
+                      <SelectTrigger className="rounded-lg border-2">
+                        <SelectValue />
                       </SelectTrigger>
-                      <SelectContent className="rounded-lg border-2">
-                        <SelectItem value="all" className="rounded-md">
+                      <SelectContent>
+                        <SelectItem value="all">
                           {language === 'vi' ? 'Tất cả giá' : language === 'ja' ? 'すべての価格' : 'All Prices'}
                         </SelectItem>
-                        <SelectItem value="0-200000" className="rounded-md">
+                        <SelectItem value="0-200000">
                           {language === 'vi' ? 'Dưới 200K' : language === 'ja' ? '200円未満' : 'Under $200'}
                         </SelectItem>
-                        <SelectItem value="200000-500000" className="rounded-md">
+                        <SelectItem value="200000-500000">
                           {language === 'vi' ? '200K - 500K' : language === 'ja' ? '200円 - 500円' : '$200 - $500'}
                         </SelectItem>
-                        <SelectItem value="500000-1000000" className="rounded-md">
+                        <SelectItem value="500000-1000000">
                           {language === 'vi' ? '500K - 1M' : language === 'ja' ? '500円 - 1,000円' : '$500 - $1000'}
                         </SelectItem>
-                        <SelectItem value="1000000-" className="rounded-md">
+                        <SelectItem value="1000000-">
                           {language === 'vi' ? 'Trên 1M' : language === 'ja' ? '1,000円以上' : 'Over $1000'}
                         </SelectItem>
                       </SelectContent>
@@ -445,38 +444,38 @@ const ProductsPage = () => {
                       {language === 'vi' ? 'Màu sắc' : language === 'ja' ? '色' : 'Color'}
                     </label>
                     <Select value={selectedColor} onValueChange={setSelectedColor}>
-                      <SelectTrigger className="w-full rounded-lg border-2 focus:border-primary transition-all h-11">
-                        <SelectValue placeholder={language === 'vi' ? 'Tất cả màu' : language === 'ja' ? 'すべての色' : 'All Colors'} />
+                      <SelectTrigger className="rounded-lg border-2">
+                        <SelectValue />
                       </SelectTrigger>
-                      <SelectContent className="max-h-60 overflow-y-auto rounded-lg border-2">
-                        <SelectItem value="all" className="rounded-md">
+                      <SelectContent>
+                        <SelectItem value="all">
                           {language === 'vi' ? 'Tất cả màu' : language === 'ja' ? 'すべての色' : 'All Colors'}
                         </SelectItem>
-                        <SelectItem value="black" className="rounded-md">
+                        <SelectItem value="black">
                           {language === 'vi' ? 'Đen' : language === 'ja' ? '黒' : 'Black'}
                         </SelectItem>
-                        <SelectItem value="white" className="rounded-md">
+                        <SelectItem value="white">
                           {language === 'vi' ? 'Trắng' : language === 'ja' ? '白' : 'White'}
                         </SelectItem>
-                        <SelectItem value="blue" className="rounded-md">
+                        <SelectItem value="blue">
                           {language === 'vi' ? 'Xanh dương' : language === 'ja' ? '青' : 'Blue'}
                         </SelectItem>
-                        <SelectItem value="red" className="rounded-md">
+                        <SelectItem value="red">
                           {language === 'vi' ? 'Đỏ' : language === 'ja' ? '赤' : 'Red'}
                         </SelectItem>
-                        <SelectItem value="green" className="rounded-md">
+                        <SelectItem value="green">
                           {language === 'vi' ? 'Xanh lá' : language === 'ja' ? '緑' : 'Green'}
                         </SelectItem>
-                        <SelectItem value="gray" className="rounded-md">
+                        <SelectItem value="gray">
                           {language === 'vi' ? 'Xám' : language === 'ja' ? 'グレー' : 'Gray'}
                         </SelectItem>
-                        <SelectItem value="brown" className="rounded-md">
+                        <SelectItem value="brown">
                           {language === 'vi' ? 'Nâu' : language === 'ja' ? '茶色' : 'Brown'}
                         </SelectItem>
-                        <SelectItem value="yellow" className="rounded-md">
+                        <SelectItem value="yellow">
                           {language === 'vi' ? 'Vàng' : language === 'ja' ? '黄色' : 'Yellow'}
                         </SelectItem>
-                        <SelectItem value="pink" className="rounded-md">
+                        <SelectItem value="pink">
                           {language === 'vi' ? 'Hồng' : language === 'ja' ? 'ピンク' : 'Pink'}
                         </SelectItem>
                       </SelectContent>
@@ -487,54 +486,9 @@ const ProductsPage = () => {
                     <Button
                       variant="outline"
                       onClick={clearFilters}
-                      className="w-full rounded-lg border-2 h-11 hover:bg-destructive/10 hover:text-destructive hover:border-destructive transition-all font-semibold"
+                      className="w-full rounded-lg"
                     >
                       {t.clearFilters}
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Sort and View Controls */}
-            <Card className="rounded-xl border-2 shadow-lg bg-background/95 backdrop-blur-sm">
-              <CardContent className="p-4">
-                <div className="flex flex-wrap items-center justify-between gap-4">
-                  <div className="flex items-center gap-4">
-                    <label className="text-sm font-semibold text-foreground whitespace-nowrap">
-                      {t.sortBy}:
-                    </label>
-                    <Select value={sortBy} onValueChange={setSortBy}>
-                      <SelectTrigger className="w-48 rounded-lg border-2 focus:border-primary transition-all">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="rounded-lg border-2">
-                        <SelectItem value="newest" className="rounded-md">{t.newest}</SelectItem>
-                        <SelectItem value="oldest" className="rounded-md">{t.oldest}</SelectItem>
-                        <SelectItem value="price-low" className="rounded-md">{t.priceLow}</SelectItem>
-                        <SelectItem value="price-high" className="rounded-md">{t.priceHigh}</SelectItem>
-                        <SelectItem value="name" className="rounded-md">{t.name}</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant={viewMode === 'grid' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setViewMode('grid')}
-                      className="rounded-lg border-2"
-                    >
-                      <Grid3X3 className="h-4 w-4 mr-2" />
-                      {t.grid}
-                    </Button>
-                    <Button
-                      variant={viewMode === 'list' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setViewMode('list')}
-                      className="rounded-lg border-2"
-                    >
-                      <List className="h-4 w-4 mr-2" />
-                      {t.list}
                     </Button>
                   </div>
                 </div>

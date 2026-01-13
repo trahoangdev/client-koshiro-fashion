@@ -12,6 +12,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { api, Product, Category } from "@/lib/api";
 import { formatCurrency } from "@/lib/currency";
 import { logger } from "@/lib/logger";
+import { guestCartService, guestWishlistService, guestCompareService } from "@/lib/guestStorage";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth, useSettings } from "@/contexts";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -266,14 +267,16 @@ const Index = () => {
   const addToCart = useCallback(async (product: Product) => {
     try {
       // For demo purposes, use default color and size
-      const selectedColor = product.colors[0];
-      const selectedSize = product.sizes[0];
+      const selectedColor = product.colors?.[0];
+      const selectedSize = product.sizes?.[0];
 
-      // Add to cart via API if authenticated
+      // Add to cart via API if authenticated, otherwise use localStorage
       if (isAuthenticated) {
         await api.addToCart(product._id, 1);
-        // Dispatch custom event to notify Header to refresh cart count
         window.dispatchEvent(new CustomEvent('cartUpdated'));
+      } else {
+        // Add to guest cart (localStorage)
+        guestCartService.addToCart(product, 1, selectedSize, selectedColor);
       }
 
       const existingItem = cartItems.find(item =>
@@ -467,22 +470,15 @@ const Index = () => {
   const cartItemsCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
   const addToWishlist = async (product: Product) => {
-    if (!isAuthenticated) {
-      toast({
-        title: language === 'vi' ? "Cần đăng nhập" :
-          language === 'ja' ? "ログインが必要です" :
-            "Login Required",
-        description: language === 'vi' ? "Vui lòng đăng nhập để thêm sản phẩm vào danh sách yêu thích" :
-          language === 'ja' ? "お気に入りリストに商品を追加するにはログインしてください" :
-            "Please login to add products to wishlist",
-        variant: "destructive",
-      });
-      return;
-    }
-
     try {
-      await api.addToWishlist(product._id);
-      window.dispatchEvent(new CustomEvent('wishlistUpdated'));
+      if (isAuthenticated) {
+        // Add to server wishlist for authenticated users
+        await api.addToWishlist(product._id);
+        window.dispatchEvent(new CustomEvent('wishlistUpdated'));
+      } else {
+        // Add to guest wishlist (localStorage)
+        guestWishlistService.addToWishlist(product);
+      }
 
       toast({
         title: language === 'vi' ? "Đã thêm vào danh sách yêu thích" :
@@ -507,46 +503,24 @@ const Index = () => {
   };
 
   const addToCompare = (product: Product) => {
-    const savedCompareList = localStorage.getItem('koshiro_compare_list');
-    let compareList: Product[] = [];
+    const result = guestCompareService.addToCompare(product);
 
-    if (savedCompareList) {
-      try {
-        compareList = JSON.parse(savedCompareList);
-      } catch (error) {
-        logger.error('Error parsing compare list', error);
-      }
-    }
-
-    if (compareList.length >= 4) {
+    if (!result.success) {
       toast({
-        title: language === 'vi' ? "Giới hạn so sánh" :
-          language === 'ja' ? "比較制限" :
-            "Compare Limit",
-        description: language === 'vi' ? "Bạn chỉ có thể so sánh tối đa 4 sản phẩm" :
-          language === 'ja' ? "最大4つの商品を比較できます" :
-            "You can compare up to 4 products",
+        title: language === 'vi' ? "Không thể thêm" :
+          language === 'ja' ? "追加できません" :
+            "Cannot Add",
+        description: result.message === 'Maximum 4 items allowed'
+          ? (language === 'vi' ? "Bạn chỉ có thể so sánh tối đa 4 sản phẩm" :
+            language === 'ja' ? "最大4つの商品を比較できます" :
+              "You can compare up to 4 products")
+          : (language === 'vi' ? "Sản phẩm này đã có trong danh sách so sánh" :
+            language === 'ja' ? "この商品は既に比較リストにあります" :
+              "This product is already in the compare list"),
         variant: "destructive",
       });
       return;
     }
-
-    if (compareList.find(p => p._id === product._id)) {
-      toast({
-        title: language === 'vi' ? "Sản phẩm đã có" :
-          language === 'ja' ? "商品は既に追加済み" :
-            "Product Already Added",
-        description: language === 'vi' ? "Sản phẩm này đã có trong danh sách so sánh" :
-          language === 'ja' ? "この商品は既に比較リストにあります" :
-            "This product is already in the compare list",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const newCompareList = [...compareList, product];
-    localStorage.setItem('koshiro_compare_list', JSON.stringify(newCompareList));
-    window.dispatchEvent(new CustomEvent('compareUpdated'));
 
     toast({
       title: language === 'vi' ? "Đã thêm vào so sánh" :
