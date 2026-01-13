@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useSettings } from "@/contexts/SettingsContext";
 
 export default function ResetPasswordPage() {
   const [searchParams] = useSearchParams();
@@ -21,6 +22,7 @@ export default function ResetPasswordPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const { language } = useLanguage();
+  const { settings } = useSettings();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -151,138 +153,142 @@ export default function ResetPasswordPage() {
 
   if (isSuccess) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+      <div className="min-h-screen relative flex items-center justify-center">
+        {/* Background with Banner */}
+        <div className="absolute inset-0 z-0">
+          <img
+            src={settings?.banners?.resetPassword || "/images/banners/banner-20.png"}
+            alt="Reset Password Background"
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px]"></div>
+        </div>
 
-
-        <main className="py-8">
-          <div className="container mx-auto px-4">
-            <div className="flex justify-center">
-              <Card className="w-full max-w-md rounded-xl border-2 shadow-xl bg-background/95 backdrop-blur-sm">
-                <CardHeader className="text-center pb-6">
-                  <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/20">
-                    <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-400" />
-                  </div>
-                  <CardTitle className="text-3xl font-bold mb-2">{t.successTitle}</CardTitle>
-                  <p className="text-muted-foreground text-lg">{t.successMessage}</p>
-                </CardHeader>
-                <CardContent>
-                  <Link to="/login">
-                    <Button className="w-full rounded-xl font-semibold h-11 shadow-lg hover:shadow-xl transition-all">
-                      <ArrowLeft className="mr-2 h-4 w-4" />
-                      {t.backToLogin}
-                    </Button>
-                  </Link>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
+        <main className="relative z-10 w-full px-4 py-8 flex justify-center">
+          <Card className="w-full max-w-md rounded-xl border-2 shadow-xl bg-background/95 backdrop-blur-sm">
+            <CardHeader className="text-center pb-6">
+              <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/20">
+                <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-400" />
+              </div>
+              <CardTitle className="text-3xl font-bold mb-2">{t.successTitle}</CardTitle>
+              <p className="text-muted-foreground text-lg">{t.successMessage}</p>
+            </CardHeader>
+            <CardContent>
+              <Link to="/login">
+                <Button className="w-full rounded-xl font-semibold h-11 shadow-lg hover:shadow-xl transition-all">
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  {t.backToLogin}
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
         </main>
-
-
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+    <div className="min-h-screen relative flex items-center justify-center">
+      {/* Background with Banner */}
+      <div className="absolute inset-0 z-0">
+        <img
+          src={settings?.banners?.resetPassword || "/images/banners/banner-20.png"}
+          alt="Reset Password Background"
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px]"></div>
+      </div>
 
-
-      <main className="py-8">
-        <div className="container mx-auto px-4">
-          <div className="flex justify-center">
-            <Card className="w-full max-w-md rounded-xl border-2 shadow-xl bg-background/95 backdrop-blur-sm">
-              <CardHeader className="text-center pb-6">
-                <CardTitle className="text-3xl font-bold mb-2">{t.title}</CardTitle>
-                <p className="text-muted-foreground text-lg">{t.subtitle}</p>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <form onSubmit={handleSubmit} className="space-y-5">
-                  <div className="space-y-2">
-                    <Label htmlFor="password" className="text-sm font-semibold">{t.password}</Label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="password"
-                        name="password"
-                        type={showPassword ? "text" : "password"}
-                        placeholder={language === 'vi' ? 'Nhập mật khẩu mới' : language === 'ja' ? '新しいパスワードを入力' : 'Enter new password'}
-                        value={formData.password}
-                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                        className="pl-10 pr-10 rounded-lg border-2 focus:border-primary transition-all"
-                        disabled={isLoading}
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent rounded-lg"
-                        onClick={() => setShowPassword(!showPassword)}
-                        disabled={isLoading}
-                      >
-                        {showPassword ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="confirmPassword" className="text-sm font-semibold">{t.confirmPassword}</Label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="confirmPassword"
-                        name="confirmPassword"
-                        type={showConfirmPassword ? "text" : "password"}
-                        placeholder={language === 'vi' ? 'Xác nhận mật khẩu mới' : language === 'ja' ? '新しいパスワードを確認' : 'Confirm new password'}
-                        value={formData.confirmPassword}
-                        onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                        className="pl-10 pr-10 rounded-lg border-2 focus:border-primary transition-all"
-                        disabled={isLoading}
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent rounded-lg"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        disabled={isLoading}
-                      >
-                        {showConfirmPassword ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-
+      <main className="relative z-10 w-full px-4 py-8 flex justify-center">
+        <Card className="w-full max-w-md rounded-xl border-2 shadow-xl bg-background/95 backdrop-blur-sm">
+          <CardHeader className="text-center pb-6">
+            <CardTitle className="text-3xl font-bold mb-2">{t.title}</CardTitle>
+            <p className="text-muted-foreground text-lg">{t.subtitle}</p>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-sm font-semibold">{t.password}</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="password"
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder={language === 'vi' ? 'Nhập mật khẩu mới' : language === 'ja' ? '新しいパスワードを入力' : 'Enter new password'}
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    className="pl-10 pr-10 rounded-lg border-2 focus:border-primary transition-all"
+                    disabled={isLoading}
+                  />
                   <Button
-                    type="submit"
-                    className="w-full rounded-xl font-semibold h-11 shadow-lg hover:shadow-xl transition-all"
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent rounded-lg"
+                    onClick={() => setShowPassword(!showPassword)}
                     disabled={isLoading}
                   >
-                    {isLoading ? (language === 'vi' ? "Đang đặt lại..." : language === 'ja' ? "リセット中..." : "Resetting...") : t.resetPassword}
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
                   </Button>
-                </form>
-
-                <div className="text-center pt-4 border-t">
-                  <Link
-                    to="/login"
-                    className="text-sm text-primary hover:underline font-semibold"
-                  >
-                    {t.backToLogin}
-                  </Link>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword" className="text-sm font-semibold">{t.confirmPassword}</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    type={showConfirmPassword ? "text" : "password"}
+                    placeholder={language === 'vi' ? 'Xác nhận mật khẩu mới' : language === 'ja' ? '新しいパスワードを確認' : 'Confirm new password'}
+                    value={formData.confirmPassword}
+                    onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                    className="pl-10 pr-10 rounded-lg border-2 focus:border-primary transition-all"
+                    disabled={isLoading}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent rounded-lg"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    disabled={isLoading}
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+
+              <Button
+                type="submit"
+                className="w-full rounded-xl font-semibold h-11 shadow-lg hover:shadow-xl transition-all"
+                disabled={isLoading}
+              >
+                {isLoading ? (language === 'vi' ? "Đang đặt lại..." : language === 'ja' ? "リセット中..." : "Resetting...") : t.resetPassword}
+              </Button>
+            </form>
+
+            <div className="text-center pt-4 border-t">
+              <Link
+                to="/login"
+                className="text-sm text-primary hover:underline font-semibold"
+              >
+                {t.backToLogin}
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
       </main>
-
-
     </div>
   );
-} 
+}

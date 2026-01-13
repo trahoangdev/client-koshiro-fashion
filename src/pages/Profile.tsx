@@ -16,6 +16,7 @@ import ProfilePayment from "@/components/ProfilePayment";
 import ProfileNotifications from "@/components/ProfileNotifications";
 import ProfileSettings from "@/components/ProfileSettings";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useSettings } from "@/contexts/SettingsContext";
 import { useAuth } from "@/contexts";
 import { api, User as UserType } from "@/lib/api";
 import { formatCurrency } from "@/lib/currency";
@@ -33,6 +34,7 @@ export default function Profile() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { language } = useLanguage();
+  const { settings } = useSettings();
   const { toast } = useToast();
   const { user, isAuthenticated, isLoading, refreshUser } = useAuth();
   const [activeSection, setActiveSection] = useState("profile");
@@ -265,6 +267,30 @@ export default function Profile() {
 
       <main className="py-8">
         <div className="container mx-auto px-4">
+          {/* Hero Section */}
+          <section className="text-center mb-8">
+            <div className="relative overflow-hidden rounded-2xl shadow-2xl">
+              <div className="absolute inset-0">
+                <img
+                  src={settings?.banners?.profile || "/images/banners/banner-16.png"}
+                  alt="Profile Banner"
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/50 to-black/60"></div>
+              </div>
+
+              <div className="relative z-10 p-12 text-white">
+                <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-white via-white to-white/80 bg-clip-text text-transparent">
+                  {t.title}
+                </h1>
+                <p className="text-xl text-white/90 font-light">
+                  {language === 'vi' ? 'Quản lý tài khoản và tùy chọn của bạn' :
+                    language === 'ja' ? 'アカウントと設定の管理' :
+                      'Manage your account and preferences'}
+                </p>
+              </div>
+            </div>
+          </section>
           <div className="flex flex-col lg:flex-row gap-8">
             {/* Sidebar */}
             <ProfileSidebar
@@ -275,10 +301,6 @@ export default function Profile() {
 
             {/* Main Content */}
             <div className="flex-1 space-y-6">
-              <div className="text-center lg:text-left mb-6">
-                <h1 className="text-4xl md:text-5xl font-bold mb-2 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">{t.title}</h1>
-                <p className="text-muted-foreground text-lg font-medium">Manage your account and preferences</p>
-              </div>
 
               {/* Profile Info Section - Only show when profile tab is active */}
               {activeSection === "profile" && (

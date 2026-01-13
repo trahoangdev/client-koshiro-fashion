@@ -159,7 +159,7 @@ const CheckoutPage = () => {
       }
     };
     loadCart();
-  }, [isAuthenticated, api, toast]);
+  }, [isAuthenticated, user, toast]);
 
   const subtotal = cartItems.reduce((acc, item) => acc + (item.product.price * item.quantity), 0);
 
@@ -667,7 +667,7 @@ const CheckoutPage = () => {
               {/* Banner Background */}
               <div className="absolute inset-0">
                 <img
-                  src="/images/banners/banner-01.png"
+                  src={settings?.banners?.checkout || "/images/banners/banner-15.png"}
                   alt="Checkout Banner"
                   className="w-full h-full object-cover"
                 />

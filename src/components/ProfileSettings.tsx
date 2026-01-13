@@ -11,10 +11,10 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
 import { logger } from "@/lib/logger";
-import { 
-  Settings, 
-  Lock, 
-  Eye, 
+import {
+  Settings,
+  Lock,
+  Eye,
   EyeOff,
   Save,
   Trash2,
@@ -36,7 +36,7 @@ interface AccountSettings {
 const ProfileSettings = () => {
   const { settings: systemSettings } = useSettings();
   const passwordMinLength = systemSettings?.passwordMinLength || 8;
-  
+
   const [settings, setSettings] = useState<AccountSettings>({
     language: 'en',
     currency: 'USD',
@@ -155,7 +155,7 @@ const ProfileSettings = () => {
   useEffect(() => {
     const loadSettings = async () => {
       if (!isAuthenticated) return;
-      
+
       try {
         setIsLoading(true);
         const response = await api.getProfile();
@@ -174,9 +174,9 @@ const ProfileSettings = () => {
         logger.error('Error loading settings', error);
         toast({
           title: tCommon('error'),
-          description: language === 'vi' ? 'Không thể tải cài đặt' : 
-                       language === 'ja' ? '設定を読み込めませんでした' : 
-                       'Could not load settings',
+          description: language === 'vi' ? 'Không thể tải cài đặt' :
+            language === 'ja' ? '設定を読み込めませんでした' :
+              'Could not load settings',
           variant: "destructive",
         });
       } finally {
@@ -196,7 +196,7 @@ const ProfileSettings = () => {
 
   const handleSaveSettings = async () => {
     if (!isAuthenticated) return;
-    
+
     try {
       setIsSaving(true);
       await api.updateProfile({
@@ -221,9 +221,9 @@ const ProfileSettings = () => {
       logger.error('Error saving settings', error);
       toast({
         title: tCommon('error'),
-        description: language === 'vi' ? 'Không thể lưu cài đặt' : 
-                     language === 'ja' ? '設定を保存できませんでした' : 
-                     'Could not save settings',
+        description: language === 'vi' ? 'Không thể lưu cài đặt' :
+          language === 'ja' ? '設定を保存できませんでした' :
+            'Could not save settings',
         variant: "destructive",
       });
     } finally {
@@ -233,14 +233,14 @@ const ProfileSettings = () => {
 
   const handlePasswordChange = async () => {
     if (!isAuthenticated) return;
-    
+
     // Validate all fields are filled
     if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
       toast({
         title: tCommon('error'),
-        description: language === 'vi' ? 'Vui lòng điền đầy đủ thông tin' : 
-                     language === 'ja' ? 'すべての情報を入力してください' : 
-                     'Please fill in all fields',
+        description: language === 'vi' ? 'Vui lòng điền đầy đủ thông tin' :
+          language === 'ja' ? 'すべての情報を入力してください' :
+            'Please fill in all fields',
         variant: "destructive",
       });
       return;
@@ -249,16 +249,16 @@ const ProfileSettings = () => {
     // Validate new password length
     if (passwordData.newPassword.length < passwordMinLength) {
       setPasswordErrors({
-        newPassword: language === 'vi' ? `Mật khẩu phải có ít nhất ${passwordMinLength} ký tự` : 
-                    language === 'ja' ? `パスワードは少なくとも${passwordMinLength}文字である必要があります` : 
-                    `Password must be at least ${passwordMinLength} characters`,
+        newPassword: language === 'vi' ? `Mật khẩu phải có ít nhất ${passwordMinLength} ký tự` :
+          language === 'ja' ? `パスワードは少なくとも${passwordMinLength}文字である必要があります` :
+            `Password must be at least ${passwordMinLength} characters`,
         confirmPassword: passwordErrors.confirmPassword
       });
       toast({
         title: tCommon('error'),
-        description: language === 'vi' ? `Mật khẩu mới phải có ít nhất ${passwordMinLength} ký tự` : 
-                     language === 'ja' ? `新しいパスワードは少なくとも${passwordMinLength}文字である必要があります` : 
-                     `New password must be at least ${passwordMinLength} characters`,
+        description: language === 'vi' ? `Mật khẩu mới phải có ít nhất ${passwordMinLength} ký tự` :
+          language === 'ja' ? `新しいパスワードは少なくとも${passwordMinLength}文字である必要があります` :
+            `New password must be at least ${passwordMinLength} characters`,
         variant: "destructive",
       });
       return;
@@ -268,15 +268,15 @@ const ProfileSettings = () => {
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       setPasswordErrors({
         newPassword: "",
-        confirmPassword: language === 'vi' ? 'Mật khẩu xác nhận không khớp' : 
-                       language === 'ja' ? '確認パスワードが一致しません' : 
-                       'Passwords do not match'
+        confirmPassword: language === 'vi' ? 'Mật khẩu xác nhận không khớp' :
+          language === 'ja' ? '確認パスワードが一致しません' :
+            'Passwords do not match'
       });
       toast({
         title: tCommon('error'),
-        description: language === 'vi' ? 'Mật khẩu xác nhận không khớp' : 
-                     language === 'ja' ? '確認パスワードが一致しません' : 
-                     'Passwords do not match',
+        description: language === 'vi' ? 'Mật khẩu xác nhận không khớp' :
+          language === 'ja' ? '確認パスワードが一致しません' :
+            'Passwords do not match',
         variant: "destructive",
       });
       return;
@@ -285,7 +285,7 @@ const ProfileSettings = () => {
     try {
       setIsChangingPassword(true);
       await api.changePassword(passwordData.currentPassword, passwordData.newPassword);
-      
+
       toast({
         title: tCommon('success'),
         description: tl.passwordChanged,
@@ -305,9 +305,9 @@ const ProfileSettings = () => {
       logger.error('Error changing password', error);
       toast({
         title: tCommon('error'),
-        description: error?.message || (language === 'vi' ? 'Không thể đổi mật khẩu' : 
-                                       language === 'ja' ? 'パスワードを変更できませんでした' : 
-                                       'Could not change password'),
+        description: error?.message || (language === 'vi' ? 'Không thể đổi mật khẩu' :
+          language === 'ja' ? 'パスワードを変更できませんでした' :
+            'Could not change password'),
         variant: "destructive",
       });
     } finally {
@@ -317,7 +317,7 @@ const ProfileSettings = () => {
 
   const handleDeleteAccount = async () => {
     if (!isAuthenticated) return;
-    
+
     if (!confirm(tl.deleteAccountWarning)) {
       return;
     }
@@ -325,9 +325,9 @@ const ProfileSettings = () => {
     if (!deletePassword) {
       toast({
         title: tCommon('error'),
-        description: language === 'vi' ? 'Vui lòng nhập mật khẩu để xác nhận' : 
-                     language === 'ja' ? '確認のためパスワードを入力してください' : 
-                     'Please enter password to confirm',
+        description: language === 'vi' ? 'Vui lòng nhập mật khẩu để xác nhận' :
+          language === 'ja' ? '確認のためパスワードを入力してください' :
+            'Please enter password to confirm',
         variant: "destructive",
       });
       return;
@@ -336,7 +336,7 @@ const ProfileSettings = () => {
     try {
       setIsDeletingAccount(true);
       await api.deleteAccount(deletePassword);
-      
+
       toast({
         title: tCommon('success'),
         description: tl.deleteAccountDesc,
@@ -351,9 +351,9 @@ const ProfileSettings = () => {
       logger.error('Error deleting account', error);
       toast({
         title: tCommon('error'),
-        description: error?.message || (language === 'vi' ? 'Không thể xóa tài khoản' : 
-                                       language === 'ja' ? 'アカウントを削除できませんでした' : 
-                                       'Could not delete account'),
+        description: error?.message || (language === 'vi' ? 'Không thể xóa tài khoản' :
+          language === 'ja' ? 'アカウントを削除できませんでした' :
+            'Could not delete account'),
         variant: "destructive",
       });
     } finally {
@@ -399,7 +399,7 @@ const ProfileSettings = () => {
                 <option value="ja">日本語</option>
               </select>
             </div>
-            
+
             <div>
               <Label htmlFor="currency">{tl.currency}</Label>
               <select
@@ -413,7 +413,7 @@ const ProfileSettings = () => {
                 <option value="JPY">JPY (¥)</option>
               </select>
             </div>
-            
+
             <div>
               <Label htmlFor="timezone">{tl.timezone}</Label>
               <select
@@ -457,7 +457,7 @@ const ProfileSettings = () => {
           {/* Change Password */}
           <div className="space-y-4">
             <h3 className="font-medium">{tl.changePassword}</h3>
-            
+
             <div className="space-y-4">
               <div>
                 <Label htmlFor="currentPassword">{tl.currentPassword}</Label>
@@ -466,7 +466,7 @@ const ProfileSettings = () => {
                     id="currentPassword"
                     type={showPassword ? "text" : "password"}
                     value={passwordData.currentPassword}
-                    onChange={(e) => setPasswordData({...passwordData, currentPassword: e.target.value})}
+                    onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
                     className="rounded-lg border-2 focus:border-primary transition-all"
                   />
                   <Button
@@ -480,7 +480,7 @@ const ProfileSettings = () => {
                   </Button>
                 </div>
               </div>
-              
+
               <div>
                 <Label htmlFor="newPassword">{tl.newPassword}</Label>
                 <Input
@@ -489,14 +489,14 @@ const ProfileSettings = () => {
                   value={passwordData.newPassword}
                   onChange={(e) => {
                     const newValue = e.target.value;
-                    setPasswordData({...passwordData, newPassword: newValue, confirmPassword: ""});
+                    setPasswordData({ ...passwordData, newPassword: newValue, confirmPassword: "" });
                     // Clear confirm password when new password changes
                     // Validate new password
                     if (newValue && newValue.length < passwordMinLength) {
                       setPasswordErrors({
-                        newPassword: language === 'vi' ? `Mật khẩu phải có ít nhất ${passwordMinLength} ký tự` : 
-                                    language === 'ja' ? `パスワードは少なくとも${passwordMinLength}文字である必要があります` : 
-                                    `Password must be at least ${passwordMinLength} characters`,
+                        newPassword: language === 'vi' ? `Mật khẩu phải có ít nhất ${passwordMinLength} ký tự` :
+                          language === 'ja' ? `パスワードは少なくとも${passwordMinLength}文字である必要があります` :
+                            `Password must be at least ${passwordMinLength} characters`,
                         confirmPassword: ""
                       });
                     } else {
@@ -506,15 +506,14 @@ const ProfileSettings = () => {
                       });
                     }
                   }}
-                  className={`rounded-lg border-2 focus:border-primary transition-all ${
-                    passwordErrors.newPassword ? 'border-red-500' : ''
-                  }`}
+                  className={`rounded-lg border-2 focus:border-primary transition-all ${passwordErrors.newPassword ? 'border-red-500' : ''
+                    }`}
                 />
                 {passwordErrors.newPassword && (
                   <p className="text-sm text-red-500 mt-1">{passwordErrors.newPassword}</p>
                 )}
               </div>
-              
+
               <div>
                 <Label htmlFor="confirmPassword" className="font-semibold">{tl.confirmPassword}</Label>
                 <Input
@@ -523,21 +522,21 @@ const ProfileSettings = () => {
                   value={passwordData.confirmPassword}
                   onChange={(e) => {
                     const confirmValue = e.target.value;
-                    setPasswordData({...passwordData, confirmPassword: confirmValue});
+                    setPasswordData({ ...passwordData, confirmPassword: confirmValue });
                     // Validate confirm password
                     if (!passwordData.newPassword || passwordData.newPassword.length < passwordMinLength) {
                       setPasswordErrors(prev => ({
                         ...prev,
-                        confirmPassword: language === 'vi' ? 'Vui lòng nhập mật khẩu mới hợp lệ trước' : 
-                                      language === 'ja' ? 'まず有効な新しいパスワードを入力してください' : 
-                                      'Please enter a valid new password first'
+                        confirmPassword: language === 'vi' ? 'Vui lòng nhập mật khẩu mới hợp lệ trước' :
+                          language === 'ja' ? 'まず有効な新しいパスワードを入力してください' :
+                            'Please enter a valid new password first'
                       }));
                     } else if (confirmValue && confirmValue !== passwordData.newPassword) {
                       setPasswordErrors(prev => ({
                         ...prev,
-                        confirmPassword: language === 'vi' ? 'Mật khẩu xác nhận không khớp' : 
-                                      language === 'ja' ? '確認パスワードが一致しません' : 
-                                      'Passwords do not match'
+                        confirmPassword: language === 'vi' ? 'Mật khẩu xác nhận không khớp' :
+                          language === 'ja' ? '確認パスワードが一致しません' :
+                            'Passwords do not match'
                       }));
                     } else {
                       setPasswordErrors(prev => ({
@@ -547,17 +546,16 @@ const ProfileSettings = () => {
                     }
                   }}
                   disabled={!passwordData.newPassword || passwordData.newPassword.length < passwordMinLength}
-                  className={`rounded-lg border-2 focus:border-primary transition-all ${
-                    passwordErrors.confirmPassword ? 'border-red-500' : ''
-                  } ${!passwordData.newPassword || passwordData.newPassword.length < passwordMinLength ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  className={`rounded-lg border-2 focus:border-primary transition-all ${passwordErrors.confirmPassword ? 'border-red-500' : ''
+                    } ${!passwordData.newPassword || passwordData.newPassword.length < passwordMinLength ? 'opacity-50 cursor-not-allowed' : ''}`}
                   placeholder={
                     !passwordData.newPassword || passwordData.newPassword.length < passwordMinLength
-                      ? (language === 'vi' ? 'Nhập mật khẩu mới trước' : 
-                         language === 'ja' ? 'まず新しいパスワードを入力してください' : 
-                         'Enter new password first')
-                      : (language === 'vi' ? 'Xác nhận mật khẩu mới' : 
-                         language === 'ja' ? '新しいパスワードを確認' : 
-                         'Confirm new password')
+                      ? (language === 'vi' ? 'Nhập mật khẩu mới trước' :
+                        language === 'ja' ? 'まず新しいパスワードを入力してください' :
+                          'Enter new password first')
+                      : (language === 'vi' ? 'Xác nhận mật khẩu mới' :
+                        language === 'ja' ? '新しいパスワードを確認' :
+                          'Confirm new password')
                   }
                 />
                 {passwordErrors.confirmPassword && (
@@ -565,19 +563,19 @@ const ProfileSettings = () => {
                 )}
                 {!passwordData.newPassword || passwordData.newPassword.length < passwordMinLength ? (
                   <p className="text-sm text-muted-foreground mt-1">
-                    {language === 'vi' ? `Vui lòng nhập mật khẩu mới hợp lệ (ít nhất ${passwordMinLength} ký tự) trước khi xác nhận` : 
-                     language === 'ja' ? `確認する前に、有効な新しいパスワード（${passwordMinLength}文字以上）を入力してください` : 
-                     `Please enter a valid new password (at least ${passwordMinLength} characters) before confirming`}
+                    {language === 'vi' ? `Vui lòng nhập mật khẩu mới hợp lệ (ít nhất ${passwordMinLength} ký tự) trước khi xác nhận` :
+                      language === 'ja' ? `確認する前に、有効な新しいパスワード（${passwordMinLength}文字以上）を入力してください` :
+                        `Please enter a valid new password (at least ${passwordMinLength} characters) before confirming`}
                   </p>
                 ) : null}
               </div>
-              
-              <Button 
-                onClick={handlePasswordChange} 
+
+              <Button
+                onClick={handlePasswordChange}
                 disabled={
-                  isChangingPassword || 
-                  !passwordData.currentPassword || 
-                  !passwordData.newPassword || 
+                  isChangingPassword ||
+                  !passwordData.currentPassword ||
+                  !passwordData.newPassword ||
                   !passwordData.confirmPassword ||
                   passwordData.newPassword.length < passwordMinLength ||
                   passwordData.newPassword !== passwordData.confirmPassword ||
@@ -622,7 +620,7 @@ const ProfileSettings = () => {
               onCheckedChange={(checked) => handleSettingChange('emailNotifications', checked)}
             />
           </div>
-          
+
           <div className="flex items-center justify-between p-4 rounded-lg border-2 bg-muted/30 hover:bg-muted/50 transition-all">
             <div>
               <h3 className="font-medium">{tl.marketingEmails}</h3>
@@ -638,8 +636,8 @@ const ProfileSettings = () => {
 
       {/* Save Settings */}
       <div className="flex justify-end py-4">
-        <Button 
-          onClick={handleSaveSettings} 
+        <Button
+          onClick={handleSaveSettings}
           disabled={isSaving}
           className="rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all"
         >
@@ -658,38 +656,38 @@ const ProfileSettings = () => {
       </div>
 
       {/* Danger Zone */}
-      <Card className="rounded-xl border-2 border-red-200 shadow-lg bg-background/95 backdrop-blur-sm">
-        <CardHeader className="bg-gradient-to-r from-red-100/50 via-red-50/30 to-transparent border-b-2 border-red-200">
-          <CardTitle className="flex items-center text-red-600 text-xl font-bold">
+      <Card className="rounded-xl border-2 border-red-200 dark:border-red-900/50 shadow-lg bg-background/95 backdrop-blur-sm">
+        <CardHeader className="bg-gradient-to-r from-red-100/50 via-red-50/30 to-transparent dark:from-red-950/50 dark:via-red-900/20 border-b-2 border-red-200 dark:border-red-900/50">
+          <CardTitle className="flex items-center text-red-600 dark:text-red-400 text-xl font-bold">
             <AlertTriangle className="h-5 w-5 mr-2" />
             Danger Zone
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6 space-y-4">
           <div>
-            <h3 className="font-medium text-red-600 mb-2">{tl.deleteAccount}</h3>
+            <h3 className="font-medium text-red-600 dark:text-red-400 mb-2">{tl.deleteAccount}</h3>
             <p className="text-sm text-muted-foreground">{tl.deleteAccountDesc}</p>
           </div>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="deletePassword" className="text-red-600 font-semibold">
-                {language === 'vi' ? 'Mật khẩu để xác nhận' : 
-                 language === 'ja' ? '確認用パスワード' : 
-                 'Password to confirm'}
+              <Label htmlFor="deletePassword" className="text-red-600 dark:text-red-400 font-semibold">
+                {language === 'vi' ? 'Mật khẩu để xác nhận' :
+                  language === 'ja' ? '確認用パスワード' :
+                    'Password to confirm'}
               </Label>
               <Input
                 id="deletePassword"
                 type="password"
                 value={deletePassword}
                 onChange={(e) => setDeletePassword(e.target.value)}
-                placeholder={language === 'vi' ? 'Nhập mật khẩu của bạn' : 
-                             language === 'ja' ? 'パスワードを入力' : 
-                             'Enter your password'}
-                className="rounded-lg border-2 border-red-200 focus:border-red-400 transition-all"
+                placeholder={language === 'vi' ? 'Nhập mật khẩu của bạn' :
+                  language === 'ja' ? 'パスワードを入力' :
+                    'Enter your password'}
+                className="rounded-lg border-2 border-red-200 dark:border-red-900/50 focus:border-red-400 dark:focus:border-red-400 transition-all dark:bg-background"
               />
             </div>
-            <Button 
-              variant="destructive" 
+            <Button
+              variant="destructive"
               onClick={handleDeleteAccount}
               disabled={isDeletingAccount || !deletePassword}
               className="flex items-center rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all w-full sm:w-auto"

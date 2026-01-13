@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useSettings } from '@/contexts/SettingsContext';
 import { useAuth } from '@/contexts';
 import { formatCurrency } from '@/lib/currency';
 import { api, Product } from '@/lib/api';
@@ -36,6 +37,7 @@ const CartPage: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { language } = useLanguage();
+  const { settings } = useSettings();
   const { isAuthenticated } = useAuth();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -353,61 +355,74 @@ const CartPage: React.FC = () => {
 
 
       <div className="container mx-auto px-4 py-8">
-        {/* Header Section */}
-        <div className="mb-8">
-          <div className="flex items-center space-x-4 mb-4">
-            <Button
-              variant="ghost"
-              onClick={() => navigate('/')}
-              className="rounded-lg hover:bg-primary/10"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              {language === 'vi' ? "Tiếp tục mua sắm" : language === 'ja' ? "買い物を続ける" : "Continue Shopping"}
-            </Button>
-          </div>
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl md:text-4xl font-bold mb-2">
-                {language === 'vi' ? "Giỏ hàng" : language === 'ja' ? "ショッピングカート" : "Shopping Cart"}
-              </h1>
-              <Badge variant="secondary" className="text-base px-4 py-1.5">
-                <ShoppingCart className="h-4 w-4 mr-2" />
-                {cartItems.length} {language === 'vi' ? "sản phẩm" : language === 'ja' ? "商品" : "items"}
-              </Badge>
+        {/* Hero Section */}
+        <section className="text-center mb-8">
+          <div className="relative overflow-hidden rounded-2xl shadow-2xl">
+            <div className="absolute inset-0">
+              <img
+                src={settings?.banners?.cart || "/images/banners/banner-14.png"}
+                alt="Cart Banner"
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/50 to-black/60"></div>
             </div>
 
-            {cartItems.length >= 3 && (
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    variant="destructive"
-                    className="rounded-lg shadow-sm hover:shadow-md transition-all"
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    {language === 'vi' ? "Xóa tất cả" : language === 'ja' ? "すべて削除" : "Clear All"}
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>{language === 'vi' ? "Xóa tất cả sản phẩm?" : language === 'ja' ? "すべての商品を削除しますか？" : "Clear all items?"}</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      {language === 'vi'
-                        ? "Hành động này không thể hoàn tác. Tất cả sản phẩm trong giỏ hàng của bạn sẽ bị xóa."
-                        : language === 'ja'
-                          ? "この操作は取り消せません。カート内のすべての商品が削除されます。"
-                          : "This action cannot be undone. This will permanently remove all items from your cart."}
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>{language === 'vi' ? "Hủy" : language === 'ja' ? "キャンセル" : "Cancel"}</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleClearCart}>
-                      {language === 'vi' ? "Xóa" : language === 'ja' ? "削除" : "Clear"}
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            )}
+            <div className="relative z-10 p-12 text-white">
+              <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-white via-white to-white/80 bg-clip-text text-transparent">
+                {language === 'vi' ? "Giỏ hàng" : language === 'ja' ? "ショッピングカート" : "Shopping Cart"}
+              </h1>
+              <div className="flex justify-center">
+                <Badge variant="secondary" className="bg-white/20 backdrop-blur-sm text-white text-lg px-6 py-2 border border-white/30 font-semibold">
+                  <ShoppingCart className="h-5 w-5 mr-2" />
+                  {cartItems.length} {language === 'vi' ? "sản phẩm" : language === 'ja' ? "商品" : "items"}
+                </Badge>
+              </div>
+            </div>
           </div>
+        </section>
+
+        {/* Toolbar */}
+        <div className="flex items-center justify-between mb-8 p-4 rounded-xl border-2 bg-background/95 backdrop-blur-sm shadow-sm">
+          <Button
+            variant="outline"
+            onClick={() => navigate('/')}
+            className="rounded-lg font-medium border-2 hover:bg-primary/5 hover:text-primary hover:border-primary transition-all"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            {language === 'vi' ? "Tiếp tục mua sắm" : language === 'ja' ? "買い物を続ける" : "Continue Shopping"}
+          </Button>
+
+          {cartItems.length >= 3 && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="rounded-lg text-destructive hover:bg-destructive/10 hover:text-destructive font-medium transition-all"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  {language === 'vi' ? "Xóa tất cả" : language === 'ja' ? "すべて削除" : "Clear All"}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>{language === 'vi' ? "Xóa tất cả sản phẩm?" : language === 'ja' ? "すべての商品を削除しますか？" : "Clear all items?"}</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    {language === 'vi'
+                      ? "Hành động này không thể hoàn tác. Tất cả sản phẩm trong giỏ hàng của bạn sẽ bị xóa."
+                      : language === 'ja'
+                        ? "この操作は取り消せません。カート内のすべての商品が削除されます。"
+                        : "This action cannot be undone. This will permanently remove all items from your cart."}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>{language === 'vi' ? "Hủy" : language === 'ja' ? "キャンセル" : "Cancel"}</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleClearCart} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                    {language === 'vi' ? "Xóa" : language === 'ja' ? "削除" : "Clear"}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

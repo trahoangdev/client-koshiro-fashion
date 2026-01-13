@@ -1,6 +1,7 @@
 import { useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useSettings } from "@/contexts/SettingsContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Home } from "lucide-react";
@@ -9,6 +10,7 @@ import { Link } from "react-router-dom";
 const NotFound = () => {
   const location = useLocation();
   const { language } = useLanguage();
+  const { settings } = useSettings();
 
   const translations = {
     en: {
@@ -50,7 +52,7 @@ const NotFound = () => {
       {/* Banner Background */}
       <div className="absolute inset-0 z-0">
         <img
-          src="/images/banners/banner-05.png"
+          src={settings?.banners?.notFound || "/images/banners/banner-21.png"}
           alt="404 Banner"
           className="w-full h-full object-cover"
         />
