@@ -8,8 +8,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function LoginPage() {
@@ -130,15 +128,15 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
 
     setIsLoading(true);
-    
+
     try {
       // Use real authentication
       await login(formData.email, formData.password);
-      
+
       // Navigate to home page after successful login
       navigate("/");
     } catch (error) {
@@ -151,8 +149,8 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      <Header cartItemsCount={0} onSearch={() => {}} />
-      
+
+
       <main className="py-8">
         <div className="container mx-auto px-4">
           <div className="flex justify-center">
@@ -260,17 +258,17 @@ export default function LoginPage() {
                   </div>
 
                   <div className="mt-6 space-y-3">
-                    <Button 
-                      variant="outline" 
-                      className="w-full rounded-lg font-medium" 
+                    <Button
+                      variant="outline"
+                      className="w-full rounded-lg font-medium"
                       disabled={isLoading}
                     >
                       <User className="mr-2 h-4 w-4" />
                       {t.continueWithGoogle}
                     </Button>
-                    <Button 
-                      variant="outline" 
-                      className="w-full rounded-lg font-medium" 
+                    <Button
+                      variant="outline"
+                      className="w-full rounded-lg font-medium"
                       disabled={isLoading}
                     >
                       <User className="mr-2 h-4 w-4" />
@@ -291,7 +289,7 @@ export default function LoginPage() {
         </div>
       </main>
 
-      <Footer />
+
     </div>
   );
 } 

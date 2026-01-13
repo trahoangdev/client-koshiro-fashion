@@ -2,18 +2,16 @@ import { useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
 import { api, Order } from "@/lib/api";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { 
-  Search, 
-  Package, 
-  Truck, 
-  CheckCircle, 
+import {
+  Search,
+  Package,
+  Truck,
+  CheckCircle,
   Clock,
   MapPin,
   Calendar,
@@ -38,12 +36,12 @@ const OrderTrackingPage = () => {
     } catch (error) {
       console.error('Error tracking order:', error);
       toast({
-        title: language === 'vi' ? "Lỗi tìm kiếm" : 
-               language === 'ja' ? "検索エラー" : 
-               "Search Error",
+        title: language === 'vi' ? "Lỗi tìm kiếm" :
+          language === 'ja' ? "検索エラー" :
+            "Search Error",
         description: language === 'vi' ? "Không thể tìm thấy đơn hàng" :
-                     language === 'ja' ? "注文が見つかりませんでした" :
-                     "Order not found",
+          language === 'ja' ? "注文が見つかりませんでした" :
+            "Order not found",
         variant: "destructive",
       });
       setOrder(null);
@@ -174,8 +172,8 @@ const OrderTrackingPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      <Header cartItemsCount={0} onSearch={() => {}} />
-      
+
+
       <main className="py-8">
         <div className="container mx-auto px-4 space-y-8">
           {/* Hero Section */}
@@ -183,21 +181,17 @@ const OrderTrackingPage = () => {
             <div className="relative overflow-hidden rounded-2xl shadow-2xl">
               {/* Banner Background */}
               <div className="absolute inset-0">
-                <img 
-                  src="/images/banners/banner-03.png" 
+                <img
+                  src="/images/banners/banner-03.png"
                   alt="Order Tracking Banner"
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/50 to-black/60"></div>
               </div>
-              
+
               {/* Content */}
               <div className="relative z-10 p-12 md:p-16 text-white">
-                <div className="flex justify-center mb-6">
-                  <div className="p-4 rounded-full bg-white/10 backdrop-blur-sm">
-                    <Truck className="h-12 w-12 md:h-16 md:w-16 text-white" />
-                  </div>
-                </div>
+
                 <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-4 bg-gradient-to-r from-white via-white to-white/80 bg-clip-text text-transparent">
                   {t.title}
                 </h1>
@@ -219,8 +213,8 @@ const OrderTrackingPage = () => {
                   onChange={(e) => setOrderNumber(e.target.value)}
                   className="flex-1 rounded-lg border-2 focus:border-primary transition-all pl-10"
                 />
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   disabled={isLoading}
                   className="rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all px-8"
                 >
@@ -332,11 +326,11 @@ const OrderTrackingPage = () => {
                     </CardHeader>
                     <CardContent>
                       <p className="text-sm text-muted-foreground mb-3 font-medium">{order.paymentMethod}</p>
-                      <Badge 
-                        variant={order.paymentStatus === 'paid' ? 'default' : 'secondary'} 
+                      <Badge
+                        variant={order.paymentStatus === 'paid' ? 'default' : 'secondary'}
                         className="text-base px-4 py-2 font-semibold rounded-lg border-2"
                       >
-                        {order.paymentStatus === 'paid' ? 
+                        {order.paymentStatus === 'paid' ?
                           (language === 'vi' ? 'Đã thanh toán' : language === 'ja' ? '支払い済み' : 'Paid') :
                           (language === 'vi' ? 'Chưa thanh toán' : language === 'ja' ? '未払い' : 'Pending')
                         }
@@ -360,8 +354,8 @@ const OrderTrackingPage = () => {
           )}
         </div>
       </main>
-      
-      <Footer />
+
+
     </div>
   );
 };

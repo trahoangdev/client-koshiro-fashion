@@ -1,18 +1,17 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
 import { api, Product } from "@/lib/api";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
+import { useCompare } from "@/hooks/useCompare";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { 
-  GitCompare, 
-  X, 
-  Plus, 
-  Star, 
+import {
+  GitCompare,
+  X,
+  Plus,
+  Star,
   ShoppingCart,
   Heart,
   Loader2
@@ -23,94 +22,51 @@ import { formatCurrency } from "@/lib/currency";
 const ComparePage = () => {
   const { language } = useLanguage();
   const { toast } = useToast();
-  const [compareList, setCompareList] = useState<Product[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const { compareItems: compareList, removeFromCompare, clearCompareList } = useCompare();
 
-  // Load compare list from localStorage
-  useEffect(() => {
-    const savedCompareList = localStorage.getItem('koshiro_compare_list');
-    if (savedCompareList) {
-      try {
-        const products = JSON.parse(savedCompareList);
-        setCompareList(products);
-      } catch (error) {
-        console.error('Error loading compare list:', error);
-      }
-    }
-  }, []);
+  const handleAddToCart = async (product: Product) => {
+    try {
+      await api.addToCart(product._id, 1);
+      window.dispatchEvent(new CustomEvent('cartUpdated'));
 
-  const saveCompareList = (products: Product[]) => {
-    localStorage.setItem('koshiro_compare_list', JSON.stringify(products));
-  };
-
-  const addToCompare = (product: Product) => {
-    if (compareList.length >= 4) {
       toast({
-        title: language === 'vi' ? "Giới hạn so sánh" : 
-               language === 'ja' ? "比較制限" : 
-               "Compare Limit",
-        description: language === 'vi' ? "Bạn chỉ có thể so sánh tối đa 4 sản phẩm" :
-                     language === 'ja' ? "最大4つの商品を比較できます" :
-                     "You can compare up to 4 products",
-        variant: "destructive",
+        title: language === 'vi' ? 'Thành công' : language === 'ja' ? '成功' : 'Success',
+        description: language === 'vi' ? 'Đã thêm sản phẩm vào giỏ hàng' :
+          language === 'ja' ? '商品をカートに追加しました' :
+            'Product added to cart',
       });
-      return;
-    }
-
-    if (compareList.find(p => p._id === product._id)) {
+    } catch (error) {
+      console.error('Error adding to cart', error);
       toast({
-        title: language === 'vi' ? "Sản phẩm đã có" : 
-               language === 'ja' ? "商品は既に追加済み" : 
-               "Product Already Added",
-        description: language === 'vi' ? "Sản phẩm này đã có trong danh sách so sánh" :
-                     language === 'ja' ? "この商品は既に比較リストにあります" :
-                     "This product is already in the compare list",
-        variant: "destructive",
+        title: language === 'vi' ? 'Lỗi' : language === 'ja' ? 'エラー' : 'Error',
+        description: language === 'vi' ? 'Không thể thêm sản phẩm vào giỏ hàng' :
+          language === 'ja' ? '商品をカートに追加できません' :
+            'Unable to add product to cart',
+        variant: 'destructive',
       });
-      return;
     }
-
-    const newCompareList = [...compareList, product];
-    setCompareList(newCompareList);
-    saveCompareList(newCompareList);
-    
-    toast({
-      title: language === 'vi' ? "Đã thêm vào so sánh" : 
-             language === 'ja' ? "比較リストに追加" : 
-             "Added to Compare",
-      description: language === 'vi' ? "Sản phẩm đã được thêm vào danh sách so sánh" :
-                   language === 'ja' ? "商品が比較リストに追加されました" :
-                   "Product has been added to compare list",
-    });
   };
 
-  const removeFromCompare = (productId: string) => {
-    const newCompareList = compareList.filter(p => p._id !== productId);
-    setCompareList(newCompareList);
-    saveCompareList(newCompareList);
-    
-    toast({
-      title: language === 'vi' ? "Đã xóa khỏi so sánh" : 
-             language === 'ja' ? "比較リストから削除" : 
-             "Removed from Compare",
-      description: language === 'vi' ? "Sản phẩm đã được xóa khỏi danh sách so sánh" :
-                   language === 'ja' ? "商品が比較リストから削除されました" :
-                   "Product has been removed from compare list",
-    });
-  };
-
-  const clearCompareList = () => {
-    setCompareList([]);
-    localStorage.removeItem('koshiro_compare_list');
-    
-    toast({
-      title: language === 'vi' ? "Đã xóa danh sách" : 
-             language === 'ja' ? "リストをクリア" : 
-             "List Cleared",
-      description: language === 'vi' ? "Danh sách so sánh đã được xóa" :
-                   language === 'ja' ? "比較リストがクリアされました" :
-                   "Compare list has been cleared",
-    });
+  const handleAddToWishlist = async (product: Product) => {
+    try {
+      await api.addToWishlist(product._id);
+      window.dispatchEvent(new CustomEvent('wishlistUpdated'));
+      toast({
+        title: language === 'vi' ? 'Thành công' : language === 'ja' ? '成功' : 'Success',
+        description: language === 'vi' ? 'Đã thêm sản phẩm vào danh sách yêu thích' :
+          language === 'ja' ? '商品をお気に入りに追加しました' :
+            'Product added to wishlist',
+      });
+    } catch (error) {
+      console.error('Error adding to wishlist', error);
+      toast({
+        title: language === 'vi' ? 'Lỗi' : language === 'ja' ? 'エラー' : 'Error',
+        description: language === 'vi' ? 'Không thể thêm sản phẩm vào danh sách yêu thích' :
+          language === 'ja' ? '商品をお気に入りに追加できません' :
+            'Unable to add product to wishlist',
+        variant: 'destructive',
+      });
+    }
   };
 
   const getProductName = (product: Product) => {
@@ -188,8 +144,8 @@ const ComparePage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      <Header cartItemsCount={0} onSearch={() => {}} />
-      
+
+
       <main className="py-8">
         <div className="container mx-auto px-4 space-y-8">
           {/* Hero Section */}
@@ -197,33 +153,29 @@ const ComparePage = () => {
             <div className="relative overflow-hidden rounded-2xl shadow-2xl">
               {/* Banner Background */}
               <div className="absolute inset-0">
-                <img 
-                  src="/images/banners/banner-02.png" 
+                <img
+                  src="/images/banners/banner-02.png"
                   alt="Compare Products Banner"
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/50 to-black/60"></div>
               </div>
-              
+
               {/* Content */}
               <div className="relative z-10 p-12 md:p-16 text-white">
-                <div className="flex justify-center mb-6">
-                  <div className="p-4 rounded-full bg-white/10 backdrop-blur-sm">
-                    <GitCompare className="h-12 w-12 md:h-16 md:w-16 text-white" />
-                  </div>
-                </div>
+
                 <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-4 bg-gradient-to-r from-white via-white to-white/80 bg-clip-text text-transparent">
                   {t.title}
                 </h1>
                 <p className="text-xl md:text-2xl text-white/90 font-light leading-relaxed mb-6">
                   {t.subtitle}
                 </p>
-                
+
                 {compareList.length > 0 && (
                   <div className="flex gap-4 justify-center">
-                    <Button 
-                      variant="outline" 
-                      onClick={clearCompareList} 
+                    <Button
+                      variant="outline"
+                      onClick={clearCompareList}
                       className="bg-white/20 backdrop-blur-sm text-white border-white/30 hover:bg-white/30 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all"
                     >
                       {t.clearList}
@@ -303,7 +255,7 @@ const ComparePage = () => {
                                     {formatCurrency(product.price, language)}
                                   </span>
                                   <Badge variant="destructive" className="text-xs font-semibold rounded-lg">
-                                    -{Math.round(((product.price - product.salePrice) / product.price) * 100)}% 
+                                    -{Math.round(((product.price - product.salePrice) / product.price) * 100)}%
                                     {language === 'vi' ? 'GIẢM' : language === 'ja' ? 'セール' : 'OFF'}
                                   </Badge>
                                 </div>
@@ -323,8 +275,8 @@ const ComparePage = () => {
                         <td className="p-4 font-bold">{t.category}</td>
                         {compareList.map((product) => (
                           <td key={product._id} className="p-4 text-center font-medium">
-                            {typeof product.categoryId === 'string' 
-                              ? 'Unknown Category' 
+                            {typeof product.categoryId === 'string'
+                              ? 'Unknown Category'
                               : product.categoryId?.name || 'Unknown Category'}
                           </td>
                         ))}
@@ -373,11 +325,11 @@ const ComparePage = () => {
                         {compareList.map((product) => (
                           <td key={product._id} className="p-4 text-center">
                             <div className="space-y-2">
-                              <Button size="sm" className="w-full rounded-lg font-semibold shadow-md hover:shadow-lg transition-all">
+                              <Button size="sm" className="w-full rounded-lg font-semibold shadow-md hover:shadow-lg transition-all" onClick={() => handleAddToCart(product)}>
                                 <ShoppingCart className="h-4 w-4 mr-2" />
                                 {t.addToCart}
                               </Button>
-                              <Button variant="outline" size="sm" className="w-full rounded-lg font-semibold border-2">
+                              <Button variant="outline" size="sm" className="w-full rounded-lg font-semibold border-2" onClick={() => handleAddToWishlist(product)}>
                                 <Heart className="h-4 w-4 mr-2" />
                                 {t.addToWishlist}
                               </Button>
@@ -393,8 +345,8 @@ const ComparePage = () => {
           )}
         </div>
       </main>
-      
-      <Footer />
+
+
     </div>
   );
 };

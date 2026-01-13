@@ -1,21 +1,15 @@
 import { useToast } from '@/hooks/use-toast';
-import { useLanguage } from '@/contexts/LanguageContext';
 import { useTranslationFn } from './use-translation';
 
 type ToastVariant = 'default' | 'destructive';
 
-interface ToastMessages {
-  title: {
-    vi: string;
-    ja: string;
-    en: string;
-  };
-  description?: {
-    vi: string;
-    ja: string;
-    en: string;
-  };
+interface TranslationMap {
+  vi: string;
+  ja: string;
+  en: string;
 }
+
+type LocalizedMessage = string | TranslationMap;
 
 /**
  * Custom hook for showing toast notifications with translations
@@ -25,29 +19,32 @@ interface ToastMessages {
  * ```tsx
  * const showToast = useToastNotification();
  * 
+ * // Using object (legacy)
  * showToast({
- *   title: {
- *     vi: 'Thành công',
- *     ja: '成功',
- *     en: 'Success'
- *   },
- *   description: {
- *     vi: 'Đã thêm sản phẩm vào giỏ hàng',
- *     ja: '商品をカートに追加しました',
- *     en: 'Product added to cart'
- *   },
- *   variant: 'success'
- * });
+ *   title: { vi: 'Thành công', ja: '成功', en: 'Success' },
+ *   description: { vi: '...', ja: '...', en: '...' }
+ * }, 'success');
+ * 
+ * // Using string (new)
+ * showToast({
+ *   title: 'Success',
+ *   description: 'Product added'
+ * }, 'success');
  * ```
  */
 export function useToastNotification() {
   const { toast } = useToast();
   const t = useTranslationFn();
 
-  return (messages: ToastMessages, variant: ToastVariant = 'default') => {
+  return (messages: { title: LocalizedMessage; description?: LocalizedMessage }, variant: ToastVariant = 'default') => {
+    const title = typeof messages.title === 'string' ? messages.title : t(messages.title);
+    const description = messages.description
+      ? (typeof messages.description === 'string' ? messages.description : t(messages.description))
+      : undefined;
+
     toast({
-      title: t(messages.title),
-      description: messages.description ? t(messages.description) : undefined,
+      title,
+      description,
       variant,
     });
   };
@@ -55,17 +52,11 @@ export function useToastNotification() {
 
 /**
  * Hook that returns error toast helper
- * 
- * @example
- * ```tsx
- * const showError = useErrorToast();
- * showError('Lỗi tải dữ liệu', 'Không thể tải sản phẩm');
- * ```
  */
 export function useErrorToast() {
   const showToast = useToastNotification();
-  
-  return (title: { vi: string; ja: string; en: string }, description?: { vi: string; ja: string; en: string }) => {
+
+  return (title: LocalizedMessage, description?: LocalizedMessage) => {
     showToast({
       title,
       description,
@@ -75,17 +66,11 @@ export function useErrorToast() {
 
 /**
  * Hook that returns success toast helper
- * 
- * @example
- * ```tsx
- * const showSuccess = useSuccessToast();
- * showSuccess('Thành công', 'Đã thêm sản phẩm vào giỏ hàng');
- * ```
  */
 export function useSuccessToast() {
   const showToast = useToastNotification();
-  
-  return (title: { vi: string; ja: string; en: string }, description?: { vi: string; ja: string; en: string }) => {
+
+  return (title: LocalizedMessage, description?: LocalizedMessage) => {
     showToast({
       title,
       description,

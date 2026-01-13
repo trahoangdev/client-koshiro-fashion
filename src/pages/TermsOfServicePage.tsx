@@ -1,11 +1,9 @@
 import React from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { 
-  FileText, 
+import {
+  FileText,
   Scale,
   AlertTriangle,
   CheckCircle,
@@ -271,8 +269,7 @@ const TermsOfServicePage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      <Header cartItemsCount={0} onSearch={() => {}} />
-      
+
       <main className="py-8">
         <div className="container mx-auto px-4 space-y-12">
           {/* Hero Section */}
@@ -280,28 +277,24 @@ const TermsOfServicePage = () => {
             <div className="relative overflow-hidden rounded-2xl shadow-2xl">
               {/* Banner Background */}
               <div className="absolute inset-0">
-                <img 
-                  src="/images/banners/banner-06.png" 
+                <img
+                  src="/images/banners/banner-06.png"
                   alt="Terms of Service Banner"
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/50 to-black/60"></div>
               </div>
-              
+
               {/* Content */}
               <div className="relative z-10 p-12 md:p-16 text-white">
-                <div className="flex justify-center mb-6">
-                  <div className="p-4 rounded-full bg-white/10 backdrop-blur-sm">
-                    <Scale className="h-12 w-12 md:h-16 md:w-16 text-white" />
-                  </div>
-                </div>
+
                 <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-4 bg-gradient-to-r from-white via-white to-white/80 bg-clip-text text-transparent">
                   {t.title}
                 </h1>
                 <p className="text-xl md:text-2xl text-white/90 mb-6 font-light leading-relaxed">
                   {t.subtitle}
                 </p>
-                
+
                 <div className="flex items-center justify-center space-x-2 text-sm text-white/80">
                   <Clock className="h-4 w-4" />
                   <span>{t.lastUpdated}: {t.effectiveDate}</span>
@@ -313,7 +306,7 @@ const TermsOfServicePage = () => {
           {/* Content */}
           <section>
             <div className="max-w-4xl mx-auto space-y-6">
-              
+
               {/* Overview */}
               <Card className="rounded-xl border-2 shadow-lg hover:shadow-xl transition-all overflow-hidden">
                 <CardHeader className="pb-4">
@@ -565,7 +558,7 @@ const TermsOfServicePage = () => {
                 </CardHeader>
                 <CardContent>
                   <p className="text-muted-foreground mb-4 font-medium leading-relaxed">{t.sections.contact.content}</p>
-                  
+
                   <div className="space-y-3">
                     <div className="flex items-center space-x-3 p-3 rounded-lg bg-muted/30">
                       <Mail className="h-4 w-4 text-primary flex-shrink-0" />
@@ -587,8 +580,7 @@ const TermsOfServicePage = () => {
           </section>
         </div>
       </main>
-      
-      <Footer />
+
     </div>
   );
 };

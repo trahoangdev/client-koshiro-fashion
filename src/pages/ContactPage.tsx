@@ -1,7 +1,5 @@
 import { useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -139,10 +137,7 @@ const ContactPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      <Header
-        cartItemsCount={0}
-        onSearch={() => {}}
-      />
+
 
       <main className="py-8">
         <div className="container mx-auto px-4 space-y-8">
@@ -151,14 +146,14 @@ const ContactPage = () => {
             <div className="relative overflow-hidden rounded-2xl shadow-2xl">
               {/* Banner Background */}
               <div className="absolute inset-0">
-                <img 
-                  src="/images/banners/banner-04.png" 
+                <img
+                  src="/images/banners/banner-09.png"
                   alt="Contact Us Banner"
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/50 to-black/60"></div>
               </div>
-              
+
               {/* Content */}
               <div className="relative z-10 p-12 md:p-16 text-white">
                 <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-4 bg-gradient-to-r from-white via-white to-white/80 bg-clip-text text-transparent">
@@ -189,21 +184,21 @@ const ContactPage = () => {
                       </div>
                       <h3 className="text-2xl font-bold mb-3">
                         {language === 'vi' ? 'Cảm ơn bạn!' :
-                         language === 'ja' ? 'ありがとうございます！' :
-                         'Thank you!'}
+                          language === 'ja' ? 'ありがとうございます！' :
+                            'Thank you!'}
                       </h3>
                       <p className="text-muted-foreground mb-6 text-lg">
                         {language === 'vi' ? 'Tin nhắn của bạn đã được gửi thành công. Chúng tôi sẽ phản hồi sớm nhất có thể.' :
-                         language === 'ja' ? 'メッセージが正常に送信されました。できるだけ早くお返事いたします。' :
-                         'Your message has been sent successfully. We\'ll get back to you soon.'}
+                          language === 'ja' ? 'メッセージが正常に送信されました。できるだけ早くお返事いたします。' :
+                            'Your message has been sent successfully. We\'ll get back to you soon.'}
                       </p>
-                      <Button 
+                      <Button
                         onClick={() => setIsSubmitted(false)}
                         className="rounded-xl font-semibold px-8"
                       >
                         {language === 'vi' ? 'Gửi Tin Nhắn Khác' :
-                         language === 'ja' ? '別のメッセージを送信' :
-                         'Send Another Message'}
+                          language === 'ja' ? '別のメッセージを送信' :
+                            'Send Another Message'}
                       </Button>
                     </div>
                   ) : (
@@ -254,8 +249,8 @@ const ContactPage = () => {
                           className="rounded-lg border-2 focus:border-primary transition-all resize-none"
                         />
                       </div>
-                      <Button 
-                        type="submit" 
+                      <Button
+                        type="submit"
                         className="w-full rounded-xl font-semibold h-11 shadow-lg hover:shadow-xl transition-all"
                         disabled={isSubmitting}
                       >
@@ -356,7 +351,7 @@ const ContactPage = () => {
         </div>
       </main>
 
-      <Footer />
+
     </div>
   );
 };

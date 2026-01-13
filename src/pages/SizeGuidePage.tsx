@@ -5,8 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { api, Category } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
@@ -25,7 +23,7 @@ interface SizeDataItem {
 // Size guide data mapping for different categories
 const getSizeDataForCategory = (categoryName: string): SizeDataItem[] => {
   const categoryLower = categoryName.toLowerCase();
-  
+
   if (categoryLower.includes('shirt') || categoryLower.includes('top') || categoryLower.includes('áo')) {
     return [
       { size: "S", chest: "86-91", waist: "71-76", length: "65-70", sleeve: "58-63" },
@@ -34,7 +32,7 @@ const getSizeDataForCategory = (categoryName: string): SizeDataItem[] => {
       { size: "XL", chest: "101-106", waist: "86-91", length: "80-85", sleeve: "73-78" }
     ];
   }
-  
+
   if (categoryLower.includes('pant') || categoryLower.includes('quần') || categoryLower.includes('bottom')) {
     return [
       { size: "S", waist: "71-76", hips: "91-96", inseam: "75-80", length: "95-100" },
@@ -43,7 +41,7 @@ const getSizeDataForCategory = (categoryName: string): SizeDataItem[] => {
       { size: "XL", waist: "86-91", hips: "106-111", inseam: "90-95", length: "110-115" }
     ];
   }
-  
+
   if (categoryLower.includes('hakama') || categoryLower.includes('袴')) {
     return [
       { size: "S", height: "160-170", waist: "71-81", length: "95-105" },
@@ -52,7 +50,7 @@ const getSizeDataForCategory = (categoryName: string): SizeDataItem[] => {
       { size: "XL", height: "180-190", waist: "91-101", length: "110-115" }
     ];
   }
-  
+
   if (categoryLower.includes('accessory') || categoryLower.includes('phụ kiện') || categoryLower.includes('アクセサリー')) {
     return [
       { size: "S", waist: "71-76", length: "95-100" },
@@ -61,7 +59,7 @@ const getSizeDataForCategory = (categoryName: string): SizeDataItem[] => {
       { size: "XL", waist: "86-91", length: "110-115" }
     ];
   }
-  
+
   // Default size guide for unknown categories
   return [
     { size: "S", chest: "86-91", waist: "71-76", length: "65-70" },
@@ -74,23 +72,23 @@ const getSizeDataForCategory = (categoryName: string): SizeDataItem[] => {
 // Get category type for rendering appropriate columns
 const getCategoryType = (categoryName: string): string => {
   const categoryLower = categoryName.toLowerCase();
-  
+
   if (categoryLower.includes('hakama') || categoryLower.includes('袴')) {
     return "hakama";
   }
-  
+
   if (categoryLower.includes('shirt') || categoryLower.includes('top') || categoryLower.includes('áo')) {
     return "tops";
   }
-  
+
   if (categoryLower.includes('pant') || categoryLower.includes('quần') || categoryLower.includes('bottom')) {
     return "bottoms";
   }
-  
+
   if (categoryLower.includes('accessory') || categoryLower.includes('phụ kiện') || categoryLower.includes('アクセサリー')) {
     return "accessories";
   }
-  
+
   return "default";
 };
 
@@ -195,7 +193,7 @@ export default function SizeGuidePage() {
         const response = await api.getCategories({ isActive: true });
         const activeCategories = response.categories.filter(cat => cat.isActive);
         setCategories(activeCategories);
-        
+
         // Set first category as active tab
         if (activeCategories.length > 0) {
           setActiveTab(activeCategories[0]._id);
@@ -303,7 +301,7 @@ export default function SizeGuidePage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-        <Header cartItemsCount={0} onSearch={() => {}} />
+
         <main className="py-8">
           <div className="container mx-auto px-4">
             <Card className="rounded-xl border-2 shadow-lg bg-background/95 backdrop-blur-sm">
@@ -314,15 +312,15 @@ export default function SizeGuidePage() {
             </Card>
           </div>
         </main>
-        <Footer />
+
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      <Header cartItemsCount={0} onSearch={() => {}} />
-      
+
+
       <main className="py-8">
         <div className="container mx-auto px-4 space-y-8">
           {/* Hero Section */}
@@ -330,21 +328,17 @@ export default function SizeGuidePage() {
             <div className="relative overflow-hidden rounded-2xl shadow-2xl">
               {/* Banner Background */}
               <div className="absolute inset-0">
-                <img 
-                  src="/images/banners/banner-04.png" 
+                <img
+                  src="/images/banners/banner-11.png"
                   alt="Size Guide Banner"
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/50 to-black/60"></div>
               </div>
-              
+
               {/* Content */}
               <div className="relative z-10 p-12 md:p-16 text-white">
-                <div className="flex justify-center mb-4">
-                  <div className="p-4 rounded-full bg-white/10 backdrop-blur-sm">
-                    <Ruler className="h-12 w-12 md:h-16 md:w-16 text-white" />
-                  </div>
-                </div>
+
                 <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-4 bg-gradient-to-r from-white via-white to-white/80 bg-clip-text text-transparent">
                   {t.title}
                 </h1>
@@ -370,8 +364,8 @@ export default function SizeGuidePage() {
                     <Tabs value={activeTab} onValueChange={setActiveTab}>
                       <TabsList className="grid w-full grid-cols-4 rounded-lg bg-muted/30 p-1 mb-6">
                         {categories.slice(0, 4).map((category) => (
-                          <TabsTrigger 
-                            key={category._id} 
+                          <TabsTrigger
+                            key={category._id}
                             value={category._id}
                             className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all font-medium"
                           >
@@ -379,12 +373,12 @@ export default function SizeGuidePage() {
                           </TabsTrigger>
                         ))}
                       </TabsList>
-                      
+
                       {categories.slice(0, 4).map((category) => {
                         const categoryName = getCategoryName(category);
                         const categoryType = getCategoryType(categoryName);
                         const sizeData = getSizeDataForCategory(categoryName);
-                        
+
                         return (
                           <TabsContent key={category._id} value={category._id} className="mt-6">
                             {categoryType === "accessories" ? (
@@ -507,7 +501,7 @@ export default function SizeGuidePage() {
         </div>
       </main>
 
-      <Footer />
+
     </div>
   );
 } 

@@ -4,8 +4,6 @@ import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { api, Product, Category } from '@/lib/api';
 import { formatCurrency } from '@/lib/currency';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
 import EnhancedProductGrid from '@/components/EnhancedProductGrid';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -38,7 +36,7 @@ const renderCategoryImage = (category: Category, className: string = "w-32 h-32"
       </div>
     );
   }
-  
+
   if (category.image) {
     return (
       <div className={`${className} bg-muted rounded-xl overflow-hidden shadow-lg`}>
@@ -51,7 +49,7 @@ const renderCategoryImage = (category: Category, className: string = "w-32 h-32"
       </div>
     );
   }
-  
+
   return null;
 };
 
@@ -216,7 +214,7 @@ const CategoryPage: React.FC = () => {
     if (colorName.startsWith('#')) {
       return colorName.toUpperCase();
     }
-    
+
     const colorMap: { [key: string]: string } = {
       // Vietnamese colors
       'Đỏ': '#ef4444', 'Red': '#ef4444',
@@ -237,7 +235,7 @@ const CategoryPage: React.FC = () => {
       'darkviolet': '#9400d3',
       'cornflowerblue': '#6495ed',
     };
-    
+
     // Try exact match first (case-insensitive)
     const normalizedColor = colorName.toLowerCase();
     for (const [key, hex] of Object.entries(colorMap)) {
@@ -245,7 +243,7 @@ const CategoryPage: React.FC = () => {
         return hex;
       }
     }
-    
+
     // Return default gray if not found
     return '#6b7280';
   };
@@ -277,7 +275,7 @@ const CategoryPage: React.FC = () => {
       darkviolet: { vi: "Tím đậm", en: "Dark Violet", ja: "ダークバイオレット" },
       cornflowerblue: { vi: "Xanh ngô", en: "Cornflower Blue", ja: "コーンフラワーブルー" },
     };
-    
+
     const colorKey = color.toLowerCase() as keyof typeof colorTranslations;
     if (colorTranslations[colorKey]) {
       return colorTranslations[colorKey][language] || color;
@@ -350,8 +348,8 @@ const CategoryPage: React.FC = () => {
 
     // On sale filter
     if (onSale) {
-      filtered = filtered.filter(product => 
-        product.onSale || 
+      filtered = filtered.filter(product =>
+        product.onSale ||
         (product.salePrice && product.salePrice < product.price) ||
         (product.originalPrice && product.originalPrice > product.price)
       );
@@ -386,20 +384,20 @@ const CategoryPage: React.FC = () => {
 
   useEffect(() => {
     let isMounted = true;
-    
+
     const loadCategoryData = async () => {
       if (!slug) {
         setLoading(false);
         return;
       }
-      
+
       try {
         setLoading(true);
         console.log('Loading category data for slug', slug);
-        
+
         // Normalize slug to lowercase (backend stores slugs in lowercase)
         const normalizedSlug = slug.toLowerCase().trim();
-        
+
         // Load category info
         let categoryResponse;
         try {
@@ -412,16 +410,16 @@ const CategoryPage: React.FC = () => {
           setCategory(null);
           toast({
             title: language === 'vi' ? 'Lỗi tải danh mục' : language === 'ja' ? 'カテゴリ読み込みエラー' : 'Error Loading Category',
-            description: language === 'vi' ? `Không thể tải danh mục "${slug}". Vui lòng thử lại.` : 
-                         language === 'ja' ? `カテゴリ「${slug}」を読み込めません。もう一度お試しください。` : 
-                         `Unable to load category "${slug}". Please try again.`,
+            description: language === 'vi' ? `Không thể tải danh mục "${slug}". Vui lòng thử lại.` :
+              language === 'ja' ? `カテゴリ「${slug}」を読み込めません。もう一度お試しください。` :
+                `Unable to load category "${slug}". Please try again.`,
             variant: "destructive",
           });
           return;
         }
-        
+
         if (!isMounted) return;
-        
+
         // Handle different response formats
         let categoryData = null;
         if (categoryResponse) {
@@ -436,7 +434,7 @@ const CategoryPage: React.FC = () => {
             categoryData = categoryResponse;
           }
         }
-        
+
         if (!categoryData || !categoryData._id) {
           console.error('Category not found or invalid response');
           console.error('Response structure:', categoryResponse);
@@ -446,27 +444,27 @@ const CategoryPage: React.FC = () => {
           setCategory(null);
           return;
         }
-        
+
         console.log('Category data:', categoryData);
         setCategory(categoryData);
-        
+
         // Load products in category
         console.log('Loading products for category ID:', categoryData._id);
         let productsResponse = null;
         try {
-            productsResponse = await api.getCategoryWithProducts(categoryData._id, {
-              page: currentPage,
-              limit: 12
-            });
-            
-            if (!isMounted) return;
-            
-            console.log('Products response received', { categoryId: categoryData._id, page: currentPage, response: productsResponse });
-          
+          productsResponse = await api.getCategoryWithProducts(categoryData._id, {
+            page: currentPage,
+            limit: 12
+          });
+
+          if (!isMounted) return;
+
+          console.log('Products response received', { categoryId: categoryData._id, page: currentPage, response: productsResponse });
+
           // Handle different response formats
           let products = [];
           let pagination = { pages: 1 };
-          
+
           if (productsResponse) {
             // Check if response has success field (server format)
             if ('success' in productsResponse && productsResponse.success) {
@@ -481,9 +479,9 @@ const CategoryPage: React.FC = () => {
               products = productsResponse;
             }
           }
-          
-            console.log('Products loaded', { count: products.length, pagination });
-          
+
+          console.log('Products loaded', { count: products.length, pagination });
+
           setProducts(products);
           setTotalPages(pagination.pages || 1);
 
@@ -492,15 +490,15 @@ const CategoryPage: React.FC = () => {
           const allColors = new Set<string>();
           const prices = products.map(p => (p.salePrice || p.price));
           const maxPrice = prices.length > 0 ? Math.max(...prices) : 2000000;
-          
+
           products.forEach(product => {
             if (product.sizes) {
               product.sizes.forEach(size => allSizes.add(size));
             }
             if (product.colors) {
               product.colors.forEach(color => {
-                const colorStr = typeof color === 'string' 
-                  ? color 
+                const colorStr = typeof color === 'string'
+                  ? color
                   : (typeof color === 'object' && color !== null && 'name' in color)
                     ? String((color as { name: string }).name)
                     : String(color);
@@ -512,22 +510,22 @@ const CategoryPage: React.FC = () => {
           setAvailableSizes(Array.from(allSizes));
           setAvailableColors(Array.from(allColors));
           setPriceRange([0, Math.ceil(maxPrice / 100000) * 100000]);
-          } catch (productsError: unknown) {
-            console.error('Error loading products', productsError);
+        } catch (productsError: unknown) {
+          console.error('Error loading products', productsError);
           if (!isMounted) return;
           setProducts([]);
           setTotalPages(1);
           setAvailableSizes([]);
           setAvailableColors([]);
         }
-        } catch (error: unknown) {
-          console.error('Error loading category data', error);
+      } catch (error: unknown) {
+        console.error('Error loading category data', error);
         if (!isMounted) return;
         toast({
           title: language === 'vi' ? 'Lỗi tải dữ liệu' : language === 'ja' ? 'データ読み込みエラー' : 'Error Loading Data',
-          description: language === 'vi' ? 'Không thể tải thông tin danh mục' : 
-                       language === 'ja' ? 'カテゴリ情報を読み込めません' : 
-                       'Unable to load category information',
+          description: language === 'vi' ? 'Không thể tải thông tin danh mục' :
+            language === 'ja' ? 'カテゴリ情報を読み込めません' :
+              'Unable to load category information',
           variant: "destructive",
         });
       } finally {
@@ -538,7 +536,7 @@ const CategoryPage: React.FC = () => {
     };
 
     loadCategoryData();
-    
+
     return () => {
       isMounted = false;
     };
@@ -553,16 +551,16 @@ const CategoryPage: React.FC = () => {
   };
 
   const handleSizeToggle = (size: string) => {
-    setSelectedSizes(prev => 
-      prev.includes(size) 
+    setSelectedSizes(prev =>
+      prev.includes(size)
         ? prev.filter(s => s !== size)
         : [...prev, size]
     );
   };
 
   const handleColorToggle = (color: string) => {
-    setSelectedColors(prev => 
-      prev.includes(color) 
+    setSelectedColors(prev =>
+      prev.includes(color)
         ? prev.filter(c => c !== color)
         : [...prev, color]
     );
@@ -571,7 +569,7 @@ const CategoryPage: React.FC = () => {
   const addToCompare = (product: Product) => {
     const savedCompareList = localStorage.getItem('koshiro_compare_list');
     let compareList: Product[] = [];
-    
+
     if (savedCompareList) {
       try {
         compareList = JSON.parse(savedCompareList);
@@ -582,12 +580,12 @@ const CategoryPage: React.FC = () => {
 
     if (compareList.length >= 4) {
       toast({
-        title: language === 'vi' ? "Giới hạn so sánh" : 
-               language === 'ja' ? "比較制限" : 
-               "Compare Limit",
+        title: language === 'vi' ? "Giới hạn so sánh" :
+          language === 'ja' ? "比較制限" :
+            "Compare Limit",
         description: language === 'vi' ? "Bạn chỉ có thể so sánh tối đa 4 sản phẩm" :
-                     language === 'ja' ? "最大4つの商品を比較できます" :
-                     "You can compare up to 4 products",
+          language === 'ja' ? "最大4つの商品を比較できます" :
+            "You can compare up to 4 products",
         variant: "destructive",
       });
       return;
@@ -595,12 +593,12 @@ const CategoryPage: React.FC = () => {
 
     if (compareList.find(p => p._id === product._id)) {
       toast({
-        title: language === 'vi' ? "Sản phẩm đã có" : 
-               language === 'ja' ? "商品は既に追加済み" : 
-               "Product Already Added",
+        title: language === 'vi' ? "Sản phẩm đã có" :
+          language === 'ja' ? "商品は既に追加済み" :
+            "Product Already Added",
         description: language === 'vi' ? "Sản phẩm này đã có trong danh sách so sánh" :
-                     language === 'ja' ? "この商品は既に比較リストにあります" :
-                     "This product is already in the compare list",
+          language === 'ja' ? "この商品は既に比較リストにあります" :
+            "This product is already in the compare list",
         variant: "destructive",
       });
       return;
@@ -608,15 +606,60 @@ const CategoryPage: React.FC = () => {
 
     const newCompareList = [...compareList, product];
     localStorage.setItem('koshiro_compare_list', JSON.stringify(newCompareList));
-    
+    window.dispatchEvent(new CustomEvent('compareUpdated'));
+
     toast({
-      title: language === 'vi' ? "Đã thêm vào so sánh" : 
-             language === 'ja' ? "比較リストに追加" : 
-             "Added to Compare",
+      title: language === 'vi' ? "Đã thêm vào so sánh" :
+        language === 'ja' ? "比較リストに追加" :
+          "Added to Compare",
       description: language === 'vi' ? "Sản phẩm đã được thêm vào danh sách so sánh" :
-                   language === 'ja' ? "商品が比較リストに追加されました" :
-                   "Product has been added to compare list",
+        language === 'ja' ? "商品が比較リストに追加されました" :
+          "Product has been added to compare list",
     });
+  };
+
+  const addToCart = async (product: Product) => {
+    try {
+      await api.addToCart(product._id, 1);
+      window.dispatchEvent(new CustomEvent('cartUpdated'));
+      toast({
+        title: language === 'vi' ? 'Thành công' : language === 'ja' ? '成功' : 'Success',
+        description: language === 'vi' ? 'Đã thêm sản phẩm vào giỏ hàng' :
+          language === 'ja' ? '商品をカートに追加しました' :
+            'Product added to cart',
+      });
+    } catch (error) {
+      console.error('Error adding to cart', error);
+      toast({
+        title: language === 'vi' ? 'Lỗi' : language === 'ja' ? 'エラー' : 'Error',
+        description: language === 'vi' ? 'Không thể thêm sản phẩm vào giỏ hàng' :
+          language === 'ja' ? '商品をカートに追加できません' :
+            'Unable to add product to cart',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const addToWishlist = async (product: Product) => {
+    try {
+      await api.addToWishlist(product._id);
+      window.dispatchEvent(new CustomEvent('wishlistUpdated'));
+      toast({
+        title: language === 'vi' ? 'Thành công' : language === 'ja' ? '成功' : 'Success',
+        description: language === 'vi' ? 'Đã thêm sản phẩm vào danh sách yêu thích' :
+          language === 'ja' ? '商品をお気に入りに追加しました' :
+            'Product added to wishlist',
+      });
+    } catch (error) {
+      console.error('Error adding to wishlist', error);
+      toast({
+        title: language === 'vi' ? 'Lỗi' : language === 'ja' ? 'エラー' : 'Error',
+        description: language === 'vi' ? 'Không thể thêm sản phẩm vào danh sách yêu thích' :
+          language === 'ja' ? '商品をお気に入りに追加できません' :
+            'Unable to add product to wishlist',
+        variant: 'destructive',
+      });
+    }
   };
 
   const clearAllFilters = () => {
@@ -634,7 +677,7 @@ const CategoryPage: React.FC = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-        <Header cartItemsCount={0} onSearch={() => {}} />
+
         <div className="container mx-auto px-4 py-8">
           <div className="flex items-center justify-center h-64">
             <div className="flex items-center space-x-2">
@@ -643,7 +686,6 @@ const CategoryPage: React.FC = () => {
             </div>
           </div>
         </div>
-        <Footer />
       </div>
     );
   }
@@ -651,7 +693,7 @@ const CategoryPage: React.FC = () => {
   if (!category) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-        <Header cartItemsCount={0} onSearch={() => {}} />
+
         <div className="container mx-auto px-4 py-8">
           <div className="text-center py-16">
             <Package className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
@@ -663,15 +705,15 @@ const CategoryPage: React.FC = () => {
             </Button>
           </div>
         </div>
-        <Footer />
+
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      <Header cartItemsCount={0} onSearch={() => {}} />
-      
+
+
       <div className="container mx-auto px-4 py-8">
         {/* Enhanced Breadcrumb */}
         <Breadcrumb className="mb-6">
@@ -713,7 +755,7 @@ const CategoryPage: React.FC = () => {
                       </Badge>
                     )}
                   </div>
-                  
+
                   <div>
                     <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
                       {getCategoryName}
@@ -725,7 +767,7 @@ const CategoryPage: React.FC = () => {
                     )}
                   </div>
                 </div>
-                
+
                 {renderCategoryImage(category, "w-32 h-32")}
               </div>
             </CardContent>
@@ -743,9 +785,9 @@ const CategoryPage: React.FC = () => {
                     <span className="text-lg font-semibold">{t.filter}</span>
                   </div>
                   {hasActiveFilters && (
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       onClick={clearAllFilters}
                       className="h-8 px-2 hover:bg-destructive/10 hover:text-destructive rounded-lg transition-all"
                     >
@@ -799,11 +841,10 @@ const CategoryPage: React.FC = () => {
                           variant={selectedSizes.includes(size) ? "default" : "outline"}
                           size="sm"
                           onClick={() => handleSizeToggle(size)}
-                          className={`h-9 px-4 rounded-lg font-medium transition-all ${
-                            selectedSizes.includes(size) 
-                              ? 'shadow-md ring-2 ring-primary ring-offset-2' 
-                              : 'hover:border-primary hover:shadow-sm'
-                          }`}
+                          className={`h-9 px-4 rounded-lg font-medium transition-all ${selectedSizes.includes(size)
+                            ? 'shadow-md ring-2 ring-primary ring-offset-2'
+                            : 'hover:border-primary hover:shadow-sm'
+                            }`}
                         >
                           {size}
                         </Button>
@@ -821,20 +862,20 @@ const CategoryPage: React.FC = () => {
                         const colorHex = getColorHex(color);
                         const isSelected = selectedColors.includes(color);
                         const isLightColor = colorHex === '#FFFFFF' || colorHex === '#FFFF00' || colorHex === '#FFD700';
-                        
+
                         return (
                           <button
                             key={color}
                             onClick={() => handleColorToggle(color)}
                             className={`
                               relative w-10 h-10 rounded-full border-2 transition-all duration-300
-                              ${isSelected 
-                                ? 'ring-2 ring-offset-2 ring-primary shadow-lg scale-110' 
+                              ${isSelected
+                                ? 'ring-2 ring-offset-2 ring-primary shadow-lg scale-110'
                                 : 'hover:scale-105 hover:shadow-md'
                               }
                               ${isLightColor ? 'border-stone-300 dark:border-stone-600' : 'border-white dark:border-stone-800'}
                             `}
-                            style={{ 
+                            style={{
                               backgroundColor: colorHex,
                             }}
                             title={getColorName(color)}
@@ -858,8 +899,8 @@ const CategoryPage: React.FC = () => {
                             onClick={() => handleColorToggle(color)}
                             className={`
                               text-xs px-2 py-1 rounded-md transition-all
-                              ${isSelected 
-                                ? 'bg-primary text-primary-foreground font-medium' 
+                              ${isSelected
+                                ? 'bg-primary text-primary-foreground font-medium'
                                 : 'bg-muted text-muted-foreground hover:bg-muted/80'
                               }
                             `}
@@ -885,7 +926,7 @@ const CategoryPage: React.FC = () => {
                       {t.inStock}
                     </label>
                   </div>
-                  
+
                   <div className="flex items-center space-x-3">
                     <Checkbox
                       id="onSale"
@@ -909,11 +950,10 @@ const CategoryPage: React.FC = () => {
                         variant={minRating === rating ? "default" : "outline"}
                         size="sm"
                         onClick={() => setMinRating(minRating === rating ? 0 : rating)}
-                        className={`w-full justify-start rounded-lg transition-all ${
-                          minRating === rating 
-                            ? 'shadow-md ring-2 ring-primary ring-offset-2' 
-                            : 'hover:border-primary hover:shadow-sm'
-                        }`}
+                        className={`w-full justify-start rounded-lg transition-all ${minRating === rating
+                          ? 'shadow-md ring-2 ring-primary ring-offset-2'
+                          : 'hover:border-primary hover:shadow-sm'
+                          }`}
                       >
                         <div className="flex items-center space-x-2">
                           <div className="flex items-center">
@@ -942,6 +982,8 @@ const CategoryPage: React.FC = () => {
                 products={filteredAndSortedProducts}
                 loading={loading}
                 onAddToCompare={addToCompare}
+                onAddToCart={addToCart}
+                onAddToWishlist={addToWishlist}
               />
             ) : (
               <Card>
@@ -966,8 +1008,8 @@ const CategoryPage: React.FC = () => {
           </div>
         </div>
       </div>
-      
-      <Footer />
+
+
     </div>
   );
 };

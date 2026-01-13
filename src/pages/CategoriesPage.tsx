@@ -1,7 +1,5 @@
 import { useState, useEffect } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -32,7 +30,7 @@ const renderCategoryImage = (category: Category, className: string = "w-12 h-12"
       </div>
     );
   }
-  
+
   if (category.image) {
     return (
       <div className={`${className} rounded-lg overflow-hidden bg-muted`}>
@@ -45,7 +43,7 @@ const renderCategoryImage = (category: Category, className: string = "w-12 h-12"
       </div>
     );
   }
-  
+
   // Fallback to icon
   return (
     <div className={`${className} bg-primary/10 rounded-lg flex items-center justify-center group-hover:bg-primary/20 transition-colors`}>
@@ -99,7 +97,7 @@ const CategoriesPage = () => {
         const name = getCategoryName(category);
         const description = getCategoryDescription(category);
         return name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-               (description && description.toLowerCase().includes(searchQuery.toLowerCase()));
+          (description && description.toLowerCase().includes(searchQuery.toLowerCase()));
       });
     }
 
@@ -227,10 +225,7 @@ const CategoriesPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      <Header
-        cartItemsCount={0}
-        onSearch={() => {}}
-      />
+
 
       <main className="py-8">
         <div className="container mx-auto px-4 space-y-8">
@@ -239,14 +234,14 @@ const CategoriesPage = () => {
             <div className="relative overflow-hidden rounded-2xl shadow-2xl">
               {/* Banner Background with Gradient */}
               <div className="absolute inset-0">
-                <img 
-                  src="/images/banners/banner-04.png" 
+                <img
+                  src="/images/banners/banner-04.png"
                   alt="Categories Banner"
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/50 to-black/60"></div>
               </div>
-              
+
               {/* Content */}
               <div className="relative z-10 p-12 md:p-16 text-white">
                 <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-4 bg-gradient-to-r from-white via-white to-white/80 bg-clip-text text-transparent">
@@ -360,16 +355,15 @@ const CategoriesPage = () => {
               </Card>
             ) : (
               <div className={
-                viewMode === 'grid' 
+                viewMode === 'grid'
                   ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'
                   : 'space-y-4'
               }>
                 {filteredCategories.map((category) => (
-                  <Card 
-                    key={category._id} 
-                    className={`group hover:shadow-xl transition-all duration-300 cursor-pointer rounded-xl border-2 overflow-hidden ${
-                      viewMode === 'list' ? 'flex hover:border-primary' : 'hover:scale-[1.02] hover:border-primary'
-                    }`}
+                  <Card
+                    key={category._id}
+                    className={`group hover:shadow-xl transition-all duration-300 cursor-pointer rounded-xl border-2 overflow-hidden ${viewMode === 'list' ? 'flex hover:border-primary' : 'hover:scale-[1.02] hover:border-primary'
+                      }`}
                     onClick={() => navigate(`/category/${category.slug}`)}
                   >
                     {viewMode === 'grid' ? (
@@ -383,26 +377,26 @@ const CategoriesPage = () => {
                             {category.productCount || 0}
                           </Badge>
                         </div>
-                        
+
                         <h3 className="text-xl font-bold mb-2 group-hover:text-primary transition-colors">
                           {getCategoryName(category)}
                         </h3>
-                        
+
                         {getCategoryDescription(category) && (
                           <p className="text-muted-foreground mb-4 line-clamp-2 text-sm leading-relaxed">
                             {getCategoryDescription(category)}
                           </p>
                         )}
-                        
+
                         <div className="flex items-center justify-between pt-2 border-t">
                           <span className="text-sm font-medium text-muted-foreground flex items-center">
                             <Package className="h-3.5 w-3.5 mr-1.5" />
                             {category.productCount || 0} {t.products}
                           </span>
-                          
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
+
+                          <Button
+                            variant="outline"
+                            size="sm"
                             className="rounded-lg group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary transition-all"
                           >
                             {t.viewProducts}
@@ -415,7 +409,7 @@ const CategoriesPage = () => {
                         <div className="relative flex-shrink-0">
                           {renderCategoryImage(category, "w-20 h-20 rounded-xl")}
                         </div>
-                        
+
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between mb-2">
                             <h3 className="text-xl font-bold group-hover:text-primary transition-colors">
@@ -426,22 +420,22 @@ const CategoriesPage = () => {
                               {category.productCount || 0} {t.products}
                             </Badge>
                           </div>
-                          
+
                           {getCategoryDescription(category) && (
                             <p className="text-muted-foreground mb-3 line-clamp-2 text-sm leading-relaxed">
                               {getCategoryDescription(category)}
                             </p>
                           )}
-                          
+
                           <div className="flex items-center justify-between pt-2 border-t">
                             <span className="text-sm font-medium text-muted-foreground flex items-center">
                               <Package className="h-3.5 w-3.5 mr-1.5" />
                               {category.productCount || 0} {t.products}
                             </span>
-                            
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
+
+                            <Button
+                              variant="outline"
+                              size="sm"
                               className="rounded-lg group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary transition-all"
                             >
                               {t.viewProducts}
@@ -474,16 +468,16 @@ const CategoriesPage = () => {
                     {t.exploreCollection}
                   </p>
                   <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                    <Button 
-                      size="lg" 
+                    <Button
+                      size="lg"
                       className="px-8 py-6 rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
                       onClick={() => navigate('/products')}
                     >
                       <Eye className="h-5 w-5 mr-2" />
                       {t.browse}
                     </Button>
-                    <Button 
-                      size="lg" 
+                    <Button
+                      size="lg"
                       variant="outline"
                       className="px-8 py-6 rounded-xl font-semibold text-lg border-2 hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all duration-300 hover:scale-105"
                       onClick={() => navigate('/sale')}
@@ -499,7 +493,7 @@ const CategoriesPage = () => {
         </div>
       </main>
 
-      <Footer />
+
     </div>
   );
 };

@@ -9,8 +9,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import ProfileSidebar from "@/components/ProfileSidebar";
 import ProfileOrders from "@/components/ProfileOrders";
 import ProfileAddresses from "@/components/ProfileAddresses";
@@ -42,7 +40,7 @@ export default function Profile() {
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [cartItemsCount, setCartItemsCount] = useState(0);
-  
+
   const [profileData, setProfileData] = useState<ProfileData>({
     name: "",
     email: "",
@@ -86,7 +84,7 @@ export default function Profile() {
   useEffect(() => {
     const loadCartCount = async () => {
       if (!isAuthenticated) return;
-      
+
       try {
         const cartResponse = await api.getCart();
         const count = cartResponse.items?.reduce((total, item) => total + item.quantity, 0) || 0;
@@ -104,7 +102,7 @@ export default function Profile() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-        <Header cartItemsCount={cartItemsCount} onSearch={() => {}} />
+
         <main className="py-8">
           <div className="container mx-auto px-4">
             <Card className="rounded-xl border-2 shadow-lg bg-background/95 backdrop-blur-sm">
@@ -115,7 +113,6 @@ export default function Profile() {
             </Card>
           </div>
         </main>
-        <Footer />
       </div>
     );
   }
@@ -221,7 +218,7 @@ export default function Profile() {
 
   const handleSave = async () => {
     if (!user) return;
-    
+
     setSaving(true);
     try {
       // Update user profile via API
@@ -230,13 +227,13 @@ export default function Profile() {
         phone: editData.phone,
         address: editData.address
       };
-      
+
       await api.updateProfile(updateData);
-      
+
       setProfileData(editData);
       setIsEditing(false);
       refreshUser(); // Refresh user data after successful update
-      
+
       toast({
         title: "Cập nhật thành công",
         description: "Thông tin hồ sơ đã được cập nhật",
@@ -264,16 +261,13 @@ export default function Profile() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      <Header 
-        cartItemsCount={cartItemsCount} 
-        onSearch={() => {}} 
-      />
-      
+
+
       <main className="py-8">
         <div className="container mx-auto px-4">
           <div className="flex flex-col lg:flex-row gap-8">
             {/* Sidebar */}
-            <ProfileSidebar 
+            <ProfileSidebar
               activeSection={activeSection}
               onSectionChange={setActiveSection}
               refreshTrigger={refreshTrigger}
@@ -346,14 +340,14 @@ export default function Profile() {
                           <Input
                             id="name"
                             value={editData.name}
-                            onChange={(e) => setEditData({...editData, name: e.target.value})}
+                            onChange={(e) => setEditData({ ...editData, name: e.target.value })}
                             className="mt-1 rounded-lg border-2 focus:border-primary transition-all"
                           />
                         ) : (
                           <p className="text-sm text-muted-foreground mt-1 py-2 px-3 rounded-lg bg-muted/30 font-medium">{profileData.name || t.notProvided}</p>
                         )}
                       </div>
-                      
+
                       <div>
                         <Label htmlFor="email" className="text-sm font-semibold mb-2 block">{t.email}</Label>
                         <div className="mt-1 py-2 px-3 rounded-lg bg-muted/30">
@@ -372,7 +366,7 @@ export default function Profile() {
                           <Input
                             id="phone"
                             value={editData.phone}
-                            onChange={(e) => setEditData({...editData, phone: e.target.value})}
+                            onChange={(e) => setEditData({ ...editData, phone: e.target.value })}
                             className="mt-1 rounded-lg border-2 focus:border-primary transition-all"
                             placeholder="Nhập số điện thoại"
                           />
@@ -387,7 +381,7 @@ export default function Profile() {
                           <Input
                             id="address"
                             value={editData.address}
-                            onChange={(e) => setEditData({...editData, address: e.target.value})}
+                            onChange={(e) => setEditData({ ...editData, address: e.target.value })}
                             className="mt-1 rounded-lg border-2 focus:border-primary transition-all"
                             placeholder="Nhập địa chỉ"
                           />
@@ -399,13 +393,13 @@ export default function Profile() {
                       <div>
                         <Label htmlFor="status" className="text-sm font-semibold mb-2 block">{t.accountStatus}</Label>
                         <div className="text-sm mt-1 py-2 px-3 rounded-lg bg-muted/30">
-                          <Badge 
+                          <Badge
                             variant={(user as unknown as UserType)?.status === 'active' ? 'default' : (user as unknown as UserType)?.status === 'blocked' ? 'destructive' : 'secondary'}
                             className="rounded-lg border-2 font-semibold"
                           >
-                            {(user as unknown as UserType)?.status === 'active' ? t.active : 
-                             (user as unknown as UserType)?.status === 'blocked' ? t.blocked : 
-                             (user as unknown as UserType)?.status === 'inactive' ? t.inactive : t.unknown}
+                            {(user as unknown as UserType)?.status === 'active' ? t.active :
+                              (user as unknown as UserType)?.status === 'blocked' ? t.blocked :
+                                (user as unknown as UserType)?.status === 'inactive' ? t.inactive : t.unknown}
                           </Badge>
                         </div>
                       </div>
@@ -420,16 +414,16 @@ export default function Profile() {
 
                     {isEditing && (
                       <div className="flex justify-end gap-2 pt-6 border-t">
-                        <Button 
-                          variant="outline" 
+                        <Button
+                          variant="outline"
                           onClick={handleCancel}
                           className="rounded-xl font-semibold border-2"
                         >
                           <X className="h-4 w-4 mr-2" />
                           {t.cancel}
                         </Button>
-                        <Button 
-                          onClick={handleSave} 
+                        <Button
+                          onClick={handleSave}
                           disabled={saving}
                           className="rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all"
                         >
@@ -459,7 +453,7 @@ export default function Profile() {
         </div>
       </main>
 
-      <Footer />
+
     </div>
   );
 }

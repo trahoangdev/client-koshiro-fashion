@@ -1,6 +1,4 @@
 import { useLanguage } from "@/contexts/LanguageContext";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -98,10 +96,7 @@ const AboutPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      <Header
-        cartItemsCount={0}
-        onSearch={() => {}}
-      />
+
 
       <main className="py-8">
         <div className="container mx-auto px-4 space-y-12">
@@ -110,14 +105,14 @@ const AboutPage = () => {
             <div className="relative overflow-hidden rounded-2xl shadow-2xl">
               {/* Banner Background */}
               <div className="absolute inset-0">
-                <img 
-                  src="/images/banners/banner-04.png" 
+                <img
+                  src="/images/banners/banner-04.png"
                   alt="About Us Banner"
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/50 to-black/60"></div>
               </div>
-              
+
               {/* Content */}
               <div className="relative z-10 p-12 md:p-16 text-white">
                 <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-4 bg-gradient-to-r from-white via-white to-white/80 bg-clip-text text-transparent">
@@ -236,17 +231,17 @@ const AboutPage = () => {
               <CardContent className="p-12 md:p-16 text-center">
                 <h2 className="text-3xl md:text-4xl font-bold mb-4 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
                   {language === 'vi' ? 'Sẵn Sàng Trải Nghiệm Thời Trang Nhật Bản?' :
-                   language === 'ja' ? '日本のファッションを体験する準備はできていますか？' :
-                   'Ready to Experience Japanese Fashion?'}
+                    language === 'ja' ? '日本のファッションを体験する準備はできていますか？' :
+                      'Ready to Experience Japanese Fashion?'}
                 </h2>
                 <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto leading-relaxed">
                   {language === 'vi' ? 'Khám phá bộ sưu tập của chúng tôi và tìm mảnh ghép hoàn hảo cho bạn' :
-                   language === 'ja' ? 'コレクションを探索して、あなたにぴったりの作品を見つけてください' :
-                   'Discover our collection and find your perfect piece'}
+                    language === 'ja' ? 'コレクションを探索して、あなたにぴったりの作品を見つけてください' :
+                      'Discover our collection and find your perfect piece'}
                 </p>
                 <Link to="/">
-                  <Button 
-                    size="lg" 
+                  <Button
+                    size="lg"
                     className="rounded-xl font-semibold text-lg px-8 py-6 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
                   >
                     {t.cta}
@@ -258,7 +253,7 @@ const AboutPage = () => {
         </div>
       </main>
 
-      <Footer />
+
     </div>
   );
 };

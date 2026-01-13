@@ -1,6 +1,4 @@
 import { useLanguage } from "@/contexts/LanguageContext";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -567,7 +565,7 @@ const InfoPage = () => {
   if (!config) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-        <Header cartItemsCount={0} onSearch={() => {}} />
+
         <main className="py-8">
           <div className="container mx-auto px-4">
             <Card className="rounded-xl border-2 shadow-xl bg-background/95 backdrop-blur-sm">
@@ -582,7 +580,7 @@ const InfoPage = () => {
             </Card>
           </div>
         </main>
-        <Footer />
+
       </div>
     );
   }
@@ -592,10 +590,7 @@ const InfoPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      <Header
-        cartItemsCount={0}
-        onSearch={() => {}}
-      />
+
 
       <main className="py-8">
         <div className="container mx-auto px-4 space-y-8">
@@ -654,7 +649,7 @@ const InfoPage = () => {
         </div>
       </main>
 
-      <Footer />
+
     </div>
   );
 };

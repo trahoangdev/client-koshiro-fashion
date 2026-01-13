@@ -1,8 +1,6 @@
 import { useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Home } from "lucide-react";
@@ -47,18 +45,18 @@ const NotFound = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 relative">
-      <Header cartItemsCount={0} onSearch={() => {}} />
-      
+
+
       {/* Banner Background */}
       <div className="absolute inset-0 z-0">
-        <img 
-          src="/images/banners/banner-05.png" 
+        <img
+          src="/images/banners/banner-05.png"
           alt="404 Banner"
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/50 to-black/60"></div>
       </div>
-      
+
       {/* Content */}
       <div className="relative z-10 flex items-center justify-center min-h-screen py-16">
         <div className="text-center max-w-2xl mx-auto px-6">
@@ -70,21 +68,21 @@ const NotFound = () => {
                   {t.title}
                 </h1>
               </div>
-              
+
               {/* Main Content */}
               <div className="space-y-6">
                 <h2 className="text-3xl md:text-4xl font-bold text-foreground">
                   {t.subtitle}
                 </h2>
-                
+
                 <p className="text-lg md:text-xl text-muted-foreground leading-relaxed">
                   {t.description}
                 </p>
-                
+
                 {/* Action Button */}
                 <div className="pt-4">
                   <Link to="/">
-                    <Button 
+                    <Button
                       size="lg"
                       className="rounded-xl font-semibold px-8 py-6 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
                     >
@@ -98,8 +96,8 @@ const NotFound = () => {
           </Card>
         </div>
       </div>
-      
-      <Footer />
+
+
     </div>
   );
 };

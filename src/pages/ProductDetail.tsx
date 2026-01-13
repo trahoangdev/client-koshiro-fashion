@@ -5,8 +5,6 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts';
 import { api, Product, ProductVideo, Color } from '@/lib/api';
 import { formatCurrency } from '@/lib/currency';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
 import ProductMediaGallery, { MediaItem } from '@/components/ProductMediaGallery';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,17 +17,17 @@ import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { 
-  Loader2, 
-  ShoppingCart, 
-  Heart, 
-  Star, 
-  Truck, 
-  Shield, 
-  RotateCcw, 
-  Minus, 
-  Plus, 
-  Share2, 
+import {
+  Loader2,
+  ShoppingCart,
+  Heart,
+  Star,
+  Truck,
+  Shield,
+  RotateCcw,
+  Minus,
+  Plus,
+  Share2,
   ChevronRight,
   MessageCircle,
   ThumbsUp,
@@ -239,8 +237,8 @@ const ProductDetail: React.FC = () => {
     const loadColors = async () => {
       try {
         setColorsLoading(true);
-        const response = await api.getColors({ 
-          activeOnly: true, 
+        const response = await api.getColors({
+          activeOnly: true,
           language: language as 'vi' | 'en' | 'ja'
         });
         setApiColors(response.colors || []);
@@ -262,21 +260,21 @@ const ProductDetail: React.FC = () => {
     if (/^#[0-9A-Fa-f]{6}$/.test(colorName) || /^#[0-9A-Fa-f]{3}$/.test(colorName)) {
       return colorName;
     }
-    
+
     // Try to find color in API colors first
     if (apiColors.length > 0) {
       const normalizedName = colorName.trim();
-      const colorInApi = apiColors.find(c => 
+      const colorInApi = apiColors.find(c =>
         c.name.toLowerCase() === normalizedName.toLowerCase() ||
         c.nameEn?.toLowerCase() === normalizedName.toLowerCase() ||
         c.nameJa?.toLowerCase() === normalizedName.toLowerCase()
       );
-      
+
       if (colorInApi) {
         return colorInApi.hexValue;
       }
     }
-    
+
     // Fallback to hardcoded color map if API colors not loaded yet
     const colorMap: { [key: string]: string } = {
       // Vietnamese colors
@@ -300,7 +298,7 @@ const ProductDetail: React.FC = () => {
       'Xám nhạt': '#d1d5db',
       'Bạc': '#c0c0c0',
       'Vàng kim': '#ffd700',
-      
+
       // English colors
       'Red': '#ef4444',
       'Blue': '#3b82f6',
@@ -313,7 +311,7 @@ const ProductDetail: React.FC = () => {
       'Grey': '#6b7280',
       'Silver': '#c0c0c0',
       'Gold': '#ffd700',
-      
+
       // Japanese colors
       '赤': '#ef4444',
       '青': '#3b82f6',
@@ -329,18 +327,18 @@ const ProductDetail: React.FC = () => {
       '銀': '#c0c0c0',
       '金': '#ffd700'
     };
-    
+
     // Check if it's already a hex code
     if (/^#[0-9A-Fa-f]{6}$/.test(colorName) || /^#[0-9A-Fa-f]{3}$/.test(colorName)) {
       return colorName;
     }
-    
+
     // Check color map (case-insensitive)
     const normalizedName = colorName.trim();
     if (colorMap[normalizedName]) {
       return colorMap[normalizedName];
     }
-    
+
     // Try case-insensitive search
     const lowerName = normalizedName.toLowerCase();
     for (const [key, value] of Object.entries(colorMap)) {
@@ -348,7 +346,7 @@ const ProductDetail: React.FC = () => {
         return value;
       }
     }
-    
+
     // Default fallback
     return '#6b7280';
   };
@@ -379,16 +377,16 @@ const ProductDetail: React.FC = () => {
   useEffect(() => {
     const loadProduct = async () => {
       if (!id) return;
-      
+
       try {
         setLoading(true);
         // Track view when loading product detail
         const response = await api.getProduct(id, true);
         setProduct(response.product);
-        
+
         // Create media items from images and videos
         const media: MediaItem[] = [];
-        
+
         // Add Cloudinary images first (priority)
         if (response.product.cloudinaryImages && response.product.cloudinaryImages.length > 0) {
           response.product.cloudinaryImages.forEach((cloudinaryImage, index) => {
@@ -410,7 +408,7 @@ const ProductDetail: React.FC = () => {
             });
           });
         }
-        
+
         // Add videos (if product has videos property)
         if (response.product.videos && Array.isArray(response.product.videos)) {
           response.product.videos.forEach((video, index) => {
@@ -423,9 +421,9 @@ const ProductDetail: React.FC = () => {
             });
           });
         }
-        
+
         setMediaItems(media);
-        
+
         // Set default selections
         if (response.product.sizes.length > 0) {
           setSelectedSize(response.product.sizes[0]);
@@ -436,9 +434,9 @@ const ProductDetail: React.FC = () => {
 
         // Load related products
         try {
-          const relatedResponse = await api.getProducts({ 
-            category: typeof response.product.categoryId === 'string' 
-              ? response.product.categoryId 
+          const relatedResponse = await api.getProducts({
+            category: typeof response.product.categoryId === 'string'
+              ? response.product.categoryId
               : response.product.categoryId._id,
             limit: 8
           });
@@ -452,7 +450,7 @@ const ProductDetail: React.FC = () => {
           try {
             const wishlistResponse = await api.getWishlist();
             const wishlistProducts = Array.isArray(wishlistResponse) ? wishlistResponse : [];
-            setIsInWishlist(wishlistProducts.some((item: Product | string) => 
+            setIsInWishlist(wishlistProducts.some((item: Product | string) =>
               (typeof item === 'string' ? item : item._id) === response.product._id
             ));
           } catch (error) {
@@ -476,15 +474,15 @@ const ProductDetail: React.FC = () => {
 
   const handleAddToCart = async () => {
     if (!product) return;
-    
+
     if (!isAuthenticated) {
       toast({
-        title: language === 'vi' ? "Cần đăng nhập" : 
-               language === 'ja' ? "ログインが必要です" : 
-               "Login Required",
+        title: language === 'vi' ? "Cần đăng nhập" :
+          language === 'ja' ? "ログインが必要です" :
+            "Login Required",
         description: language === 'vi' ? "Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng" :
-                     language === 'ja' ? "商品をカートに追加するにはログインしてください" :
-                     "Please login to add products to cart",
+          language === 'ja' ? "商品をカートに追加するにはログインしてください" :
+            "Please login to add products to cart",
         variant: "destructive",
       });
       return;
@@ -492,30 +490,30 @@ const ProductDetail: React.FC = () => {
 
     try {
       await api.addToCart(product._id, quantity);
-      
+
       // Wait a bit to ensure API call is complete, then dispatch event
       setTimeout(() => {
         console.log('Dispatching cartUpdated event...');
         window.dispatchEvent(new CustomEvent('cartUpdated'));
       }, 100);
-      
+
       toast({
-        title: language === 'vi' ? "Đã thêm vào giỏ hàng" : 
-               language === 'ja' ? "カートに追加されました" : 
-               "Added to Cart",
+        title: language === 'vi' ? "Đã thêm vào giỏ hàng" :
+          language === 'ja' ? "カートに追加されました" :
+            "Added to Cart",
         description: language === 'vi' ? "Sản phẩm đã được thêm vào giỏ hàng" :
-                     language === 'ja' ? "商品がカートに追加されました" :
-                     "Product has been added to cart",
+          language === 'ja' ? "商品がカートに追加されました" :
+            "Product has been added to cart",
       });
     } catch (error) {
       console.error('Failed to add to cart:', error);
       toast({
-        title: language === 'vi' ? "Lỗi" : 
-               language === 'ja' ? "エラー" : 
-               "Error",
+        title: language === 'vi' ? "Lỗi" :
+          language === 'ja' ? "エラー" :
+            "Error",
         description: language === 'vi' ? "Không thể thêm vào giỏ hàng" :
-                     language === 'ja' ? "カートに追加できませんでした" :
-                     "Failed to add to cart. Please try again.",
+          language === 'ja' ? "カートに追加できませんでした" :
+            "Failed to add to cart. Please try again.",
         variant: "destructive"
       });
     }
@@ -523,15 +521,15 @@ const ProductDetail: React.FC = () => {
 
   const handleAddToWishlist = async () => {
     if (!product) return;
-    
+
     if (!isAuthenticated) {
       toast({
-        title: language === 'vi' ? "Cần đăng nhập" : 
-               language === 'ja' ? "ログインが必要です" : 
-               "Login Required",
+        title: language === 'vi' ? "Cần đăng nhập" :
+          language === 'ja' ? "ログインが必要です" :
+            "Login Required",
         description: language === 'vi' ? "Vui lòng đăng nhập để thêm sản phẩm vào danh sách yêu thích" :
-                     language === 'ja' ? "商品をお気に入りに追加するにはログインしてください" :
-                     "Please login to add products to wishlist",
+          language === 'ja' ? "商品をお気に入りに追加するにはログインしてください" :
+            "Please login to add products to wishlist",
         variant: "destructive",
       });
       return;
@@ -542,35 +540,36 @@ const ProductDetail: React.FC = () => {
         await api.removeFromWishlist(product._id);
         setIsInWishlist(false);
         toast({
-          title: language === 'vi' ? "Đã xóa khỏi yêu thích" : 
-                 language === 'ja' ? "お気に入りから削除されました" : 
-                 "Removed from Wishlist",
+          title: language === 'vi' ? "Đã xóa khỏi yêu thích" :
+            language === 'ja' ? "お気に入りから削除されました" :
+              "Removed from Wishlist",
           description: language === 'vi' ? "Sản phẩm đã được xóa khỏi danh sách yêu thích" :
-                       language === 'ja' ? "商品がお気に入りから削除されました" :
-                       "Product has been removed from wishlist",
+            language === 'ja' ? "商品がお気に入りから削除されました" :
+              "Product has been removed from wishlist",
         });
       } else {
         await api.addToWishlist(product._id);
         setIsInWishlist(true);
         toast({
-          title: language === 'vi' ? "Đã thêm vào yêu thích" : 
-                 language === 'ja' ? "お気に入りに追加されました" : 
-                 "Added to Wishlist",
+          title: language === 'vi' ? "Đã thêm vào yêu thích" :
+            language === 'ja' ? "お気に入りに追加されました" :
+              "Added to Wishlist",
           description: language === 'vi' ? "Sản phẩm đã được thêm vào danh sách yêu thích" :
-                       language === 'ja' ? "商品がお気に入りに追加されました" :
-                       "Product has been added to wishlist",
+            language === 'ja' ? "商品がお気に入りに追加されました" :
+              "Product has been added to wishlist",
         });
       }
       setRefreshWishlistTrigger(prev => prev + 1);
+      window.dispatchEvent(new CustomEvent('wishlistUpdated'));
     } catch (error) {
       console.error('Failed to update wishlist:', error);
       toast({
-        title: language === 'vi' ? "Lỗi" : 
-               language === 'ja' ? "エラー" : 
-               "Error",
+        title: language === 'vi' ? "Lỗi" :
+          language === 'ja' ? "エラー" :
+            "Error",
         description: language === 'vi' ? "Không thể cập nhật danh sách yêu thích" :
-                     language === 'ja' ? "お気に入りを更新できませんでした" :
-                     "Failed to update wishlist. Please try again.",
+          language === 'ja' ? "お気に入りを更新できませんでした" :
+            "Failed to update wishlist. Please try again.",
         variant: "destructive"
       });
     }
@@ -578,10 +577,10 @@ const ProductDetail: React.FC = () => {
 
   const handleAddToCompare = () => {
     if (!product) return;
-    
+
     const savedCompareList = localStorage.getItem('koshiro_compare_list');
     let compareList: Product[] = [];
-    
+
     if (savedCompareList) {
       try {
         compareList = JSON.parse(savedCompareList);
@@ -592,12 +591,12 @@ const ProductDetail: React.FC = () => {
 
     if (compareList.length >= 4) {
       toast({
-        title: language === 'vi' ? "Giới hạn so sánh" : 
-               language === 'ja' ? "比較制限" : 
-               "Compare Limit",
+        title: language === 'vi' ? "Giới hạn so sánh" :
+          language === 'ja' ? "比較制限" :
+            "Compare Limit",
         description: language === 'vi' ? "Bạn chỉ có thể so sánh tối đa 4 sản phẩm" :
-                     language === 'ja' ? "最大4つの商品を比較できます" :
-                     "You can compare up to 4 products",
+          language === 'ja' ? "最大4つの商品を比較できます" :
+            "You can compare up to 4 products",
         variant: "destructive",
       });
       return;
@@ -605,12 +604,12 @@ const ProductDetail: React.FC = () => {
 
     if (compareList.find(p => p._id === product._id)) {
       toast({
-        title: language === 'vi' ? "Sản phẩm đã có" : 
-               language === 'ja' ? "商品は既に追加済み" : 
-               "Product Already Added",
+        title: language === 'vi' ? "Sản phẩm đã có" :
+          language === 'ja' ? "商品は既に追加済み" :
+            "Product Already Added",
         description: language === 'vi' ? "Sản phẩm này đã có trong danh sách so sánh" :
-                     language === 'ja' ? "この商品は既に比較リストにあります" :
-                     "This product is already in the compare list",
+          language === 'ja' ? "この商品は既に比較リストにあります" :
+            "This product is already in the compare list",
         variant: "destructive",
       });
       return;
@@ -618,21 +617,22 @@ const ProductDetail: React.FC = () => {
 
     const newCompareList = [...compareList, product];
     localStorage.setItem('koshiro_compare_list', JSON.stringify(newCompareList));
-    
+    window.dispatchEvent(new CustomEvent('compareUpdated'));
+
     toast({
-      title: language === 'vi' ? "Đã thêm vào so sánh" : 
-             language === 'ja' ? "比較リストに追加" : 
-             "Added to Compare",
+      title: language === 'vi' ? "Đã thêm vào so sánh" :
+        language === 'ja' ? "比較リストに追加" :
+          "Added to Compare",
       description: language === 'vi' ? "Sản phẩm đã được thêm vào danh sách so sánh" :
-                   language === 'ja' ? "商品が比較リストに追加されました" :
-                   "Product has been added to compare list",
+        language === 'ja' ? "商品が比較リストに追加されました" :
+          "Product has been added to compare list",
     });
   };
 
   const handleShare = (platform: string) => {
     const url = window.location.href;
     const title = `Check out ${product?.name}`;
-    
+
     switch (platform) {
       case 'facebook':
         window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
@@ -672,15 +672,15 @@ const ProductDetail: React.FC = () => {
 
   const handleBuyNow = async () => {
     if (!product) return;
-    
+
     if (!isAuthenticated) {
       toast({
-        title: language === 'vi' ? "Cần đăng nhập" : 
-               language === 'ja' ? "ログインが必要です" : 
-               "Login Required",
+        title: language === 'vi' ? "Cần đăng nhập" :
+          language === 'ja' ? "ログインが必要です" :
+            "Login Required",
         description: language === 'vi' ? "Vui lòng đăng nhập để mua sản phẩm" :
-                     language === 'ja' ? "商品を購入するにはログインしてください" :
-                     "Please login to purchase products",
+          language === 'ja' ? "商品を購入するにはログインしてください" :
+            "Please login to purchase products",
         variant: "destructive",
       });
       return;
@@ -689,31 +689,31 @@ const ProductDetail: React.FC = () => {
     try {
       // Add to cart first, then navigate to checkout
       await api.addToCart(product._id, quantity);
-      
+
       // Wait a bit to ensure API call is complete, then dispatch event
       setTimeout(() => {
         console.log('Dispatching cartUpdated event (Buy Now)...');
         window.dispatchEvent(new CustomEvent('cartUpdated'));
       }, 100);
-      
+
       toast({
-        title: language === 'vi' ? "Đã thêm vào giỏ hàng" : 
-               language === 'ja' ? "カートに追加されました" : 
-               "Added to Cart",
+        title: language === 'vi' ? "Đã thêm vào giỏ hàng" :
+          language === 'ja' ? "カートに追加されました" :
+            "Added to Cart",
         description: language === 'vi' ? "Sản phẩm đã được thêm vào giỏ hàng" :
-                     language === 'ja' ? "商品がカートに追加されました" :
-                     "Product has been added to cart",
+          language === 'ja' ? "商品がカートに追加されました" :
+            "Product has been added to cart",
       });
       navigate('/checkout');
     } catch (error) {
       console.error('Failed to add to cart:', error);
       toast({
-        title: language === 'vi' ? "Lỗi" : 
-               language === 'ja' ? "エラー" : 
-               "Error",
+        title: language === 'vi' ? "Lỗi" :
+          language === 'ja' ? "エラー" :
+            "Error",
         description: language === 'vi' ? "Không thể thêm vào giỏ hàng" :
-                     language === 'ja' ? "カートに追加できませんでした" :
-                     "Failed to add to cart. Please try again.",
+          language === 'ja' ? "カートに追加できませんでした" :
+            "Failed to add to cart. Please try again.",
         variant: "destructive"
       });
     }
@@ -722,7 +722,6 @@ const ProductDetail: React.FC = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-        <Header cartItemsCount={0} onSearch={handleSearch} refreshWishlistTrigger={refreshWishlistTrigger} />
         <div className="container mx-auto px-4 py-8">
           <Card className="rounded-xl border-2 shadow-lg bg-background/95 backdrop-blur-sm">
             <CardContent className="p-12 text-center">
@@ -733,7 +732,7 @@ const ProductDetail: React.FC = () => {
             </CardContent>
           </Card>
         </div>
-        <Footer />
+
       </div>
     );
   }
@@ -741,12 +740,12 @@ const ProductDetail: React.FC = () => {
   if (!product) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-        <Header cartItemsCount={0} onSearch={handleSearch} refreshWishlistTrigger={refreshWishlistTrigger} />
+
         <div className="container mx-auto px-4 py-8">
           <Card className="rounded-xl border-2 shadow-lg bg-background/95 backdrop-blur-sm">
             <CardContent className="p-12 text-center">
               <h1 className="text-2xl font-bold mb-4">Product not found</h1>
-              <Button 
+              <Button
                 onClick={() => navigate('/')}
                 className="rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all"
               >
@@ -755,7 +754,7 @@ const ProductDetail: React.FC = () => {
             </CardContent>
           </Card>
         </div>
-        <Footer />
+
       </div>
     );
   }
@@ -765,15 +764,15 @@ const ProductDetail: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      <Header cartItemsCount={0} onSearch={handleSearch} refreshWishlistTrigger={refreshWishlistTrigger} />
-      
+
+
       {/* Breadcrumb */}
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-            <Button 
-              variant="ghost" 
-              size="sm" 
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => navigate(-1)}
               className="p-0 h-auto hover:text-primary"
             >
@@ -781,18 +780,18 @@ const ProductDetail: React.FC = () => {
               Back
             </Button>
             <span className="mx-2">•</span>
-            <Button 
-              variant="ghost" 
-              size="sm" 
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => navigate('/')}
               className="p-0 h-auto hover:text-primary"
             >
               Home
             </Button>
             <ChevronRight className="h-4 w-4" />
-            <Button 
-              variant="ghost" 
-              size="sm" 
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => navigate(`/category/${typeof product.categoryId === 'string' ? product.categoryId : product.categoryId.slug}`)}
               className="p-0 h-auto hover:text-primary"
             >
@@ -812,7 +811,7 @@ const ProductDetail: React.FC = () => {
               <Share2 className="h-4 w-4 mr-2" />
               Share
             </Button>
-            
+
             {shareMenuOpen && (
               <Card className="absolute right-0 top-full mt-2 z-50 w-48">
                 <CardContent className="p-3">
@@ -887,15 +886,15 @@ const ProductDetail: React.FC = () => {
                     onClick={() => navigate(`/category/${typeof product.categoryId === 'string' ? product.categoryId : product.categoryId.slug}`)}
                     className="p-0 h-auto text-primary hover:text-primary/80"
                   >
-                    {typeof product.categoryId === 'string' 
-                      ? 'Category' 
+                    {typeof product.categoryId === 'string'
+                      ? 'Category'
                       : product.categoryId.name}
                   </Button>
                   <span className="text-muted-foreground">•</span>
                   <span className="text-sm text-muted-foreground">SKU: {product._id.slice(-8).toUpperCase()}</span>
                 </div>
               </div>
-              
+
               {/* Product Badges */}
               <div className="flex flex-wrap gap-2 mb-4">
                 {/* Stock Status - Highest priority */}
@@ -904,35 +903,35 @@ const ProductDetail: React.FC = () => {
                     {language === 'vi' ? 'Hết hàng' : language === 'ja' ? '在庫切れ' : 'Out of Stock'}
                   </Badge>
                 )}
-                
+
                 {/* Sale Badge - Show when on sale and in stock */}
                 {product.stock > 0 && product.onSale && product.originalPrice && product.originalPrice > product.price && (
                   <Badge variant="destructive" className="bg-red-500/90 text-white">
                     -{Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% {language === 'vi' ? 'GIẢM' : language === 'ja' ? 'セール' : 'OFF'}
                   </Badge>
                 )}
-                
+
                 {/* Limited Edition Badge - Show when in stock */}
                 {product.stock > 0 && product.isLimitedEdition && (
                   <Badge className="bg-purple-500/90 text-white">
                     {language === 'vi' ? 'Phiên bản giới hạn' : language === 'ja' ? '限定版' : 'Limited Edition'}
                   </Badge>
                 )}
-                
+
                 {/* Featured Badge - Show when in stock */}
                 {product.stock > 0 && product.isFeatured && (
                   <Badge variant="default" className="bg-stone-800/90 dark:bg-stone-200/90 text-white dark:text-stone-800">
                     {language === 'vi' ? 'Nổi bật' : language === 'ja' ? 'おすすめ' : 'Featured'}
                   </Badge>
                 )}
-                
+
                 {/* New Badge - Show when in stock */}
                 {product.stock > 0 && product.isNew && (
                   <Badge className="bg-green-500/90 text-white">
                     {language === 'vi' ? 'MỚI' : language === 'ja' ? '新着' : 'NEW'}
                   </Badge>
                 )}
-                
+
                 {/* Best Seller Badge - Show when in stock */}
                 {product.stock > 0 && product.isBestSeller && (
                   <Badge className="bg-orange-500/90 text-white">
@@ -940,15 +939,15 @@ const ProductDetail: React.FC = () => {
                   </Badge>
                 )}
               </div>
-              
+
               {/* Rating & Reviews */}
               <div className="flex items-center space-x-6">
                 <div className="flex items-center space-x-2">
                   <div className="flex items-center space-x-1">
                     {[1, 2, 3, 4, 5].map((star) => (
-                      <Star 
-                        key={star} 
-                        className={`h-5 w-5 ${star <= averageRating ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground'}`} 
+                      <Star
+                        key={star}
+                        className={`h-5 w-5 ${star <= averageRating ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground'}`}
                       />
                     ))}
                   </div>
@@ -974,7 +973,7 @@ const ProductDetail: React.FC = () => {
                         {formatCurrency(product.price, language)}
                       </span>
                       <Badge variant="destructive" className="text-sm">
-                        -{Math.round(((product.price - product.salePrice) / product.price) * 100)}% 
+                        -{Math.round(((product.price - product.salePrice) / product.price) * 100)}%
                         {language === 'vi' ? ' GIẢM' : language === 'ja' ? ' セール' : ' OFF'}
                       </Badge>
                     </>
@@ -985,16 +984,16 @@ const ProductDetail: React.FC = () => {
                         {formatCurrency(product.originalPrice, language)}
                       </span>
                       <Badge variant="destructive" className="text-sm">
-                        -{Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% 
+                        -{Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}%
                         {language === 'vi' ? ' GIẢM' : language === 'ja' ? ' セール' : ' OFF'}
                       </Badge>
                     </>
                   )}
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  {language === 'vi' ? 'Miễn phí vận chuyển cho đơn hàng trên 500.000đ' : 
-                   language === 'ja' ? '5万円以上のご注文で送料無料' : 
-                   'Free shipping on orders over $50'}
+                  {language === 'vi' ? 'Miễn phí vận chuyển cho đơn hàng trên 500.000đ' :
+                    language === 'ja' ? '5万円以上のご注文で送料無料' :
+                      'Free shipping on orders over $50'}
                 </p>
               </div>
 
@@ -1044,10 +1043,10 @@ const ProductDetail: React.FC = () => {
                   <div className="flex flex-wrap gap-3">
                     {product.colors.map((color) => {
                       if (!color) return null;
-                      
+
                       const colorInfo = getColorInfo(color);
                       let colorName: string;
-                      
+
                       if (typeof color === 'string') {
                         colorName = color;
                       } else if (typeof color === 'object' && 'name' in color) {
@@ -1055,9 +1054,9 @@ const ProductDetail: React.FC = () => {
                       } else {
                         colorName = String(color);
                       }
-                      
+
                       const isSelected = selectedColor === colorName;
-                      
+
                       return (
                         <button
                           key={colorName}
@@ -1067,8 +1066,8 @@ const ProductDetail: React.FC = () => {
                             relative flex flex-col items-center justify-center
                             w-14 h-14 rounded-full
                             border-2 transition-all duration-200
-                            ${isSelected 
-                              ? 'border-primary ring-2 ring-primary ring-offset-2 scale-110' 
+                            ${isSelected
+                              ? 'border-primary ring-2 ring-primary ring-offset-2 scale-110'
                               : 'border-muted-foreground/30 hover:border-primary/50 hover:scale-105'
                             }
                             shadow-md hover:shadow-lg
@@ -1139,8 +1138,8 @@ const ProductDetail: React.FC = () => {
             {/* Enhanced Action Buttons */}
             <div className="space-y-4">
               <div className="flex flex-col sm:flex-row gap-3">
-                <Button 
-                  className="flex-1 h-12 text-base font-semibold" 
+                <Button
+                  className="flex-1 h-12 text-base font-semibold"
                   size="lg"
                   onClick={handleAddToCart}
                   disabled={!product.isActive}
@@ -1148,9 +1147,9 @@ const ProductDetail: React.FC = () => {
                   <ShoppingCart className="h-5 w-5 mr-2" />
                   {t.addToCart}
                 </Button>
-                
-                <Button 
-                  variant="outline" 
+
+                <Button
+                  variant="outline"
                   className="h-12 text-base font-semibold"
                   size="lg"
                   onClick={handleBuyNow}
@@ -1159,10 +1158,10 @@ const ProductDetail: React.FC = () => {
                   {t.buyNow}
                 </Button>
               </div>
-              
+
               <div className="flex items-center justify-center gap-2">
-                <Button 
-                  variant="ghost" 
+                <Button
+                  variant="ghost"
                   size="sm"
                   onClick={handleAddToWishlist}
                   className={`text-muted-foreground hover:text-primary ${isInWishlist ? 'text-red-500' : ''}`}
@@ -1170,8 +1169,8 @@ const ProductDetail: React.FC = () => {
                   <Heart className={`h-4 w-4 mr-2 ${isInWishlist ? 'fill-current' : ''}`} />
                   {isInWishlist ? 'Remove from Wishlist' : t.addToWishlist}
                 </Button>
-                <Button 
-                  variant="ghost" 
+                <Button
+                  variant="ghost"
                   size="sm"
                   onClick={handleAddToCompare}
                   className="text-muted-foreground hover:text-primary"
@@ -1198,18 +1197,18 @@ const ProductDetail: React.FC = () => {
                 {t.reviews} ({reviews.length})
               </TabsTrigger>
             </TabsList>
-            
+
             <TabsContent value="description" className="mt-8">
               <Card>
                 <CardContent className="pt-6">
                   <div className="prose max-w-none">
                     <div className="text-base leading-7 text-muted-foreground">
-                      <MarkdownRenderer 
+                      <MarkdownRenderer
                         content={getProductDescription() || 'No description available for this product.'}
                         className="prose prose-sm max-w-none"
                       />
                     </div>
-                    
+
                     {/* Key Features & Care Instructions */}
                     {(product.materials && product.materials.length > 0) || getCareInstructions() || getOrigin() ? (
                       <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1256,7 +1255,7 @@ const ProductDetail: React.FC = () => {
                 </CardContent>
               </Card>
             </TabsContent>
-            
+
             <TabsContent value="specifications" className="mt-8">
               <Card>
                 <CardHeader>
@@ -1343,8 +1342,8 @@ const ProductDetail: React.FC = () => {
                         {product.materials && Array.isArray(product.materials) && product.materials.length > 0 ? (
                           <div className="flex flex-wrap gap-2">
                             {product.materials.map((material, index) => {
-                              const materialText = typeof material === 'string' 
-                                ? material 
+                              const materialText = typeof material === 'string'
+                                ? material
                                 : (material && typeof material === 'object' && ('name' in material || 'value' in material))
                                   ? ((material as { name?: string; value?: string }).name || (material as { name?: string; value?: string }).value || String(material))
                                   : String(material);
@@ -1406,7 +1405,7 @@ const ProductDetail: React.FC = () => {
                 </CardContent>
               </Card>
             </TabsContent>
-            
+
             <TabsContent value="reviews" className="mt-8">
               <div className="space-y-6">
                 {/* Reviews Summary */}
@@ -1417,9 +1416,9 @@ const ProductDetail: React.FC = () => {
                         <span className="text-2xl font-bold">{averageRating.toFixed(1)}</span>
                         <div className="flex items-center space-x-1">
                           {[1, 2, 3, 4, 5].map((star) => (
-                            <Star 
-                              key={star} 
-                              className={`h-5 w-5 ${star <= averageRating ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground'}`} 
+                            <Star
+                              key={star}
+                              className={`h-5 w-5 ${star <= averageRating ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground'}`}
                             />
                           ))}
                         </div>
@@ -1437,7 +1436,7 @@ const ProductDetail: React.FC = () => {
                             <span className="text-sm w-8">{rating}</span>
                             <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                             <div className="flex-1 bg-muted rounded-full h-2">
-                              <div 
+                              <div
                                 className="bg-yellow-400 h-2 rounded-full transition-all duration-300"
                                 style={{ width: `${percentage}%` }}
                               />
@@ -1480,9 +1479,9 @@ const ProductDetail: React.FC = () => {
                             </div>
                             <div className="flex items-center space-x-1">
                               {[1, 2, 3, 4, 5].map((star) => (
-                                <Star 
-                                  key={star} 
-                                  className={`h-4 w-4 ${star <= review.rating ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground'}`} 
+                                <Star
+                                  key={star}
+                                  className={`h-4 w-4 ${star <= review.rating ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground'}`}
                                 />
                               ))}
                             </div>
@@ -1517,22 +1516,22 @@ const ProductDetail: React.FC = () => {
                 <div className="aspect-square bg-muted rounded-t-md overflow-hidden">
                   <img
                     src={relatedProduct.images[0] || '/placeholder.svg'}
-                    alt={language === 'vi' ? relatedProduct.name : 
-                          language === 'ja' ? (relatedProduct.nameJa || relatedProduct.name) : 
-                          (relatedProduct.nameEn || relatedProduct.name)}
+                    alt={language === 'vi' ? relatedProduct.name :
+                      language === 'ja' ? (relatedProduct.nameJa || relatedProduct.name) :
+                        (relatedProduct.nameEn || relatedProduct.name)}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     onClick={() => navigate(`/product/${relatedProduct._id}`)}
                   />
                 </div>
                 <CardContent className="pt-4">
                   <h3 className="font-semibold text-sm mb-2 line-clamp-2">
-                    {language === 'vi' ? relatedProduct.name : 
-                     language === 'ja' ? (relatedProduct.nameJa || relatedProduct.name) : 
-                     (relatedProduct.nameEn || relatedProduct.name)}
+                    {language === 'vi' ? relatedProduct.name :
+                      language === 'ja' ? (relatedProduct.nameJa || relatedProduct.name) :
+                        (relatedProduct.nameEn || relatedProduct.name)}
                   </h3>
                   <div className="flex items-center justify-between">
                     <span className="font-bold text-primary">
-                      {relatedProduct.salePrice 
+                      {relatedProduct.salePrice
                         ? formatCurrency(relatedProduct.salePrice, language)
                         : formatCurrency(relatedProduct.price, language)}
                     </span>
@@ -1552,8 +1551,8 @@ const ProductDetail: React.FC = () => {
           </div>
         </div>
       </div>
-      
-      <Footer />
+
+
     </div>
   );
 };
