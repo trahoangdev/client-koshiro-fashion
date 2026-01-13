@@ -11,8 +11,8 @@ By participating in this project, you agree to abide by our Code of Conduct. We 
 1.  **Fork the repository** on GitHub.
 2.  **Clone your fork** locally:
     ```bash
-    git clone https://github.com/your-username/koshiro-fashion-client.git
-    cd koshiro-fashion-client
+    git clone https://github.com/your-username/client-koshiro-fashion.git
+    cd client-koshiro-fashion
     ```
 3.  **Install dependencies**:
     ```bash

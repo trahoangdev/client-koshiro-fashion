@@ -1,0 +1,23 @@
+// Admin Pages Exports
+export { default as AdminActivity } from './AdminActivity';
+export { default as AdminAnalyticsPage } from './AdminAnalyticsPage';
+export { default as AdminApiPage } from './AdminApiPage';
+export { default as AdminCategories } from './AdminCategories';
+export { default as AdminDashboard } from './AdminDashboard';
+export { default as AdminInventoryPage } from './AdminInventoryPage';
+export { default as AdminLogin } from './AdminLogin';
+export { default as AdminNotificationsPage } from './AdminNotificationsPage';
+export { default as AdminOrders } from './AdminOrders';
+export { default as AdminPaymentsPage } from './AdminPaymentsPage';
+export { default as AdminProducts } from './AdminProducts';
+export { default as AdminPromotionsPage } from './AdminPromotionsPage';
+export { default as AdminPublicPage } from './AdminPublicPage';
+export { default as AdminReportsPage } from './AdminReportsPage';
+export { default as AdminReviews } from './AdminReviews';
+export { default as AdminRolesPage } from './AdminRolesPage';
+export { default as AdminSettings } from './AdminSettings';
+export { default as AdminShippingPage } from './AdminShippingPage';
+export { default as AdminUsers } from './AdminUsers';
+export { default as RoleDetailPage } from './RoleDetailPage';
+export { default as PermissionDetailPage } from './PermissionDetailPage';
+export { default as ProductFormPage } from './ProductFormPage';
