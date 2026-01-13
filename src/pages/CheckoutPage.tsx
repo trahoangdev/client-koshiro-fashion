@@ -240,6 +240,17 @@ const CheckoutPage = () => {
     console.log('Search query:', query);
   };
 
+  const getProductImage = (product: Product | undefined) => {
+    if (!product) return '/placeholder.svg';
+    if (product.cloudinaryImages && product.cloudinaryImages.length > 0) {
+      return product.cloudinaryImages[0].secureUrl;
+    }
+    if (product.images && product.images.length > 0) {
+      return product.images[0];
+    }
+    return '/placeholder.svg';
+  };
+
   const translations = {
     en: {
       title: "Checkout",
@@ -1086,8 +1097,9 @@ const CheckoutPage = () => {
                       <Card key={`${item.productId}-${item.selectedSize}-${item.selectedColor}-${index}`} className="rounded-lg border-2 hover:shadow-md transition-all overflow-hidden bg-muted/30">
                         <CardContent className="p-3">
                           <div className="flex items-center space-x-3">
+
                             <img
-                              src={item.product.images?.[0] || '/placeholder.svg'}
+                              src={getProductImage(item.product)}
                               alt={item.product.name}
                               className="w-16 h-16 object-cover rounded-md"
                             />

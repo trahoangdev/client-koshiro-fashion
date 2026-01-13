@@ -616,403 +616,402 @@ const CategoryPage: React.FC = () => {
         language === 'ja' ? "商品が比較リストに追加されました" :
           "Product has been added to compare list",
     });
-  });
-};
+  };
 
-const addToCart = async (product: Product) => {
-  try {
-    await api.addToCart(product._id, 1);
-    window.dispatchEvent(new CustomEvent('cartUpdated'));
-    toast({
-      title: language === 'vi' ? 'Thành công' : language === 'ja' ? '成功' : 'Success',
-      description: language === 'vi' ? 'Đã thêm sản phẩm vào giỏ hàng' :
-        language === 'ja' ? '商品をカートに追加しました' :
-          'Product added to cart',
-    });
-  } catch (error) {
-    console.error('Error adding to cart', error);
-    toast({
-      title: language === 'vi' ? 'Lỗi' : language === 'ja' ? 'エラー' : 'Error',
-      description: language === 'vi' ? 'Không thể thêm sản phẩm vào giỏ hàng' :
-        language === 'ja' ? '商品をカートに追加できません' :
-          'Unable to add product to cart',
-      variant: 'destructive',
-    });
-  }
-};
+  const addToCart = async (product: Product) => {
+    try {
+      await api.addToCart(product._id, 1);
+      window.dispatchEvent(new CustomEvent('cartUpdated'));
+      toast({
+        title: language === 'vi' ? 'Thành công' : language === 'ja' ? '成功' : 'Success',
+        description: language === 'vi' ? 'Đã thêm sản phẩm vào giỏ hàng' :
+          language === 'ja' ? '商品をカートに追加しました' :
+            'Product added to cart',
+      });
+    } catch (error) {
+      console.error('Error adding to cart', error);
+      toast({
+        title: language === 'vi' ? 'Lỗi' : language === 'ja' ? 'エラー' : 'Error',
+        description: language === 'vi' ? 'Không thể thêm sản phẩm vào giỏ hàng' :
+          language === 'ja' ? '商品をカートに追加できません' :
+            'Unable to add product to cart',
+        variant: 'destructive',
+      });
+    }
+  };
 
-const addToWishlist = async (product: Product) => {
-  try {
-    await api.addToWishlist(product._id);
-    window.dispatchEvent(new CustomEvent('wishlistUpdated'));
-    toast({
-      title: language === 'vi' ? 'Thành công' : language === 'ja' ? '成功' : 'Success',
-      description: language === 'vi' ? 'Đã thêm sản phẩm vào danh sách yêu thích' :
-        language === 'ja' ? '商品をお気に入りに追加しました' :
-          'Product added to wishlist',
-    });
-  } catch (error) {
-    console.error('Error adding to wishlist', error);
-    toast({
-      title: language === 'vi' ? 'Lỗi' : language === 'ja' ? 'エラー' : 'Error',
-      description: language === 'vi' ? 'Không thể thêm sản phẩm vào danh sách yêu thích' :
-        language === 'ja' ? '商品をお気に入りに追加できません' :
-          'Unable to add product to wishlist',
-      variant: 'destructive',
-    });
-  }
-};
+  const addToWishlist = async (product: Product) => {
+    try {
+      await api.addToWishlist(product._id);
+      window.dispatchEvent(new CustomEvent('wishlistUpdated'));
+      toast({
+        title: language === 'vi' ? 'Thành công' : language === 'ja' ? '成功' : 'Success',
+        description: language === 'vi' ? 'Đã thêm sản phẩm vào danh sách yêu thích' :
+          language === 'ja' ? '商品をお気に入りに追加しました' :
+            'Product added to wishlist',
+      });
+    } catch (error) {
+      console.error('Error adding to wishlist', error);
+      toast({
+        title: language === 'vi' ? 'Lỗi' : language === 'ja' ? 'エラー' : 'Error',
+        description: language === 'vi' ? 'Không thể thêm sản phẩm vào danh sách yêu thích' :
+          language === 'ja' ? '商品をお気に入りに追加できません' :
+            'Unable to add product to wishlist',
+        variant: 'destructive',
+      });
+    }
+  };
 
-const clearAllFilters = () => {
-  setSearchQuery('');
-  setPriceRange([0, 2000000]);
-  setSelectedSizes([]);
-  setSelectedColors([]);
-  setInStock(false);
-  setOnSale(false);
-  setMinRating(0);
-};
+  const clearAllFilters = () => {
+    setSearchQuery('');
+    setPriceRange([0, 2000000]);
+    setSelectedSizes([]);
+    setSelectedColors([]);
+    setInStock(false);
+    setOnSale(false);
+    setMinRating(0);
+  };
 
-const hasActiveFilters = searchQuery || selectedSizes.length > 0 || selectedColors.length > 0 || inStock || onSale || minRating > 0;
+  const hasActiveFilters = searchQuery || selectedSizes.length > 0 || selectedColors.length > 0 || inStock || onSale || minRating > 0;
 
-if (loading) {
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
 
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-center h-64">
-          <div className="flex items-center space-x-2">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <span className="text-lg">{t.loading}</span>
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex items-center justify-center h-64">
+            <div className="flex items-center space-x-2">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <span className="text-lg">{t.loading}</span>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
 
-if (!category) {
+  if (!category) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center py-16">
+            <Package className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+            <h1 className="text-2xl font-bold mb-4">Category not found</h1>
+            <p className="text-muted-foreground mb-6">The category you're looking for doesn't exist.</p>
+            <Button onClick={() => navigate('/')} size="lg">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              {t.backToCategories}
+            </Button>
+          </div>
+        </div>
+
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
 
+
       <div className="container mx-auto px-4 py-8">
-        <div className="text-center py-16">
-          <Package className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-          <h1 className="text-2xl font-bold mb-4">Category not found</h1>
-          <p className="text-muted-foreground mb-6">The category you're looking for doesn't exist.</p>
-          <Button onClick={() => navigate('/')} size="lg">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            {t.backToCategories}
-          </Button>
-        </div>
-      </div>
+        {/* Enhanced Breadcrumb */}
+        <Breadcrumb className="mb-6">
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink onClick={() => navigate('/')} className="cursor-pointer">
+                {t.home}
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink onClick={() => navigate('/categories')} className="cursor-pointer">
+                {t.categories}
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbPage>{getCategoryName}</BreadcrumbPage>
+          </BreadcrumbList>
+        </Breadcrumb>
 
-    </div>
-  );
-}
-
-return (
-  <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-
-
-    <div className="container mx-auto px-4 py-8">
-      {/* Enhanced Breadcrumb */}
-      <Breadcrumb className="mb-6">
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink onClick={() => navigate('/')} className="cursor-pointer">
-              {t.home}
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbLink onClick={() => navigate('/categories')} className="cursor-pointer">
-              {t.categories}
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbPage>{getCategoryName}</BreadcrumbPage>
-        </BreadcrumbList>
-      </Breadcrumb>
-
-      {/* Enhanced Category Header */}
-      <div className="mb-8">
-        <Card className="bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20">
-          <CardContent className="p-8">
-            <div className="flex items-center justify-between">
-              <div className="space-y-4">
-                <div className="flex items-center space-x-4">
-                  <Button variant="ghost" onClick={() => navigate('/categories')} size="sm">
-                    <ArrowLeft className="h-4 w-4 mr-2" />
-                    {t.backToCategories}
-                  </Button>
-                  <Badge variant="secondary" className="px-3 py-1">
-                    {filteredAndSortedProducts.length} {t.resultsFound}
-                  </Badge>
-                  {hasActiveFilters && (
-                    <Badge variant="outline" className="px-3 py-1">
-                      <Filter className="h-3 w-3 mr-1" />
-                      Filtered
-                    </Badge>
-                  )}
-                </div>
-
-                <div>
-                  <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-                    {getCategoryName}
-                  </h1>
-                  {getCategoryDescription && (
-                    <p className="text-muted-foreground text-lg max-w-2xl">
-                      {getCategoryDescription}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {renderCategoryImage(category, "w-32 h-32")}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-        {/* Enhanced Filters Sidebar */}
-        <div className="lg:col-span-1">
-          <Card className="sticky top-4 rounded-xl border-2 shadow-lg bg-background/95 backdrop-blur-sm">
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <SlidersHorizontal className="h-5 w-5 text-primary" />
-                  <span className="text-lg font-semibold">{t.filter}</span>
-                </div>
-                {hasActiveFilters && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={clearAllFilters}
-                    className="h-8 px-2 hover:bg-destructive/10 hover:text-destructive rounded-lg transition-all"
-                  >
-                    <X className="h-4 w-4 mr-1" />
-                    {t.clearFilters}
-                  </Button>
-                )}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Search */}
-              <div>
-                <label className="text-sm font-semibold mb-2 block text-foreground">{t.search}</label>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder={t.search}
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 rounded-lg border-2 focus:border-primary transition-all"
-                  />
-                </div>
-              </div>
-
-              {/* Price Range */}
-              <div>
-                <label className="text-sm font-semibold mb-4 block text-foreground">{t.priceRange}</label>
-                <div className="space-y-3">
-                  <Slider
-                    value={priceRange}
-                    onValueChange={(value) => setPriceRange(value as [number, number])}
-                    max={2000000}
-                    step={50000}
-                    className="w-full"
-                  />
-                  <div className="flex items-center justify-between text-sm font-medium">
-                    <span className="text-primary">{formatCurrency(priceRange[0], language)}</span>
-                    <span className="text-primary">{formatCurrency(priceRange[1], language)}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Sizes */}
-              {availableSizes.length > 0 && (
-                <div>
-                  <label className="text-sm font-semibold mb-3 block text-foreground">{t.size}</label>
-                  <div className="flex flex-wrap gap-2">
-                    {availableSizes.map((size) => (
-                      <Button
-                        key={size}
-                        variant={selectedSizes.includes(size) ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => handleSizeToggle(size)}
-                        className={`h-9 px-4 rounded-lg font-medium transition-all ${selectedSizes.includes(size)
-                          ? 'shadow-md ring-2 ring-primary ring-offset-2'
-                          : 'hover:border-primary hover:shadow-sm'
-                          }`}
-                      >
-                        {size}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Colors */}
-              {availableColors.length > 0 && (
-                <div>
-                  <label className="text-sm font-semibold mb-3 block text-foreground">{t.color}</label>
-                  <div className="flex flex-wrap gap-2">
-                    {availableColors.map((color) => {
-                      const colorHex = getColorHex(color);
-                      const isSelected = selectedColors.includes(color);
-                      const isLightColor = colorHex === '#FFFFFF' || colorHex === '#FFFF00' || colorHex === '#FFD700';
-
-                      return (
-                        <button
-                          key={color}
-                          onClick={() => handleColorToggle(color)}
-                          className={`
-                              relative w-10 h-10 rounded-full border-2 transition-all duration-300
-                              ${isSelected
-                              ? 'ring-2 ring-offset-2 ring-primary shadow-lg scale-110'
-                              : 'hover:scale-105 hover:shadow-md'
-                            }
-                              ${isLightColor ? 'border-stone-300 dark:border-stone-600' : 'border-white dark:border-stone-800'}
-                            `}
-                          style={{
-                            backgroundColor: colorHex,
-                          }}
-                          title={getColorName(color)}
-                        >
-                          {isSelected && (
-                            <div className="absolute inset-0 flex items-center justify-center">
-                              <div className={`w-3 h-3 rounded-full ${isLightColor ? 'bg-stone-800' : 'bg-white'} shadow-sm`} />
-                            </div>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  {/* Color names below swatches */}
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    {availableColors.map((color) => {
-                      const isSelected = selectedColors.includes(color);
-                      return (
-                        <button
-                          key={color}
-                          onClick={() => handleColorToggle(color)}
-                          className={`
-                              text-xs px-2 py-1 rounded-md transition-all
-                              ${isSelected
-                              ? 'bg-primary text-primary-foreground font-medium'
-                              : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                            }
-                            `}
-                        >
-                          {getColorName(color)}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Checkboxes */}
-              <div className="space-y-3 p-3 rounded-lg bg-muted/30">
-                <div className="flex items-center space-x-3">
-                  <Checkbox
-                    id="inStock"
-                    checked={inStock}
-                    onCheckedChange={(checked) => setInStock(checked === true)}
-                    className="border-2 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-                  />
-                  <label htmlFor="inStock" className="text-sm font-medium cursor-pointer flex-1">
-                    {t.inStock}
-                  </label>
-                </div>
-
-                <div className="flex items-center space-x-3">
-                  <Checkbox
-                    id="onSale"
-                    checked={onSale}
-                    onCheckedChange={(checked) => setOnSale(checked === true)}
-                    className="border-2 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-                  />
-                  <label htmlFor="onSale" className="text-sm font-medium cursor-pointer flex-1">
-                    {t.onSale}
-                  </label>
-                </div>
-              </div>
-
-              {/* Rating Filter */}
-              <div>
-                <label className="text-sm font-semibold mb-3 block text-foreground">{t.rating}</label>
-                <div className="space-y-2">
-                  {[4, 3, 2, 1].map((rating) => (
-                    <Button
-                      key={rating}
-                      variant={minRating === rating ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setMinRating(minRating === rating ? 0 : rating)}
-                      className={`w-full justify-start rounded-lg transition-all ${minRating === rating
-                        ? 'shadow-md ring-2 ring-primary ring-offset-2'
-                        : 'hover:border-primary hover:shadow-sm'
-                        }`}
-                    >
-                      <div className="flex items-center space-x-2">
-                        <div className="flex items-center">
-                          {Array.from({ length: rating }, (_, i) => (
-                            <Star key={i} className={`h-3.5 w-3.5 ${minRating === rating ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground'}`} />
-                          ))}
-                          {Array.from({ length: 5 - rating }, (_, i) => (
-                            <Star key={i} className={`h-3.5 w-3.5 text-muted-foreground/30`} />
-                          ))}
-                        </div>
-                        <span className="text-xs font-medium ml-1">{rating} {t.starsAndUp}</span>
-                      </div>
+        {/* Enhanced Category Header */}
+        <div className="mb-8">
+          <Card className="bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20">
+            <CardContent className="p-8">
+              <div className="flex items-center justify-between">
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-4">
+                    <Button variant="ghost" onClick={() => navigate('/categories')} size="sm">
+                      <ArrowLeft className="h-4 w-4 mr-2" />
+                      {t.backToCategories}
                     </Button>
-                  ))}
+                    <Badge variant="secondary" className="px-3 py-1">
+                      {filteredAndSortedProducts.length} {t.resultsFound}
+                    </Badge>
+                    {hasActiveFilters && (
+                      <Badge variant="outline" className="px-3 py-1">
+                        <Filter className="h-3 w-3 mr-1" />
+                        Filtered
+                      </Badge>
+                    )}
+                  </div>
+
+                  <div>
+                    <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                      {getCategoryName}
+                    </h1>
+                    {getCategoryDescription && (
+                      <p className="text-muted-foreground text-lg max-w-2xl">
+                        {getCategoryDescription}
+                      </p>
+                    )}
+                  </div>
                 </div>
+
+                {renderCategoryImage(category, "w-32 h-32")}
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Main Content Area */}
-        <div className="lg:col-span-3">
-          {/* Products Display */}
-          {filteredAndSortedProducts.length > 0 ? (
-            <EnhancedProductGrid
-              products={filteredAndSortedProducts}
-              loading={loading}
-              onAddToCompare={addToCompare}
-              onAddToCart={addToCart}
-              onAddToWishlist={addToWishlist}
-            />
-          ) : (
-            <Card>
-              <CardContent className="pt-6">
-                <div className="text-center py-12">
-                  <Package className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">
-                    {hasActiveFilters ? t.noFiltersMatch : t.noProducts}
-                  </h3>
-                  <p className="text-muted-foreground mb-4">
-                    {hasActiveFilters ? t.adjustFilters : t.noProductsDesc}
-                  </p>
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          {/* Enhanced Filters Sidebar */}
+          <div className="lg:col-span-1">
+            <Card className="sticky top-4 rounded-xl border-2 shadow-lg bg-background/95 backdrop-blur-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <SlidersHorizontal className="h-5 w-5 text-primary" />
+                    <span className="text-lg font-semibold">{t.filter}</span>
+                  </div>
                   {hasActiveFilters && (
-                    <Button onClick={clearAllFilters} variant="outline">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={clearAllFilters}
+                      className="h-8 px-2 hover:bg-destructive/10 hover:text-destructive rounded-lg transition-all"
+                    >
+                      <X className="h-4 w-4 mr-1" />
                       {t.clearFilters}
                     </Button>
                   )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Search */}
+                <div>
+                  <label className="text-sm font-semibold mb-2 block text-foreground">{t.search}</label>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder={t.search}
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-10 rounded-lg border-2 focus:border-primary transition-all"
+                    />
+                  </div>
+                </div>
+
+                {/* Price Range */}
+                <div>
+                  <label className="text-sm font-semibold mb-4 block text-foreground">{t.priceRange}</label>
+                  <div className="space-y-3">
+                    <Slider
+                      value={priceRange}
+                      onValueChange={(value) => setPriceRange(value as [number, number])}
+                      max={2000000}
+                      step={50000}
+                      className="w-full"
+                    />
+                    <div className="flex items-center justify-between text-sm font-medium">
+                      <span className="text-primary">{formatCurrency(priceRange[0], language)}</span>
+                      <span className="text-primary">{formatCurrency(priceRange[1], language)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Sizes */}
+                {availableSizes.length > 0 && (
+                  <div>
+                    <label className="text-sm font-semibold mb-3 block text-foreground">{t.size}</label>
+                    <div className="flex flex-wrap gap-2">
+                      {availableSizes.map((size) => (
+                        <Button
+                          key={size}
+                          variant={selectedSizes.includes(size) ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => handleSizeToggle(size)}
+                          className={`h-9 px-4 rounded-lg font-medium transition-all ${selectedSizes.includes(size)
+                            ? 'shadow-md ring-2 ring-primary ring-offset-2'
+                            : 'hover:border-primary hover:shadow-sm'
+                            }`}
+                        >
+                          {size}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Colors */}
+                {availableColors.length > 0 && (
+                  <div>
+                    <label className="text-sm font-semibold mb-3 block text-foreground">{t.color}</label>
+                    <div className="flex flex-wrap gap-2">
+                      {availableColors.map((color) => {
+                        const colorHex = getColorHex(color);
+                        const isSelected = selectedColors.includes(color);
+                        const isLightColor = colorHex === '#FFFFFF' || colorHex === '#FFFF00' || colorHex === '#FFD700';
+
+                        return (
+                          <button
+                            key={color}
+                            onClick={() => handleColorToggle(color)}
+                            className={`
+                              relative w-10 h-10 rounded-full border-2 transition-all duration-300
+                              ${isSelected
+                                ? 'ring-2 ring-offset-2 ring-primary shadow-lg scale-110'
+                                : 'hover:scale-105 hover:shadow-md'
+                              }
+                              ${isLightColor ? 'border-stone-300 dark:border-stone-600' : 'border-white dark:border-stone-800'}
+                            `}
+                            style={{
+                              backgroundColor: colorHex,
+                            }}
+                            title={getColorName(color)}
+                          >
+                            {isSelected && (
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <div className={`w-3 h-3 rounded-full ${isLightColor ? 'bg-stone-800' : 'bg-white'} shadow-sm`} />
+                              </div>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {/* Color names below swatches */}
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {availableColors.map((color) => {
+                        const isSelected = selectedColors.includes(color);
+                        return (
+                          <button
+                            key={color}
+                            onClick={() => handleColorToggle(color)}
+                            className={`
+                              text-xs px-2 py-1 rounded-md transition-all
+                              ${isSelected
+                                ? 'bg-primary text-primary-foreground font-medium'
+                                : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                              }
+                            `}
+                          >
+                            {getColorName(color)}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Checkboxes */}
+                <div className="space-y-3 p-3 rounded-lg bg-muted/30">
+                  <div className="flex items-center space-x-3">
+                    <Checkbox
+                      id="inStock"
+                      checked={inStock}
+                      onCheckedChange={(checked) => setInStock(checked === true)}
+                      className="border-2 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                    />
+                    <label htmlFor="inStock" className="text-sm font-medium cursor-pointer flex-1">
+                      {t.inStock}
+                    </label>
+                  </div>
+
+                  <div className="flex items-center space-x-3">
+                    <Checkbox
+                      id="onSale"
+                      checked={onSale}
+                      onCheckedChange={(checked) => setOnSale(checked === true)}
+                      className="border-2 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                    />
+                    <label htmlFor="onSale" className="text-sm font-medium cursor-pointer flex-1">
+                      {t.onSale}
+                    </label>
+                  </div>
+                </div>
+
+                {/* Rating Filter */}
+                <div>
+                  <label className="text-sm font-semibold mb-3 block text-foreground">{t.rating}</label>
+                  <div className="space-y-2">
+                    {[4, 3, 2, 1].map((rating) => (
+                      <Button
+                        key={rating}
+                        variant={minRating === rating ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setMinRating(minRating === rating ? 0 : rating)}
+                        className={`w-full justify-start rounded-lg transition-all ${minRating === rating
+                          ? 'shadow-md ring-2 ring-primary ring-offset-2'
+                          : 'hover:border-primary hover:shadow-sm'
+                          }`}
+                      >
+                        <div className="flex items-center space-x-2">
+                          <div className="flex items-center">
+                            {Array.from({ length: rating }, (_, i) => (
+                              <Star key={i} className={`h-3.5 w-3.5 ${minRating === rating ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground'}`} />
+                            ))}
+                            {Array.from({ length: 5 - rating }, (_, i) => (
+                              <Star key={i} className={`h-3.5 w-3.5 text-muted-foreground/30`} />
+                            ))}
+                          </div>
+                          <span className="text-xs font-medium ml-1">{rating} {t.starsAndUp}</span>
+                        </div>
+                      </Button>
+                    ))}
+                  </div>
                 </div>
               </CardContent>
             </Card>
-          )}
+          </div>
+
+          {/* Main Content Area */}
+          <div className="lg:col-span-3">
+            {/* Products Display */}
+            {filteredAndSortedProducts.length > 0 ? (
+              <EnhancedProductGrid
+                products={filteredAndSortedProducts}
+                loading={loading}
+                onAddToCompare={addToCompare}
+                onAddToCart={addToCart}
+                onAddToWishlist={addToWishlist}
+              />
+            ) : (
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="text-center py-12">
+                    <Package className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">
+                      {hasActiveFilters ? t.noFiltersMatch : t.noProducts}
+                    </h3>
+                    <p className="text-muted-foreground mb-4">
+                      {hasActiveFilters ? t.adjustFilters : t.noProductsDesc}
+                    </p>
+                    {hasActiveFilters && (
+                      <Button onClick={clearAllFilters} variant="outline">
+                        {t.clearFilters}
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
         </div>
       </div>
+
+
     </div>
-
-
-  </div>
-);
+  );
 };
 
 export default CategoryPage; 

@@ -308,7 +308,7 @@ const WishlistPage = () => {
               {/* Banner Background */}
               <div className="absolute inset-0">
                 <img
-                  src="/images/banners/banner-04.png"
+                  src="/images/banners/banner-13.png"
                   alt="Wishlist Banner"
                   className="w-full h-full object-cover"
                 />
@@ -317,12 +317,9 @@ const WishlistPage = () => {
 
               {/* Content */}
               <div className="relative z-10 p-12 md:p-16 text-white">
-                <div className="flex items-center justify-center mb-4">
-                  <Heart className="h-12 w-12 md:h-16 md:w-16 mr-3 fill-white" />
-                  <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold bg-gradient-to-r from-white via-white to-white/80 bg-clip-text text-transparent">
-                    {t.title}
-                  </h1>
-                </div>
+                <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-4 bg-gradient-to-r from-white via-white to-white/80 bg-clip-text text-transparent">
+                  {t.title}
+                </h1>
                 <p className="text-xl md:text-2xl mb-4 text-white/90 font-light">
                   {t.subtitle}
                 </p>

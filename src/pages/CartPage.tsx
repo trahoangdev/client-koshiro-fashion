@@ -12,6 +12,17 @@ import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Loader2, ShoppingCart, Trash2, Plus, Minus, ArrowLeft, CreditCard, Truck } from 'lucide-react';
 import { logger } from '@/lib/logger';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface CartItem {
   productId: string;
@@ -30,6 +41,18 @@ const CartPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
 
+
+
+  const getProductImage = (product: Product | undefined) => {
+    if (!product) return '/placeholder.svg';
+    if (product.cloudinaryImages && product.cloudinaryImages.length > 0) {
+      return product.cloudinaryImages[0].secureUrl;
+    }
+    if (product.images && product.images.length > 0) {
+      return product.images[0];
+    }
+    return '/placeholder.svg';
+  };
 
   const cartItemsCount = cartItems.reduce((count, item) => count + item.quantity, 0);
 
@@ -58,7 +81,7 @@ const CartPage: React.FC = () => {
               size?: string;
               color?: string;
               product: Product;
-            }) => item && item.product && item.product._id && item.product.images && Array.isArray(item.product.images)) // Filter out items with missing product data
+            }) => item && item.product && item.product._id) // Filter out items with missing product data
             .map((item: {
               productId: string;
               quantity: number;
@@ -199,9 +222,8 @@ const CartPage: React.FC = () => {
   const handleClearCart = async () => {
     if (!isAuthenticated) return;
 
-    if (!window.confirm(language === 'vi' ? "Bạn có chắc chắn muốn xóa tất cả sản phẩm?" : language === 'ja' ? "カートを空にしてもよろしいですか？" : "Are you sure you want to clear your cart?")) {
-      return;
-    }
+    // Window.confirm check removed in favor of AlertDialog
+
 
     try {
       setLoading(true);
@@ -355,14 +377,35 @@ const CartPage: React.FC = () => {
             </div>
 
             {cartItems.length >= 3 && (
-              <Button
-                variant="destructive"
-                onClick={handleClearCart}
-                className="rounded-lg shadow-sm hover:shadow-md transition-all"
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                {language === 'vi' ? "Xóa tất cả" : language === 'ja' ? "すべて削除" : "Clear All"}
-              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="destructive"
+                    className="rounded-lg shadow-sm hover:shadow-md transition-all"
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    {language === 'vi' ? "Xóa tất cả" : language === 'ja' ? "すべて削除" : "Clear All"}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>{language === 'vi' ? "Xóa tất cả sản phẩm?" : language === 'ja' ? "すべての商品を削除しますか？" : "Clear all items?"}</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      {language === 'vi'
+                        ? "Hành động này không thể hoàn tác. Tất cả sản phẩm trong giỏ hàng của bạn sẽ bị xóa."
+                        : language === 'ja'
+                          ? "この操作は取り消せません。カート内のすべての商品が削除されます。"
+                          : "This action cannot be undone. This will permanently remove all items from your cart."}
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>{language === 'vi' ? "Hủy" : language === 'ja' ? "キャンセル" : "Cancel"}</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleClearCart}>
+                      {language === 'vi' ? "Xóa" : language === 'ja' ? "削除" : "Clear"}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             )}
           </div>
         </div>
@@ -375,7 +418,7 @@ const CartPage: React.FC = () => {
                 <div className="flex">
                   <div className="w-32 flex-shrink-0 bg-muted rounded-l-xl overflow-hidden">
                     <img
-                      src={item.product?.images?.[0] || '/placeholder.svg'}
+                      src={getProductImage(item.product)}
                       alt={item.product?.name || 'Product'}
                       className="w-full h-full object-cover"
                     />
@@ -439,7 +482,7 @@ const CartPage: React.FC = () => {
                           max={item.product?.stock || 1}
                           value={item.quantity}
                           onChange={(e) => updateQuantity(item.product?._id || item.productId, parseInt(e.target.value) || 1, item.selectedSize, item.selectedColor)}
-                          className="w-14 text-center rounded-md border-0 bg-background font-semibold h-8"
+                          className="w-14 text-center rounded-md border-0 bg-background font-semibold h-8 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           disabled={updating === (item.product?._id || item.productId)}
                         />
 

@@ -147,7 +147,7 @@ const ContactPage = () => {
               {/* Banner Background */}
               <div className="absolute inset-0">
                 <img
-                  src="/images/banners/banner-04.png"
+                  src="/images/banners/banner-09.png"
                   alt="Contact Us Banner"
                   className="w-full h-full object-cover"
                 />

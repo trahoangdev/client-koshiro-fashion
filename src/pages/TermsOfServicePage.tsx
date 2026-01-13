@@ -287,11 +287,7 @@ const TermsOfServicePage = () => {
 
               {/* Content */}
               <div className="relative z-10 p-12 md:p-16 text-white">
-                <div className="flex justify-center mb-6">
-                  <div className="p-4 rounded-full bg-white/10 backdrop-blur-sm">
-                    <Scale className="h-12 w-12 md:h-16 md:w-16 text-white" />
-                  </div>
-                </div>
+
                 <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-4 bg-gradient-to-r from-white via-white to-white/80 bg-clip-text text-transparent">
                   {t.title}
                 </h1>
