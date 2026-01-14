@@ -2,6 +2,7 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import Hero from "@/components/shared/Hero";
+import { KoshiroHero } from "@/components/user/KoshiroHero";
 import EnhancedProductGrid from "@/components/shared/EnhancedProductGrid";
 import ProductCard from "@/components/shared/ProductCard";
 import FilterBar from "@/components/shared/FilterBar";
@@ -536,104 +537,29 @@ const Index = () => {
     <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
 
       {/* Toast notifications */}
-      {/* Hero Section - Optimized with fetchPriority */}
-      <section className="relative h-[80vh] md:h-[90vh] flex items-center justify-center overflow-hidden bg-stone-900 rounded-b-2xl shadow-2xl">
-        {/* Background Image */}
-        <div className="absolute inset-0">
-          <img
-            src={settings?.banners?.home || "/images/banners/banner-01.png"}
-            alt="Koshiro Fashion Background"
-            className="w-full h-full object-cover object-center"
-            loading="eager"
-            fetchPriority="high"
-          />
-          {/* Gradient Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-br from-stone-900/70 via-stone-800/50 to-stone-900/70"></div>
-          {/* Subtle Pattern Overlay */}
-          <div className="absolute inset-0 opacity-[0.02]">
-            <div className="absolute inset-0" style={{
-              backgroundImage: `radial - gradient(circle at 1px 1px, rgb(255 255 255) 1px, transparent 0)`,
-              backgroundSize: '40px 40px'
-            }} />
-          </div>
-        </div>
-
-        {/* Content */}
-        <div className="container relative z-10 text-center">
-          <div className="max-w-4xl mx-auto px-6">
-            {/* Logo */}
-            <div className="mb-8 flex justify-center">
-              <div className="relative animate-logo-float">
-                <img
-                  src="/koshino_logo.png"
-                  alt="Koshino Fashion Logo"
-                  className="h-16 md:h-20 lg:h-24 w-auto opacity-90 hover:opacity-100 transition-all duration-300 animate-logo-glow"
-                  loading="eager"
-                  fetchPriority="high"
-                />
-                {/* Subtle glow effect */}
-                <div className="absolute inset-0 bg-white/10 rounded-full blur-xl scale-110 opacity-50 animate-pulse"></div>
-              </div>
-            </div>
-
-            {/* Japanese-inspired Typography with Modern Touch */}
-            <div className="mb-8">
-              <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight mb-6">
-                <span className="block bg-gradient-to-r from-white via-white to-white/90 bg-clip-text text-transparent drop-shadow-2xl">
-                  {language === 'vi' ? 'KOSHIRO' : language === 'ja' ? 'コシロ' : 'KOSHIRO'}
-                </span>
-                <span className="block text-2xl md:text-3xl lg:text-4xl font-semibold text-white/95 mt-4 tracking-widest drop-shadow-lg">
-                  {language === 'vi' ? 'THỜI TRANG NHẬT BẢN' :
-                    language === 'ja' ? '日本ファッション' :
-                      'JAPANESE FASHION'}
-                </span>
-              </h1>
-            </div>
-
-            {/* Minimalist Description */}
-            <p className="text-xl md:text-2xl lg:text-3xl text-white/90 max-w-3xl mx-auto mb-12 leading-relaxed font-medium drop-shadow-md">
-              {language === 'vi' ? 'Tìm kiếm sự cân bằng hoàn hảo giữa truyền thống và hiện đại' :
-                language === 'ja' ? '伝統と現代の完璧なバランスを探す' :
-                  'Finding the perfect balance between tradition and modernity'}
-            </p>
-
-            {/* Modern Zen CTA Button */}
-            <Button
-              variant="outline"
-              size="lg"
-              className="border-2 border-white/40 text-white hover:bg-white hover:text-stone-900 px-10 py-6 rounded-xl font-bold text-lg tracking-wide transition-all duration-300 backdrop-blur-sm bg-white/15 shadow-2xl hover:shadow-white/20 hover:scale-105"
-              onClick={() => {
-                const collectionSection = document.querySelector('[data-section="collection"]');
-                if (collectionSection) {
-                  collectionSection.scrollIntoView({ behavior: 'smooth' });
-                }
-              }}
-            >
-              {language === 'vi' ? 'KHÁM PHÁ' : language === 'ja' ? '探す' : 'EXPLORE'}
-            </Button>
-          </div>
-        </div>
-
-        {/* Custom Scroll Wheel Indicator */}
-        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 z-20" aria-hidden="true">
-          <div className="relative flex flex-col items-center justify-center">
-            {/* Mouse Body */}
-            <div className="relative w-8 h-12 border-[3px] border-white/60 rounded-full bg-white/20 backdrop-blur-md animate-scroll-wheel shadow-lg shadow-white/20">
-              {/* Scroll Wheel */}
-              <div className="absolute top-2 left-1/2 transform -translate-x-1/2 w-1.5 h-3 bg-white rounded-full shadow-sm"></div>
-              {/* Scroll Wheel Lines */}
-              <div className="absolute top-3 left-1/2 transform -translate-x-1/2 w-0.5 h-1.5 bg-white/80 rounded-full"></div>
-              <div className="absolute top-3.5 left-1/2 transform -translate-x-1/2 w-0.5 h-1 bg-white/60 rounded-full"></div>
-            </div>
-            {/* Scroll Animation Lines - Centered below mouse */}
-            <div className="relative mt-2 flex flex-col items-center">
-              <div className="w-1 h-6 bg-gradient-to-b from-white/70 via-white/40 to-white/10 animate-scroll-indicator rounded-full"></div>
-              <div className="w-1 h-5 bg-gradient-to-b from-white/50 via-white/30 to-white/5 animate-scroll-indicator rounded-full mt-1" style={{ animationDelay: '0.3s' }}></div>
-              <div className="w-1 h-4 bg-gradient-to-b from-white/40 via-white/20 to-white/5 animate-scroll-indicator rounded-full mt-1" style={{ animationDelay: '0.6s' }}></div>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* Hero Section */}
+      <KoshiroHero
+        badge={language === 'vi' ? "Bộ sưu tập mới 2024" : language === 'ja' ? "2024年新コレクション" : "New Collection 2024"}
+        title={language === 'vi' ? "KOSHIRO" : language === 'ja' ? "コシロ" : "KOSHIRO"}
+        subtitle={language === 'vi' ? 'Tìm kiếm sự cân bằng hoàn hảo giữa truyền thống và hiện đại' :
+          language === 'ja' ? '伝統と現代の完璧なバランスを探す' :
+            'Finding the perfect balance between tradition and modernity'}
+        primaryAction={{
+          text: language === 'vi' ? 'KHÁM PHÁ' : language === 'ja' ? '探す' : 'EXPLORE',
+          href: '#collection'
+        }}
+        secondaryAction={{
+          text: language === 'vi' ? 'LIÊN HỆ' : language === 'ja' ? 'お問い合わせ' : 'CONTACT',
+          href: '/contact'
+        }}
+        images={[
+          "/images/banners/banner-01.png",
+          "/images/banners/banner-02.png",
+          "/images/banners/banner-03.png",
+          "/images/banners/banner-04.png",
+          "/images/banners/banner-05.png"
+        ]}
+      />
 
       <main className="py-24">
         <div className="container space-y-32">

@@ -269,7 +269,7 @@ export default function RegisterPage() {
       {/* Background with Banner */}
       <div className="absolute inset-0 z-0">
         <img
-          src={settings?.banners?.register || "/images/banners/banner-18.png"}
+          src={settings?.banners?.register || "/images/banners/koshiro-register-bg.png"}
           alt="Register Background"
           className="w-full h-full object-cover"
         />

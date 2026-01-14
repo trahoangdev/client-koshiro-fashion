@@ -8,7 +8,7 @@ import AdminLayout from "@/components/admin/AdminLayout";
 import ProductForm from "@/components/admin/ProductForm";
 import { Loader2, ArrowLeft, Save, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { 
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -56,6 +56,7 @@ interface ProductFormData {
   isBestSeller: boolean;
   metaTitle: string;
   metaDescription: string;
+  slug: string;
   weight: number;
   dimensions: {
     length: number;
@@ -149,7 +150,7 @@ export default function ProductFormPage() {
   };
 
   const t = translations[language as keyof typeof translations] || translations.en;
-  
+
   // Update refs
   navigateRef.current = navigate;
   toastRef.current = toast;
@@ -160,7 +161,7 @@ export default function ProductFormPage() {
 
   const saveDraft = useCallback(async () => {
     if (!formData) return;
-    
+
     try {
       const draftKey = isEditMode ? `product-draft-${id}` : 'product-draft-new';
       localStorage.setItem(draftKey, JSON.stringify({
@@ -168,7 +169,7 @@ export default function ProductFormPage() {
         timestamp: Date.now()
       }));
       setIsDraftSaved(true);
-      
+
       // Show brief notification
       setTimeout(() => setIsDraftSaved(false), 2000);
     } catch (error) {
@@ -178,7 +179,7 @@ export default function ProductFormPage() {
 
   const loadDraft = useCallback(() => {
     if (isEditMode) return; // Don't load draft for edit mode
-    
+
     try {
       const draftKey = 'product-draft-new';
       const draft = localStorage.getItem(draftKey);
@@ -189,12 +190,12 @@ export default function ProductFormPage() {
           setFormData(draftData);
           setHasUnsavedChanges(true);
           toast({
-            title: language === 'vi' ? 'Đã tải bản nháp' : 
-                   language === 'ja' ? '下書きを読み込みました' : 
-                   'Draft loaded',
+            title: language === 'vi' ? 'Đã tải bản nháp' :
+              language === 'ja' ? '下書きを読み込みました' :
+                'Draft loaded',
             description: language === 'vi' ? 'Bản nháp trước đó đã được tải' :
-                         language === 'ja' ? '以前の下書きが読み込まれました' :
-                         'Previous draft has been loaded',
+              language === 'ja' ? '以前の下書きが読み込まれました' :
+                'Previous draft has been loaded',
           });
         }
       }
@@ -213,7 +214,7 @@ export default function ProductFormPage() {
     const loadData = async () => {
       try {
         setIsLoading(true);
-        
+
         // Load categories
         const categoriesResponse = await api.getCategories();
         setCategories(categoriesResponse.categories);
@@ -223,7 +224,7 @@ export default function ProductFormPage() {
           try {
             const productResponse = await api.getProduct(id);
             const product = productResponse.product;
-            
+
             // Transform product data to form format
             const transformedData: ProductFormData = {
               name: product.name,
@@ -249,6 +250,7 @@ export default function ProductFormPage() {
               isBestSeller: product.isBestSeller,
               metaTitle: product.metaTitle || '',
               metaDescription: product.metaDescription || '',
+              slug: product.slug || '',
               weight: product.weight || 0,
               dimensions: product.dimensions || { length: 0, width: 0, height: 0 },
               sku: product.sku || '',
@@ -261,7 +263,7 @@ export default function ProductFormPage() {
               originEn: product.originEn || '',
               originJa: product.originJa || ''
             };
-            
+
             setFormData(transformedData);
           } catch (error) {
             console.error('Error loading product:', error);
@@ -298,6 +300,7 @@ export default function ProductFormPage() {
             isBestSeller: false,
             metaTitle: '',
             metaDescription: '',
+            slug: '',
             weight: 0,
             dimensions: { length: 0, width: 0, height: 0 },
             sku: '',
@@ -362,29 +365,29 @@ export default function ProductFormPage() {
   const handleSubmit = async (data: ProductFormData) => {
     try {
       setIsSubmitting(true);
-      
+
       // Transform colors to string array for API (save color name, not hex value)
       const transformedData = {
         ...data,
-        colors: data.colors.map(color => 
+        colors: data.colors.map(color =>
           typeof color === 'string' ? color : color.name
         )
       };
-      
+
       if (isEditMode && id) {
         await api.updateProduct(id, transformedData);
       } else {
         await api.createProduct(transformedData);
       }
-      
+
       // Clear draft after successful save
       clearDraft();
       setHasUnsavedChanges(false);
-      
+
       toast({
         title: t.success,
       });
-      
+
       navigate('/admin/products');
     } catch (error) {
       console.error('Error saving product:', error);
@@ -475,18 +478,18 @@ export default function ProductFormPage() {
             <div>
               <h1 className="text-3xl font-bold tracking-tight">{t.title}</h1>
               <p className="text-muted-foreground">
-                {isEditMode 
-                  ? (language === 'vi' ? 'Chỉnh sửa thông tin sản phẩm' : 
-                     language === 'ja' ? '商品情報を編集' : 
-                     'Edit product information')
-                  : (language === 'vi' ? 'Tạo sản phẩm mới cho cửa hàng' : 
-                     language === 'ja' ? '新しい商品を作成' : 
-                     'Create a new product for your store')
+                {isEditMode
+                  ? (language === 'vi' ? 'Chỉnh sửa thông tin sản phẩm' :
+                    language === 'ja' ? '商品情報を編集' :
+                      'Edit product information')
+                  : (language === 'vi' ? 'Tạo sản phẩm mới cho cửa hàng' :
+                    language === 'ja' ? '新しい商品を作成' :
+                      'Create a new product for your store')
                 }
               </p>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-2">
             {/* Auto-save indicator */}
             {hasUnsavedChanges && (
@@ -504,7 +507,7 @@ export default function ProductFormPage() {
                 )}
               </div>
             )}
-            
+
             {/* Manual save draft button */}
             <Button
               variant="outline"
@@ -513,9 +516,9 @@ export default function ProductFormPage() {
               disabled={!hasUnsavedChanges}
             >
               <Save className="h-4 w-4 mr-2" />
-              {language === 'vi' ? 'Lưu nháp' : 
-               language === 'ja' ? '下書き保存' : 
-               'Save Draft'}
+              {language === 'vi' ? 'Lưu nháp' :
+                language === 'ja' ? '下書き保存' :
+                  'Save Draft'}
             </Button>
           </div>
         </div>

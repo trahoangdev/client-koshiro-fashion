@@ -272,7 +272,7 @@ export default function Profile() {
             <div className="relative overflow-hidden rounded-2xl shadow-2xl">
               <div className="absolute inset-0">
                 <img
-                  src={settings?.banners?.profile || "/images/banners/banner-16.png"}
+                  src={settings?.banners?.profile || "/images/banners/koshiro-profile-bg.png"}
                   alt="Profile Banner"
                   className="w-full h-full object-cover"
                 />

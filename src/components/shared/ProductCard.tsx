@@ -144,7 +144,7 @@ const ProductCard = ({ product, viewMode = 'grid', onAddToCart, onAddToWishlist,
   };
 
   const handleCardClick = () => {
-    navigate(`/product/${product._id}`);
+    navigate(`/product/${product.slug || product._id}`);
   };
 
   const handleAddToCart = (e: React.MouseEvent) => {

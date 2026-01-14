@@ -280,7 +280,7 @@ const TermsOfServicePage = () => {
               {/* Banner Background */}
               <div className="absolute inset-0">
                 <img
-                  src={settings?.banners?.terms || "/images/banners/banner-06.png"}
+                  src={settings?.banners?.terms || "/images/banners/koshiro-terms-bg.png"}
                   alt="Terms of Service Banner"
                   className="w-full h-full object-cover"
                 />

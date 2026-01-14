@@ -341,7 +341,7 @@ const ProductsPage = () => {
               {/* Banner Background */}
               <div className="absolute inset-0">
                 <img
-                  src={settings?.banners?.products || "/images/banners/banner-01.png"}
+                  src={settings?.banners?.products || "/images/banners/koshiro-products-bg.png"}
                   alt="Products Banner"
                   className="w-full h-full object-cover"
                 />

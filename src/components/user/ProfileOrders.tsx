@@ -18,11 +18,11 @@ import {
 import { api, Order } from "@/lib/api";
 import { formatCurrency } from "@/lib/currency";
 import { useToast } from "@/hooks/use-toast";
-import { 
-  Package, 
-  Calendar, 
-  MapPin, 
-  CreditCard, 
+import {
+  Package,
+  Calendar,
+  MapPin,
+  CreditCard,
   Clock,
   CheckCircle,
   XCircle,
@@ -110,6 +110,23 @@ const ProfileOrders = () => {
     });
   };
 
+  const getProductImage = (item: any) => {
+    if (!item?.productId) return '/placeholder.svg';
+    const product = item.productId;
+
+    // Check for Cloudinary images (runtime check even if type doesn't show it)
+    if (product.cloudinaryImages && product.cloudinaryImages.length > 0 && product.cloudinaryImages[0].secureUrl) {
+      return product.cloudinaryImages[0].secureUrl;
+    }
+
+    // Check for legacy images
+    if (product.images && product.images.length > 0) {
+      return product.images[0];
+    }
+
+    return '/placeholder.svg';
+  };
+
   const translations = {
     en: {
       title: "Order History",
@@ -180,11 +197,11 @@ const ProfileOrders = () => {
       if (order.status === 'completed' || order.status === 'cancelled') {
         toast({
           title: language === 'vi' ? 'Không thể hủy' : language === 'ja' ? 'キャンセルできません' : 'Cannot Cancel',
-          description: language === 'vi' 
+          description: language === 'vi'
             ? `Đơn hàng ${order.status === 'completed' ? 'đã hoàn thành' : 'đã bị hủy'} không thể hủy bỏ.`
-            : language === 'ja' 
-            ? `注文は${order.status === 'completed' ? '完了済み' : 'キャンセル済み'}のため、キャンセルできません。`
-            : `Order cannot be cancelled as it is ${order.status === 'completed' ? 'completed' : 'already cancelled'}.`,
+            : language === 'ja'
+              ? `注文は${order.status === 'completed' ? '完了済み' : 'キャンセル済み'}のため、キャンセルできません。`
+              : `Order cannot be cancelled as it is ${order.status === 'completed' ? 'completed' : 'already cancelled'}.`,
           variant: 'destructive'
         });
         return;
@@ -192,10 +209,10 @@ const ProfileOrders = () => {
 
       // Call API to cancel order
       const response = await api.cancelOrder(orderId);
-      
+
       // Update local state
-      setOrders(prev => prev.map(o => 
-        o._id === orderId 
+      setOrders(prev => prev.map(o =>
+        o._id === orderId
           ? { ...o, status: 'cancelled' as const }
           : o
       ));
@@ -203,11 +220,11 @@ const ProfileOrders = () => {
       // Show success message
       toast({
         title: language === 'vi' ? 'Thành công!' : language === 'ja' ? '成功！' : 'Success!',
-        description: language === 'vi' 
+        description: language === 'vi'
           ? `Đơn hàng ${order.orderNumber} đã được hủy thành công.`
-          : language === 'ja' 
-          ? `注文${order.orderNumber}は正常にキャンセルされました。`
-          : `Order ${order.orderNumber} has been cancelled successfully.`,
+          : language === 'ja'
+            ? `注文${order.orderNumber}は正常にキャンセルされました。`
+            : `Order ${order.orderNumber} has been cancelled successfully.`,
         variant: 'default'
       });
 
@@ -216,15 +233,15 @@ const ProfileOrders = () => {
 
     } catch (error) {
       console.error('Error cancelling order:', error);
-      
+
       // Show error message
       toast({
         title: language === 'vi' ? 'Lỗi hủy đơn hàng' : language === 'ja' ? '注文キャンセルエラー' : 'Order Cancellation Error',
-        description: language === 'vi' 
+        description: language === 'vi'
           ? 'Không thể hủy đơn hàng. Vui lòng thử lại sau hoặc liên hệ hỗ trợ.'
-          : language === 'ja' 
-          ? '注文をキャンセルできませんでした。後でもう一度お試しいただくか、サポートにお問い合わせください。'
-          : 'Failed to cancel order. Please try again later or contact support.',
+          : language === 'ja'
+            ? '注文をキャンセルできませんでした。後でもう一度お試しいただくか、サポートにお問い合わせください。'
+            : 'Failed to cancel order. Please try again later or contact support.',
         variant: 'destructive'
       });
     }
@@ -256,29 +273,29 @@ const ProfileOrders = () => {
   const getStatusDescription = (order: Order) => {
     switch (order.status) {
       case 'pending':
-        return language === 'vi' 
+        return language === 'vi'
           ? 'Đơn hàng đang chờ xử lý - Có thể hủy bỏ'
-          : language === 'ja' 
-          ? '注文は処理待ちです - キャンセル可能'
-          : 'Order is pending - Can be cancelled';
+          : language === 'ja'
+            ? '注文は処理待ちです - キャンセル可能'
+            : 'Order is pending - Can be cancelled';
       case 'processing':
-        return language === 'vi' 
+        return language === 'vi'
           ? 'Đơn hàng đang được xử lý - Có thể hủy bỏ'
-          : language === 'ja' 
-          ? '注文は処理中です - キャンセル可能'
-          : 'Order is being processed - Can be cancelled';
+          : language === 'ja'
+            ? '注文は処理中です - キャンセル可能'
+            : 'Order is being processed - Can be cancelled';
       case 'completed':
-        return language === 'vi' 
+        return language === 'vi'
           ? 'Đơn hàng đã hoàn thành - Không thể hủy bỏ'
-          : language === 'ja' 
-          ? '注文完了 - キャンセル不可'
-          : 'Order completed - Cannot be cancelled';
+          : language === 'ja'
+            ? '注文完了 - キャンセル不可'
+            : 'Order completed - Cannot be cancelled';
       case 'cancelled':
-        return language === 'vi' 
+        return language === 'vi'
           ? 'Đơn hàng đã bị hủy bỏ'
-          : language === 'ja' 
-          ? '注文はキャンセルされました'
-          : 'Order has been cancelled';
+          : language === 'ja'
+            ? '注文はキャンセルされました'
+            : 'Order has been cancelled';
       default:
         return '';
     }
@@ -340,22 +357,22 @@ const ProfileOrders = () => {
                   </div>
                 </div>
               </CardHeader>
-              
+
               <CardContent className="p-6">
                 {/* Order Items */}
                 <div className="space-y-3 mb-4">
                   {order.items.map((item, index) => (
                     <div key={index} className="flex items-center space-x-3">
                       <img
-                        src={item.productId?.images?.[0] || '/placeholder.svg'}
+                        src={getProductImage(item)}
                         alt={item.name}
                         className="w-16 h-16 object-cover rounded-lg border-2 shadow-md"
                       />
                       <div className="flex-1">
                         <p className="font-medium text-sm">{item.name}</p>
-                                               <p className="text-xs text-muted-foreground">
-                         {item.size} • {item.color} • {language === 'vi' ? 'Số lượng' : language === 'ja' ? '数量' : 'Quantity'}: {item.quantity}
-                       </p>
+                        <p className="text-xs text-muted-foreground">
+                          {item.size} {item.color} {language === 'vi' ? 'Số lượng' : language === 'ja' ? '数量' : 'Quantity'}: {item.quantity}
+                        </p>
                       </div>
                       <p className="font-medium">{formatCurrency(item.price * item.quantity, language)}</p>
                     </div>
@@ -376,13 +393,13 @@ const ProfileOrders = () => {
                       <p>{order.shippingAddress.city}, {order.shippingAddress.district}</p>
                     </div>
                   </div>
-                  
+
                   <div>
                     <p className="text-sm font-medium text-muted-foreground mb-1">
                       {t.paymentMethod}
                     </p>
                     <p className="text-sm">{order.paymentMethod}</p>
-                    
+
                     <p className="text-sm font-medium text-muted-foreground mb-1 mt-2">
                       {t.paymentStatus}
                     </p>
@@ -390,7 +407,7 @@ const ProfileOrders = () => {
                       {order.paymentStatus}
                     </Badge>
                   </div>
-                  
+
                   <div className="text-right">
                     <p className="text-sm text-muted-foreground mb-1">{t.total}</p>
                     <p className="text-2xl font-bold">{formatCurrency(order.totalAmount, language)}</p>
@@ -403,9 +420,9 @@ const ProfileOrders = () => {
                 {/* Action Buttons */}
                 <div className="flex justify-end space-x-2">
                   {canCancelOrder(order) && (
-                    <Button 
-                      variant="destructive" 
-                      size="sm" 
+                    <Button
+                      variant="destructive"
+                      size="sm"
                       onClick={() => openCancelDialog(order._id)}
                       className="rounded-lg font-semibold shadow-md hover:shadow-lg transition-all"
                     >
@@ -413,7 +430,7 @@ const ProfileOrders = () => {
                       {getCancelButtonText(order)}
                     </Button>
                   )}
-                  
+
                   {/* Show status message for completed/cancelled orders */}
                   {order.status === 'completed' && (
                     <div className="flex items-center gap-2 px-3 py-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md">
@@ -423,7 +440,7 @@ const ProfileOrders = () => {
                       </span>
                     </div>
                   )}
-                  
+
                   {order.status === 'cancelled' && (
                     <div className="flex items-center gap-2 px-3 py-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md">
                       <XCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
@@ -432,7 +449,7 @@ const ProfileOrders = () => {
                       </span>
                     </div>
                   )}
-                  
+
                   {/* Show status description for pending/processing orders */}
                   {(order.status === 'pending' || order.status === 'processing') && (
                     <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md">
@@ -454,89 +471,89 @@ const ProfileOrders = () => {
           </div>
         )}
       </div>
-         {/* Cancel Order Confirmation Dialog */}
-     <AlertDialog open={!!orderToCancel} onOpenChange={closeCancelDialog}>
-       <AlertDialogContent className="max-w-lg">
-         <AlertDialogHeader>
-           <AlertDialogTitle className="flex items-center gap-2 text-lg">
-             <AlertTriangle className="h-6 w-6 text-destructive" />
-             {language === 'vi' ? 'Xác nhận hủy đơn hàng' : language === 'ja' ? '注文キャンセルの確認' : 'Confirm Order Cancellation'}
-           </AlertDialogTitle>
-           <AlertDialogDescription className="text-base">
-             {(() => {
-               const order = orders.find(o => o._id === orderToCancel);
-               if (!order) return '';
-               
-               return (
-                 <div className="space-y-4 mt-4">
-                   <div className="p-4 bg-muted/50 rounded-lg">
-                     <h4 className="font-semibold mb-2">
-                       {language === 'vi' ? 'Thông tin đơn hàng:' : language === 'ja' ? '注文情報:' : 'Order Information:'}
-                     </h4>
-                     <div className="space-y-2 text-sm">
-                       <div className="flex justify-between">
-                         <span className="text-muted-foreground">
-                           {language === 'vi' ? 'Mã đơn hàng:' : language === 'ja' ? '注文番号:' : 'Order Number:'}
-                         </span>
-                         <span className="font-medium">{order.orderNumber}</span>
-                       </div>
-                       <div className="flex justify-between">
-                         <span className="text-muted-foreground">
-                           {language === 'vi' ? 'Tổng tiền:' : language === 'ja' ? '合計金額:' : 'Total Amount:'}
-                         </span>
-                         <span className="font-medium">{formatCurrency(order.totalAmount, language)}</span>
-                       </div>
-                       <div className="flex justify-between">
-                         <span className="text-muted-foreground">
-                           {language === 'vi' ? 'Số sản phẩm:' : language === 'ja' ? '商品数:' : 'Items:'}
-                         </span>
-                         <span className="font-medium">{order.items.length}</span>
-                       </div>
-                     </div>
-                   </div>
-                   
-                   <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-                     <div className="flex items-start gap-2">
-                       <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
-                       <div className="text-sm text-yellow-800 dark:text-yellow-200">
-                         <p className="font-medium mb-1">
-                           {language === 'vi' ? 'Lưu ý quan trọng:' : language === 'ja' ? '重要な注意事項:' : 'Important Notice:'}
-                         </p>
-                         <p>
-                           {language === 'vi' 
-                             ? 'Hành động này không thể hoàn tác. Đơn hàng sẽ được cập nhật trạng thái thành "Đã hủy" và có thể ảnh hưởng đến quyền lợi của bạn.'
-                             : language === 'ja' 
-                             ? 'この操作は元に戻せません。注文のステータスが「キャンセル済み」に更新され、お客様の権利に影響する可能性があります。'
-                             : 'This action cannot be undone. The order status will be updated to "Cancelled" and may affect your benefits.'
-                           }
-                         </p>
-                       </div>
-                     </div>
-                   </div>
-                 </div>
-               );
-             })()}
-           </AlertDialogDescription>
-         </AlertDialogHeader>
-         <AlertDialogFooter className="gap-3">
-           <AlertDialogCancel className="px-6">
-             {language === 'vi' ? 'Không, giữ nguyên' : language === 'ja' ? 'いいえ、そのまま' : 'No, keep it'}
-           </AlertDialogCancel>
-           <AlertDialogAction
-             onClick={() => {
-               if (orderToCancel) {
-                 handleCancelOrder(orderToCancel);
-               }
-             }}
-             className="bg-destructive text-destructive-foreground hover:bg-destructive/90 px-6"
-           >
-             {language === 'vi' ? 'Có, hủy đơn hàng' : language === 'ja' ? 'はい、キャンセルします' : 'Yes, cancel order'}
-           </AlertDialogAction>
-         </AlertDialogFooter>
-       </AlertDialogContent>
-     </AlertDialog>
-     </div>
+      {/* Cancel Order Confirmation Dialog */}
+      <AlertDialog open={!!orderToCancel} onOpenChange={closeCancelDialog}>
+        <AlertDialogContent className="max-w-lg">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-lg">
+              <AlertTriangle className="h-6 w-6 text-destructive" />
+              {language === 'vi' ? 'Xác nhận hủy đơn hàng' : language === 'ja' ? '注文キャンセルの確認' : 'Confirm Order Cancellation'}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-base">
+              {(() => {
+                const order = orders.find(o => o._id === orderToCancel);
+                if (!order) return '';
+
+                return (
+                  <div className="space-y-4 mt-4">
+                    <div className="p-4 bg-muted/50 rounded-lg">
+                      <h4 className="font-semibold mb-2">
+                        {language === 'vi' ? 'Thông tin đơn hàng:' : language === 'ja' ? '注文情報:' : 'Order Information:'}
+                      </h4>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">
+                            {language === 'vi' ? 'Mã đơn hàng:' : language === 'ja' ? '注文番号:' : 'Order Number:'}
+                          </span>
+                          <span className="font-medium">{order.orderNumber}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">
+                            {language === 'vi' ? 'Tổng tiền:' : language === 'ja' ? '合計金額:' : 'Total Amount:'}
+                          </span>
+                          <span className="font-medium">{formatCurrency(order.totalAmount, language)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">
+                            {language === 'vi' ? 'Số sản phẩm:' : language === 'ja' ? '商品数:' : 'Items:'}
+                          </span>
+                          <span className="font-medium">{order.items.length}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                      <div className="flex items-start gap-2">
+                        <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
+                        <div className="text-sm text-yellow-800 dark:text-yellow-200">
+                          <p className="font-medium mb-1">
+                            {language === 'vi' ? 'Lưu ý quan trọng:' : language === 'ja' ? '重要な注意事項:' : 'Important Notice:'}
+                          </p>
+                          <p>
+                            {language === 'vi'
+                              ? 'Hành động này không thể hoàn tác. Đơn hàng sẽ được cập nhật trạng thái thành "Đã hủy" và có thể ảnh hưởng đến quyền lợi của bạn.'
+                              : language === 'ja'
+                                ? 'この操作は元に戻せません。注文のステータスが「キャンセル済み」に更新され、お客様の権利に影響する可能性があります。'
+                                : 'This action cannot be undone. The order status will be updated to "Cancelled" and may affect your benefits.'
+                            }
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-3">
+            <AlertDialogCancel className="px-6">
+              {language === 'vi' ? 'Không, giữ nguyên' : language === 'ja' ? 'いいえ、そのまま' : 'No, keep it'}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (orderToCancel) {
+                  handleCancelOrder(orderToCancel);
+                }
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 px-6"
+            >
+              {language === 'vi' ? 'Có, hủy đơn hàng' : language === 'ja' ? 'はい、キャンセルします' : 'Yes, cancel order'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
   );
 };
 
-export default ProfileOrders; 
+export default ProfileOrders;

@@ -70,7 +70,7 @@ const RecentlyViewedProducts: React.FC<RecentlyViewedProductsProps> = ({
     if (onProductClick) {
       onProductClick(product);
     } else {
-      navigate(`/product/${product._id}`);
+      navigate(`/product/${product.slug || product._id}`);
     }
   };
 
@@ -217,7 +217,7 @@ const RecentlyViewedProducts: React.FC<RecentlyViewedProductsProps> = ({
                       className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
                     />
                   )}
-                  
+
                   {/* Badges */}
                   <div className="absolute top-2 left-2 flex flex-col gap-1">
                     {product.isNew && (
@@ -236,7 +236,7 @@ const RecentlyViewedProducts: React.FC<RecentlyViewedProductsProps> = ({
                   <h3 className="font-medium text-sm line-clamp-2 group-hover:text-primary transition-colors">
                     {getProductName(product)}
                   </h3>
-                  
+
                   {/* Price */}
                   <div className="flex items-center gap-2">
                     <span className="font-semibold text-sm">

@@ -681,6 +681,66 @@ class ApiClient {
     });
   }
 
+  // Review methods
+  async getReviews(params?: {
+    page?: number;
+    limit?: number;
+    productId?: string;
+    rating?: number;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+  }): Promise<PaginationResponse<Review>> {
+    const searchParams = new URLSearchParams();
+
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined) {
+          searchParams.append(key, value.toString());
+        }
+      });
+    }
+
+    const queryString = searchParams.toString();
+    const endpoint = `/reviews${queryString ? `?${queryString}` : ''}`;
+
+    return this.request<PaginationResponse<Review>>(endpoint);
+  }
+
+  async getReviewStats(productId?: string): Promise<{
+    totalReviews: number;
+    averageRating: number;
+    ratingDistribution: { _id: number; count: number }[];
+  }> {
+    const endpoint = productId ? `/reviews/stats?productId=${productId}` : '/reviews/stats';
+    return this.request(endpoint);
+  }
+
+  async createReview(reviewData: CreateReviewRequest): Promise<{ message: string; review: Review }> {
+    return this.request<{ message: string; review: Review }>('/reviews', {
+      method: 'POST',
+      body: JSON.stringify(reviewData),
+    });
+  }
+
+  async markReviewHelpful(reviewId: string): Promise<{ message: string }> {
+    return this.request<{ message: string }>(`/reviews/${reviewId}/helpful`, {
+      method: 'POST',
+    });
+  }
+
+  async updateReview(reviewId: string, updateData: Partial<CreateReviewRequest & { verified: boolean }>): Promise<{ message: string; review: Review }> {
+    return this.request<{ message: string; review: Review }>(`/reviews/${reviewId}`, {
+      method: 'PUT',
+      body: JSON.stringify(updateData),
+    });
+  }
+
+  async deleteReview(reviewId: string): Promise<{ message: string }> {
+    return this.request<{ message: string }>(`/reviews/${reviewId}`, {
+      method: 'DELETE',
+    });
+  }
+
   // Health check
   async healthCheck(): Promise<{ status: string; message: string; timestamp: string }> {
     return this.request<{ status: string; message: string; timestamp: string }>('/health');
@@ -770,6 +830,7 @@ class ApiClient {
     dimensions?: { length: number; width: number; height: number };
     sku?: string;
     barcode?: string;
+    slug?: string;
   }): Promise<{ message: string; product: Product }> {
     return this.request<{ message: string; product: Product }>('/admin/products', {
       method: 'POST',
@@ -805,6 +866,7 @@ class ApiClient {
     dimensions?: { length: number; width: number; height: number };
     sku?: string;
     barcode?: string;
+    slug?: string;
   }): Promise<{ message: string; product: Product }> {
     return this.request<{ message: string; product: Product }>(`/admin/products/${id}`, {
       method: 'PUT',
@@ -1060,51 +1122,7 @@ class ApiClient {
     }>>('/admin/product-stats');
   }
 
-  // Review methods
-  async getReviews(params?: {
-    page?: number;
-    limit?: number;
-    productId?: string;
-  }): Promise<{ reviews: Review[]; total: number }> {
-    const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.append('page', params.page.toString());
-    if (params?.limit) searchParams.append('limit', params.limit.toString());
-    if (params?.productId) searchParams.append('productId', params.productId);
 
-    return this.request<{ reviews: Review[]; total: number }>(`/reviews?${searchParams.toString()}`);
-  }
-
-  async createReview(reviewData: CreateReviewRequest): Promise<{ message: string; review: Review }> {
-    return this.request<{ message: string; review: Review }>('/reviews', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(reviewData),
-    });
-  }
-
-  async markReviewHelpful(reviewId: string): Promise<{ message: string }> {
-    return this.request<{ message: string }>(`/reviews/${reviewId}/helpful`, {
-      method: 'POST',
-    });
-  }
-
-  async updateReview(reviewId: string, updateData: Partial<CreateReviewRequest & { verified: boolean }>): Promise<{ message: string; review: Review }> {
-    return this.request<{ message: string; review: Review }>(`/reviews/${reviewId}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(updateData),
-    });
-  }
-
-  async deleteReview(reviewId: string): Promise<{ message: string }> {
-    return this.request<{ message: string }>(`/reviews/${reviewId}`, {
-      method: 'DELETE',
-    });
-  }
 
   // Settings methods
   async getSettings(): Promise<Settings> {

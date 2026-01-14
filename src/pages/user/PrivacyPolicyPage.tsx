@@ -278,7 +278,7 @@ const PrivacyPolicyPage = () => {
               {/* Banner Background */}
               <div className="absolute inset-0">
                 <img
-                  src={settings?.banners?.privacy || "/images/banners/banner-10.png"}
+                  src={settings?.banners?.privacy || "/images/banners/koshiro-privacy-bg.png"}
                   alt="Privacy Policy Banner"
                   className="w-full h-full object-cover"
                 />

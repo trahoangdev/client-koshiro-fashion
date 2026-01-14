@@ -246,7 +246,7 @@ const WishlistPage = () => {
             <div className="relative overflow-hidden rounded-2xl shadow-2xl">
               <div className="absolute inset-0">
                 <img
-                  src={settings?.banners?.wishlist || "/images/banners/banner-13.png"}
+                  src={settings?.banners?.wishlist || "/images/banners/koshiro-wishlist-bg.png"}
                   alt="Wishlist Banner"
                   className="w-full h-full object-cover"
                 />

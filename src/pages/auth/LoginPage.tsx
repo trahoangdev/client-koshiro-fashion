@@ -154,7 +154,7 @@ export default function LoginPage() {
       {/* Background with Banner */}
       <div className="absolute inset-0 z-0">
         <img
-          src={settings?.banners?.login || "/images/banners/banner-17.png"}
+          src={settings?.banners?.login || "/images/banners/koshiro-login-bg.png"}
           alt="Login Background"
           className="w-full h-full object-cover"
         />

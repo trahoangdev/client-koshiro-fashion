@@ -108,7 +108,7 @@ const AboutPage = () => {
               {/* Banner Background */}
               <div className="absolute inset-0">
                 <img
-                  src={settings?.banners?.about || "/images/banners/banner-04.png"}
+                  src={settings?.banners?.about || "/images/banners/koshiro-about-bg.png"}
                   alt="About Us Banner"
                   className="w-full h-full object-cover"
                 />

@@ -341,7 +341,7 @@ const CartPage: React.FC = () => {
           <div className="relative overflow-hidden rounded-2xl shadow-2xl">
             <div className="absolute inset-0">
               <img
-                src={settings?.banners?.cart || "/images/banners/banner-14.png"}
+                src={settings?.banners?.cart || "/images/banners/koshiro-cart-bg.png"}
                 alt="Cart Banner"
                 className="w-full h-full object-cover"
               />

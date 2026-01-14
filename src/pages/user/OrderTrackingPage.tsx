@@ -184,7 +184,7 @@ const OrderTrackingPage = () => {
               {/* Banner Background */}
               <div className="absolute inset-0">
                 <img
-                  src={settings?.banners?.tracking || "/images/banners/banner-03.png"}
+                  src={settings?.banners?.tracking || "/images/banners/koshiro-tracking-bg.png"}
                   alt="Order Tracking Banner"
                   className="w-full h-full object-cover"
                 />

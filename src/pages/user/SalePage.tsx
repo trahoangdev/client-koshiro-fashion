@@ -258,7 +258,7 @@ const SalePage = () => {
               {/* Banner Background with Gradient */}
               <div className="absolute inset-0">
                 <img
-                  src={settings?.banners?.sale || "/images/banners/banner-04.png"}
+                  src={settings?.banners?.sale || "/images/banners/koshiro-sale-bg.png"}
                   alt="Sale Banner"
                   className="w-full h-full object-cover"
                 />

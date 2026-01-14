@@ -144,7 +144,7 @@ export default function ForgotPasswordPage() {
         {/* Background with Banner */}
         <div className="absolute inset-0 z-0">
           <img
-            src={settings?.banners?.forgotPassword || "/images/banners/banner-19.png"}
+            src={settings?.banners?.forgotPassword || "/images/banners/koshiro-forgotpass-bg.png"}
             alt="Forgot Password Background"
             className="w-full h-full object-cover"
           />
@@ -190,7 +190,7 @@ export default function ForgotPasswordPage() {
       {/* Background with Banner */}
       <div className="absolute inset-0 z-0">
         <img
-          src={settings?.banners?.forgotPassword || "/images/banners/banner-19.png"}
+          src={settings?.banners?.forgotPassword || "/images/banners/koshiro-forgotpass-bg.png"}
           alt="Forgot Password Background"
           className="w-full h-full object-cover"
         />

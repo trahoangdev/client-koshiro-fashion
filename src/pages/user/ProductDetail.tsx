@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts';
-import { api, Product, ProductVideo, Color } from '@/lib/api';
+import { api, Product, ProductVideo, Color, Review } from '@/lib/api';
 import { guestCartService, guestWishlistService, guestCompareService } from '@/lib/guestStorage';
 import { formatCurrency } from '@/lib/currency';
 import ProductMediaGallery, { MediaItem } from '@/components/shared/ProductMediaGallery';
@@ -14,6 +14,7 @@ import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
@@ -51,6 +52,7 @@ import MarkdownRenderer from '@/components/shared/MarkdownRenderer';
 const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   const { language } = useLanguage();
   const { isAuthenticated } = useAuth();
@@ -66,48 +68,137 @@ const ProductDetail: React.FC = () => {
   const [shareMenuOpen, setShareMenuOpen] = useState(false);
   const [apiColors, setApiColors] = useState<Color[]>([]);
   const [colorsLoading, setColorsLoading] = useState(false);
-  const [reviews] = useState([
-    {
-      id: 1,
-      user: 'Anh Nguyen',
-      avatar: '/api/placeholder/40/40',
-      rating: 5,
-      comment: 'Excellent quality! The fabric is soft and the fit is perfect. Highly recommend this product.',
-      date: '2024-01-15',
-      helpful: 23,
-      verified: true
-    },
-    {
-      id: 2,
-      user: 'Mai Tran',
-      avatar: '/api/placeholder/40/40',
-      rating: 4,
-      comment: 'Good product overall. Fast shipping and great customer service. Will buy again.',
-      date: '2024-01-10',
-      helpful: 15,
-      verified: true
-    },
-    {
-      id: 3,
-      user: 'John Smith',
-      avatar: '/api/placeholder/40/40',
-      rating: 5,
-      comment: 'Amazing design and quality. Worth every penny!',
-      date: '2024-01-08',
-      helpful: 8,
-      verified: false
-    },
-    {
-      id: 4,
-      user: 'Lisa Chen',
-      avatar: '/api/placeholder/40/40',
-      rating: 4,
-      comment: 'Nice product but could be improved in some areas. Still satisfied with the purchase.',
-      date: '2024-01-05',
-      helpful: 12,
-      verified: true
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [averageRating, setAverageRating] = useState(0);
+  const [totalReviews, setTotalReviews] = useState(0);
+  const [ratingDistribution, setRatingDistribution] = useState<number[]>([0, 0, 0, 0, 0]);
+
+  const [newReviewTitle, setNewReviewTitle] = useState('');
+  const [newReviewComment, setNewReviewComment] = useState('');
+  const [newReviewRating, setNewReviewRating] = useState(5);
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+
+  // Load reviews from API
+  const loadReviews = async (productId: string) => {
+    try {
+      setReviewsLoading(true);
+      const [reviewsData, statsData] = await Promise.all([
+        api.getReviews({ productId, limit: 20 }), // Default limit 20
+        api.getReviewStats(productId)
+      ]);
+
+      setReviews(reviewsData.data || []);
+      setAverageRating(statsData.averageRating);
+      setTotalReviews(statsData.totalReviews);
+
+      const dist = [0, 0, 0, 0, 0];
+      statsData.ratingDistribution.forEach((stat) => {
+        if (stat._id >= 1 && stat._id <= 5) {
+          dist[stat._id - 1] = stat.count;
+        }
+      });
+      setRatingDistribution(dist);
+
+    } catch (error) {
+      console.error('Error loading reviews:', error);
+    } finally {
+      setReviewsLoading(false);
     }
-  ]);
+  };
+
+  useEffect(() => {
+    if (id) {
+      loadReviews(id);
+    }
+  }, [id]);
+
+  const handleHelpfulReview = async (reviewId: string) => {
+    if (!isAuthenticated) {
+      toast({
+        title: language === 'vi' ? 'Vui lòng đăng nhập' : language === 'ja' ? 'ログインしてください' : 'Please login',
+        description: language === 'vi' ? 'Bạn cần đăng nhập để tương tác' : language === 'ja' ? '対話するにはログインが必要です' : 'You need to login to interact',
+        variant: "destructive"
+      });
+      navigate(`/login?redirect=${encodeURIComponent(location.pathname)}`);
+      return;
+    }
+
+    try {
+      await api.markReviewHelpful(reviewId);
+      // Update local state
+      setReviews(prevReviews => prevReviews.map(review =>
+        review._id === reviewId
+          ? { ...review, helpful: (review.helpful || 0) + 1 }
+          : review
+      ));
+      toast({
+        title: language === 'vi' ? 'Đã ghi nhận' : language === 'ja' ? '成功' : 'Success',
+        description: language === 'vi' ? 'Cảm ơn bạn đã đánh giá' : language === 'ja' ? 'フィードバックありがとうございます' : 'Thanks for your feedback',
+      });
+    } catch (error) {
+      console.error('Error marking review helpful:', error);
+      toast({
+        title: language === 'vi' ? 'Lỗi' : language === 'ja' ? 'エラー' : 'Error',
+        description: language === 'vi' ? 'Không thể thực hiện' : language === 'ja' ? '失敗しました' : 'Failed to mark as helpful',
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleSubmitReview = async () => {
+    if (!isAuthenticated) {
+      toast({
+        title: language === 'vi' ? 'Vui lòng đăng nhập' : language === 'ja' ? 'ログインしてください' : 'Please login',
+        description: language === 'vi' ? 'Bạn cần đăng nhập để viết đánh giá' : language === 'ja' ? 'レビューを書くにはログインが必要です' : 'You need to login to write a review',
+        variant: "destructive"
+      });
+      navigate(`/login?redirect=${encodeURIComponent(location.pathname)}`);
+      return;
+    }
+
+    if (!newReviewComment.trim()) {
+      toast({
+        title: language === 'vi' ? 'Thiếu thông tin' : language === 'ja' ? '情報不足' : 'Missing information',
+        description: language === 'vi' ? 'Vui lòng nhập nội dung đánh giá' : language === 'ja' ? 'レビュー内容を入力してください' : 'Please enter review content',
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      setIsSubmittingReview(true);
+
+      const title = newReviewTitle.trim() || (language === 'vi' ? 'Đánh giá sản phẩm' : 'Product Review');
+
+      await api.createReview({
+        productId: id,
+        rating: newReviewRating,
+        title: title,
+        comment: newReviewComment
+      });
+
+      // Reload reviews to show new one
+      if (id) await loadReviews(id);
+
+      setNewReviewComment('');
+      setNewReviewTitle('');
+      setNewReviewRating(5);
+
+      toast({
+        title: language === 'vi' ? 'Thành công' : language === 'ja' ? '成功' : 'Success',
+        description: language === 'vi' ? 'Đánh giá của bạn đã được gửi' : language === 'ja' ? 'レビューが送信されました' : 'Your review has been submitted',
+      });
+    } catch (error: any) {
+      toast({
+        title: language === 'vi' ? 'Lỗi' : language === 'ja' ? 'エラー' : 'Error',
+        description: error.message || (language === 'vi' ? 'Không thể gửi đánh giá' : language === 'ja' ? 'レビューを送信できませんでした' : 'Failed to submit review'),
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmittingReview(false);
+    }
+  };
 
   const handleSearch = (query: string) => {
     navigate(`/search?q=${encodeURIComponent(query)}`);
@@ -350,6 +441,57 @@ const ProductDetail: React.FC = () => {
 
     // Default fallback
     return '#6b7280';
+  };
+
+  // Helper function to get english display name for color
+  const getColorDisplayName = (colorName: string): string => {
+    // Check if it's already a hex code
+    if (/^#[0-9A-Fa-f]{6}$/.test(colorName) || /^#[0-9A-Fa-f]{3}$/.test(colorName)) {
+      return colorName;
+    }
+
+    // Try to find color in API colors first
+    if (apiColors.length > 0) {
+      const normalizedName = colorName.trim();
+      const colorInApi = apiColors.find(c =>
+        c.name.toLowerCase() === normalizedName.toLowerCase() ||
+        c.nameEn?.toLowerCase() === normalizedName.toLowerCase() ||
+        c.nameJa?.toLowerCase() === normalizedName.toLowerCase()
+      );
+
+      if (colorInApi && colorInApi.nameEn) {
+        return colorInApi.nameEn;
+      }
+    }
+
+    // Fallback translation map for common Vietnamese colors
+    const enColorMap: { [key: string]: string } = {
+      'Đỏ': 'Red',
+      'Xanh dương': 'Blue',
+      'Xanh da trời': 'Sky Blue',
+      'Xanh lá': 'Green',
+      'Xanh': 'Green',
+      'Vàng': 'Yellow',
+      'Hồng': 'Pink',
+      'Tím': 'Purple',
+      'Cam': 'Orange',
+      'Nâu': 'Brown',
+      'Đen': 'Black',
+      'Trắng': 'White',
+      'Xám': 'Gray',
+      'Bạc': 'Silver',
+      'Vàng kim': 'Gold',
+      'Be': 'Beige',
+      'Kem': 'Cream',
+    };
+
+    // Try exact or case-insensitive match
+    const mapped = enColorMap[colorName] ||
+      Object.entries(enColorMap).find(([k, v]) => k.toLowerCase() === colorName.toLowerCase())?.[1];
+
+    if (mapped) return mapped;
+
+    return colorName;
   };
 
   // Helper function to get color name and value
@@ -758,8 +900,7 @@ const ProductDetail: React.FC = () => {
     );
   }
 
-  const averageRating = calculateAverageRating();
-  const ratingDistribution = getRatingDistribution();
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
@@ -1094,7 +1235,7 @@ const ProductDetail: React.FC = () => {
                   {selectedColor && (
                     <p className="text-sm text-muted-foreground">
                       {language === 'vi' ? 'Đã chọn: ' : language === 'ja' ? '選択済み: ' : 'Selected: '}
-                      <span className="font-medium text-foreground">{selectedColor}</span>
+                      <span className="font-medium text-foreground">{getColorDisplayName(selectedColor)}</span>
                     </p>
                   )}
                 </div>
@@ -1185,16 +1326,14 @@ const ProductDetail: React.FC = () => {
         {/* Enhanced Product Details Tabs */}
         <div className="mt-16">
           <Tabs defaultValue="description" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="description" className="text-sm font-medium">
                 {t.description}
               </TabsTrigger>
               <TabsTrigger value="specifications" className="text-sm font-medium">
                 {t.specifications}
               </TabsTrigger>
-              <TabsTrigger value="reviews" className="text-sm font-medium">
-                {t.reviews} ({reviews.length})
-              </TabsTrigger>
+
             </TabsList>
 
             <TabsContent value="description" className="mt-8">
@@ -1408,104 +1547,7 @@ const ProductDetail: React.FC = () => {
               </Card>
             </TabsContent>
 
-            <TabsContent value="reviews" className="mt-8">
-              <div className="space-y-6">
-                {/* Reviews Summary */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center space-x-4">
-                      <div className="flex items-center space-x-2">
-                        <span className="text-2xl font-bold">{averageRating.toFixed(1)}</span>
-                        <div className="flex items-center space-x-1">
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <Star
-                              key={star}
-                              className={`h-5 w-5 ${star <= averageRating ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground'}`}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                      <span className="text-muted-foreground">Based on {reviews.length} reviews</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      {[5, 4, 3, 2, 1].map((rating) => {
-                        const count = ratingDistribution[rating - 1];
-                        const percentage = reviews.length > 0 ? (count / reviews.length) * 100 : 0;
-                        return (
-                          <div key={rating} className="flex items-center space-x-4">
-                            <span className="text-sm w-8">{rating}</span>
-                            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                            <div className="flex-1 bg-muted rounded-full h-2">
-                              <div
-                                className="bg-yellow-400 h-2 rounded-full transition-all duration-300"
-                                style={{ width: `${percentage}%` }}
-                              />
-                            </div>
-                            <span className="text-sm text-muted-foreground w-8">{count}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </CardContent>
-                </Card>
 
-                {/* Individual Reviews */}
-                <div className="space-y-4">
-                  {reviews.map((review) => (
-                    <Card key={review.id}>
-                      <CardContent className="pt-6">
-                        <div className="flex items-start space-x-4">
-                          <Avatar className="h-10 w-10">
-                            <AvatarImage src={review.avatar} />
-                            <AvatarFallback>
-                              {review.user.charAt(0).toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1 space-y-2">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center space-x-2">
-                                <p className="font-semibold">{review.user}</p>
-                                {review.verified && (
-                                  <Badge variant="secondary" className="text-xs">
-                                    <CheckCircle className="h-3 w-3 mr-1" />
-                                    Verified
-                                  </Badge>
-                                )}
-                              </div>
-                              <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                                <Clock className="h-3 w-3" />
-                                <span>{review.date}</span>
-                              </div>
-                            </div>
-                            <div className="flex items-center space-x-1">
-                              {[1, 2, 3, 4, 5].map((star) => (
-                                <Star
-                                  key={star}
-                                  className={`h-4 w-4 ${star <= review.rating ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground'}`}
-                                />
-                              ))}
-                            </div>
-                            <p className="text-muted-foreground">{review.comment}</p>
-                            <div className="flex items-center space-x-4">
-                              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary">
-                                <ThumbsUp className="h-4 w-4 mr-1" />
-                                Helpful ({review.helpful})
-                              </Button>
-                              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary">
-                                <MessageCircle className="h-4 w-4 mr-1" />
-                                Reply
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </div>
-            </TabsContent>
           </Tabs>
         </div>
 
@@ -1522,7 +1564,7 @@ const ProductDetail: React.FC = () => {
                       language === 'ja' ? (relatedProduct.nameJa || relatedProduct.name) :
                         (relatedProduct.nameEn || relatedProduct.name)}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    onClick={() => navigate(`/product/${relatedProduct._id}`)}
+                    onClick={() => navigate(`/product/${relatedProduct.slug || relatedProduct._id}`)}
                   />
                 </div>
                 <CardContent className="pt-4">
@@ -1552,9 +1594,174 @@ const ProductDetail: React.FC = () => {
             ))}
           </div>
         </div>
+
+        {/* Reviews Section - Moved below Related Products */}
+        <div className="mt-16">
+          <h2 className="text-2xl font-bold mb-8">{t.reviews} ({totalReviews})</h2>
+          <div className="space-y-6">
+            {/* Reviews Summary */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-2xl font-bold">{averageRating.toFixed(1)}</span>
+                    <div className="flex items-center space-x-1">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <Star
+                          key={star}
+                          className={`h-5 w-5 ${star <= averageRating ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground'}`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  <span className="text-muted-foreground">Based on {totalReviews} reviews</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {[5, 4, 3, 2, 1].map((rating) => {
+                    const count = ratingDistribution[rating - 1];
+                    const percentage = totalReviews > 0 ? (count / totalReviews) * 100 : 0;
+                    return (
+                      <div key={rating} className="flex items-center space-x-4">
+                        <span className="text-sm w-8">{rating}</span>
+                        <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                        <div className="flex-1 bg-muted rounded-full h-2">
+                          <div
+                            className="bg-yellow-400 h-2 rounded-full transition-all duration-300"
+                            style={{ width: `${percentage}%` }}
+                          />
+                        </div>
+                        <span className="text-sm text-muted-foreground w-8">{count}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Review Input Form */}
+            <Card>
+              <CardContent className="pt-6">
+                <h3 className="font-semibold mb-4">
+                  {language === 'vi' ? 'Viết đánh giá' : language === 'ja' ? 'レビューを書く' : 'Write a Review'}
+                </h3>
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm font-medium">
+                      {language === 'vi' ? 'Đánh giá chung' : language === 'ja' ? '総合評価' : 'Overall rating'}:
+                    </span>
+                    <div className="flex items-center">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          type="button"
+                          onClick={() => setNewReviewRating(star)}
+                          className="p-1 focus:outline-none transition-transform active:scale-95"
+                        >
+                          <Star
+                            className={`h-6 w-6 ${star <= newReviewRating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`}
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">
+                      {language === 'vi' ? 'Tiêu đề' : language === 'ja' ? 'タイトル' : 'Title'}
+                    </label>
+                    <Input
+                      placeholder={language === 'vi' ? 'Tóm tắt đánh giá của bạn' : language === 'ja' ? 'レビューの要約' : 'Summarize your review'}
+                      value={newReviewTitle}
+                      onChange={(e) => setNewReviewTitle(e.target.value)}
+                    />
+                  </div>
+
+                  <Textarea
+                    placeholder={language === 'vi' ? 'Chia sẻ trải nghiệm của bạn về sản phẩm này...' : language === 'ja' ? 'この製品についての経験を共有してください...' : 'Share your experience with this product...'}
+                    value={newReviewComment}
+                    onChange={(e) => setNewReviewComment(e.target.value)}
+                    rows={4}
+                    className="resize-none"
+                  />
+
+                  <div className="flex justify-end">
+                    <Button
+                      onClick={handleSubmitReview}
+                      disabled={isSubmittingReview}
+                    >
+                      {isSubmittingReview && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      {language === 'vi' ? 'Gửi đánh giá' : language === 'ja' ? 'レビューを送信' : 'Submit Review'}
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Individual Reviews */}
+            <div className="space-y-4">
+              {reviews.map((review) => (
+                <Card key={review._id}>
+                  <CardContent className="pt-6">
+                    <div className="flex items-start space-x-4">
+                      <Avatar className="h-10 w-10">
+                        <AvatarFallback>
+                          {review.userId?.name?.charAt(0).toUpperCase() || 'U'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2">
+                            <p className="font-semibold">{review.userId?.name || (language === 'vi' ? 'Ẩn danh' : 'Anonymous')}</p>
+                            {review.verified && (
+                              <Badge variant="secondary" className="text-xs">
+                                <CheckCircle className="h-3 w-3 mr-1" />
+                                Verified
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                            <Clock className="h-3 w-3" />
+                            <span>
+                              {new Date(review.createdAt).toLocaleDateString(
+                                language === 'vi' ? 'vi-VN' : language === 'ja' ? 'ja-JP' : 'en-US',
+                                { year: 'numeric', month: 'long', day: 'numeric' }
+                              )}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Star
+                              key={star}
+                              className={`h-4 w-4 ${star <= review.rating ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground'}`}
+                            />
+                          ))}
+                        </div>
+                        <h4 className="font-bold text-sm">{review.title}</h4>
+                        <p className="text-muted-foreground">{review.comment}</p>
+                        <div className="flex items-center space-x-4">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-muted-foreground hover:text-primary"
+                            onClick={() => handleHelpfulReview(review._id)}
+                          >
+                            <ThumbsUp className="h-4 w-4 mr-1" />
+                            Helpful ({review.helpful})
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+
+            </div>
+          </div>
+        </div>
       </div>
-
-
     </div>
   );
 };
