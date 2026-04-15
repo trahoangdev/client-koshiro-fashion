@@ -471,7 +471,7 @@ export default function AdminInventoryPage() {
         if (updatedJob?.status === 'completed' && updatedJob.downloadUrl) {
           const link = document.createElement('a');
           link.href = updatedJob.downloadUrl;
-          const fileExtension = format === 'excel' ? 'xlsx' : format;
+          const fileExtension = format === 'excel' ? 'xls' : format;
           link.download = `inventory_${new Date().toISOString().split('T')[0]}.${fileExtension}`;
           document.body.appendChild(link);
           link.click();
@@ -634,7 +634,7 @@ export default function AdminInventoryPage() {
             <input
               id="import-file"
               type="file"
-              accept=".xlsx,.csv,.json"
+              accept=".csv,.json"
               onChange={handleImport}
               className="hidden"
             />
