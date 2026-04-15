@@ -169,7 +169,7 @@ const AdminReviews = () => {
     try {
       setIsLoading(true);
       const response = await api.getReviews({ limit: 100 });
-      setReviews(response.reviews);
+      setReviews(response.data);
     } catch (error) {
       console.error('Error loading reviews:', error);
       toast({
