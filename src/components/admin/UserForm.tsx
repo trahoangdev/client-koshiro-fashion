@@ -64,6 +64,23 @@ interface UserFormProps {
   mode: 'create' | 'edit';
 }
 
+const defaultPreferences: UserFormData['preferences'] = {
+  emailNotifications: true,
+  smsNotifications: false,
+  marketingEmails: false,
+  language: 'en',
+  currency: 'USD'
+};
+
+const getFormRole = (role: UserType['role'] | undefined): UserFormData['role'] => {
+  if (!role) {
+    return 'customer';
+  }
+
+  const roleName = typeof role === 'string' ? role : role.name;
+  return roleName.toLowerCase().includes('admin') ? 'admin' : 'customer';
+};
+
 export default function UserForm({
   initialData,
   onSubmit,
@@ -75,21 +92,17 @@ export default function UserForm({
   const { language } = useLanguage();
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState<UserFormData>({
-    name: '',
-    email: '',
-    phone: '',
+    name: initialData?.name || '',
+    email: initialData?.email || '',
+    phone: initialData?.phone || '',
     password: '',
-    role: 'customer',
-    status: 'active',
+    role: getFormRole(initialData?.role),
+    status: initialData?.status || 'active',
     addresses: [],
     preferences: {
-      emailNotifications: true,
-      smsNotifications: false,
-      marketingEmails: false,
-      language: 'en',
-      currency: 'USD'
-    },
-    ...initialData
+      ...defaultPreferences,
+      ...initialData?.preferences
+    }
   });
 
   const translations = {

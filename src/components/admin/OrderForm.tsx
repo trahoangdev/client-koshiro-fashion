@@ -31,8 +31,8 @@ import { formatCurrency } from "@/lib/currency";
 
 interface OrderFormData {
   userId: string;
-  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'completed' | 'cancelled';
-  paymentStatus: 'pending' | 'paid' | 'failed';
+  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'completed' | 'cancelled' | 'returned' | 'refunded';
+  paymentStatus: 'pending' | 'paid' | 'failed' | 'refunded';
   items: Array<{
     productId: string;
     quantity: number;

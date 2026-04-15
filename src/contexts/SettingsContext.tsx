@@ -263,7 +263,6 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
   );
 };
 
-// eslint-disable-next-line react-refresh/only-export-components
 export const useSettings = (): SettingsContextType => {
   const context = useContext(SettingsContext);
   if (context === undefined) {
