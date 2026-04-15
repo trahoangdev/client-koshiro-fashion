@@ -162,7 +162,7 @@ client/
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/your-username/koshiro-fashion.git
+git clone https://github.com/trahoangdev/client-koshiro-fashion.git
 cd koshiro-fashion/client
 
 # 2. Install dependencies

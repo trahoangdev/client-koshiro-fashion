@@ -77,7 +77,7 @@ import { User as UserType } from "@/lib/api";
 import { formatCurrency } from "@/lib/currency";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { api } from "@/lib/api";
-import UserForm from "../components/UserForm";
+import UserForm from "@/components/admin/UserForm";
 import { exportImportService } from "@/lib/exportImportService";
 
 interface UserStats {
@@ -727,7 +727,7 @@ export default function AdminUsers() {
         if (updatedJob?.status === 'completed' && updatedJob.downloadUrl) {
           const link = document.createElement('a');
           link.href = updatedJob.downloadUrl;
-          const fileExtension = format === 'excel' ? 'xlsx' : format;
+          const fileExtension = format === 'excel' ? 'xls' : format;
           link.download = `users_${new Date().toISOString().split('T')[0]}.${fileExtension}`;
           document.body.appendChild(link);
           link.click();

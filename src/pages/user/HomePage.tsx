@@ -2,6 +2,7 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import Hero from "@/components/shared/Hero";
+import { KoshiroHero } from "@/components/user/KoshiroHero";
 import EnhancedProductGrid from "@/components/shared/EnhancedProductGrid";
 import ProductCard from "@/components/shared/ProductCard";
 import FilterBar from "@/components/shared/FilterBar";
@@ -12,6 +13,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { api, Product, Category } from "@/lib/api";
 import { formatCurrency } from "@/lib/currency";
 import { logger } from "@/lib/logger";
+import { guestCartService, guestWishlistService, guestCompareService } from "@/lib/guestStorage";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth, useSettings } from "@/contexts";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -266,14 +268,16 @@ const Index = () => {
   const addToCart = useCallback(async (product: Product) => {
     try {
       // For demo purposes, use default color and size
-      const selectedColor = product.colors[0];
-      const selectedSize = product.sizes[0];
+      const selectedColor = product.colors?.[0];
+      const selectedSize = product.sizes?.[0];
 
-      // Add to cart via API if authenticated
+      // Add to cart via API if authenticated, otherwise use localStorage
       if (isAuthenticated) {
         await api.addToCart(product._id, 1);
-        // Dispatch custom event to notify Header to refresh cart count
         window.dispatchEvent(new CustomEvent('cartUpdated'));
+      } else {
+        // Add to guest cart (localStorage)
+        guestCartService.addToCart(product, 1, selectedSize, selectedColor);
       }
 
       const existingItem = cartItems.find(item =>
@@ -331,7 +335,7 @@ const Index = () => {
             `${item.product._id} -${item.selectedColor} -${item.selectedSize} ` === itemId
           );
           if (item) {
-            await api.removeFromCart(item.product._id);
+            await api.removeFromCart(item.product._id, item.selectedSize, item.selectedColor);
             setTimeout(() => {
               window.dispatchEvent(new CustomEvent('cartUpdated'));
             }, 100);
@@ -355,7 +359,7 @@ const Index = () => {
           `${item.product._id} -${item.selectedColor} -${item.selectedSize} ` === itemId
         );
         if (item) {
-          await api.updateCartItem(item.product._id, quantity);
+          await api.updateCartItem(item.product._id, quantity, item.selectedSize, item.selectedColor);
 
           // Wait a bit to ensure API call is complete, then dispatch event
           setTimeout(() => {
@@ -394,7 +398,7 @@ const Index = () => {
           `${item.product._id} -${item.selectedColor} -${item.selectedSize} ` === itemId
         );
         if (item) {
-          await api.removeFromCart(item.product._id);
+          await api.removeFromCart(item.product._id, item.selectedSize, item.selectedColor);
 
           // Wait a bit to ensure API call is complete, then dispatch event
           setTimeout(() => {
@@ -467,22 +471,15 @@ const Index = () => {
   const cartItemsCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
   const addToWishlist = async (product: Product) => {
-    if (!isAuthenticated) {
-      toast({
-        title: language === 'vi' ? "Cần đăng nhập" :
-          language === 'ja' ? "ログインが必要です" :
-            "Login Required",
-        description: language === 'vi' ? "Vui lòng đăng nhập để thêm sản phẩm vào danh sách yêu thích" :
-          language === 'ja' ? "お気に入りリストに商品を追加するにはログインしてください" :
-            "Please login to add products to wishlist",
-        variant: "destructive",
-      });
-      return;
-    }
-
     try {
-      await api.addToWishlist(product._id);
-      window.dispatchEvent(new CustomEvent('wishlistUpdated'));
+      if (isAuthenticated) {
+        // Add to server wishlist for authenticated users
+        await api.addToWishlist(product._id);
+        window.dispatchEvent(new CustomEvent('wishlistUpdated'));
+      } else {
+        // Add to guest wishlist (localStorage)
+        guestWishlistService.addToWishlist(product);
+      }
 
       toast({
         title: language === 'vi' ? "Đã thêm vào danh sách yêu thích" :
@@ -507,46 +504,24 @@ const Index = () => {
   };
 
   const addToCompare = (product: Product) => {
-    const savedCompareList = localStorage.getItem('koshiro_compare_list');
-    let compareList: Product[] = [];
+    const result = guestCompareService.addToCompare(product);
 
-    if (savedCompareList) {
-      try {
-        compareList = JSON.parse(savedCompareList);
-      } catch (error) {
-        logger.error('Error parsing compare list', error);
-      }
-    }
-
-    if (compareList.length >= 4) {
+    if (!result.success) {
       toast({
-        title: language === 'vi' ? "Giới hạn so sánh" :
-          language === 'ja' ? "比較制限" :
-            "Compare Limit",
-        description: language === 'vi' ? "Bạn chỉ có thể so sánh tối đa 4 sản phẩm" :
-          language === 'ja' ? "最大4つの商品を比較できます" :
-            "You can compare up to 4 products",
+        title: language === 'vi' ? "Không thể thêm" :
+          language === 'ja' ? "追加できません" :
+            "Cannot Add",
+        description: result.message === 'Maximum 4 items allowed'
+          ? (language === 'vi' ? "Bạn chỉ có thể so sánh tối đa 4 sản phẩm" :
+            language === 'ja' ? "最大4つの商品を比較できます" :
+              "You can compare up to 4 products")
+          : (language === 'vi' ? "Sản phẩm này đã có trong danh sách so sánh" :
+            language === 'ja' ? "この商品は既に比較リストにあります" :
+              "This product is already in the compare list"),
         variant: "destructive",
       });
       return;
     }
-
-    if (compareList.find(p => p._id === product._id)) {
-      toast({
-        title: language === 'vi' ? "Sản phẩm đã có" :
-          language === 'ja' ? "商品は既に追加済み" :
-            "Product Already Added",
-        description: language === 'vi' ? "Sản phẩm này đã có trong danh sách so sánh" :
-          language === 'ja' ? "この商品は既に比較リストにあります" :
-            "This product is already in the compare list",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const newCompareList = [...compareList, product];
-    localStorage.setItem('koshiro_compare_list', JSON.stringify(newCompareList));
-    window.dispatchEvent(new CustomEvent('compareUpdated'));
 
     toast({
       title: language === 'vi' ? "Đã thêm vào so sánh" :
@@ -562,104 +537,29 @@ const Index = () => {
     <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
 
       {/* Toast notifications */}
-      {/* Hero Section - Optimized with fetchPriority */}
-      <section className="relative h-[80vh] md:h-[90vh] flex items-center justify-center overflow-hidden bg-stone-900 rounded-b-2xl shadow-2xl">
-        {/* Background Image */}
-        <div className="absolute inset-0">
-          <img
-            src={settings?.banners?.home || "/images/banners/banner-01.png"}
-            alt="Koshiro Fashion Background"
-            className="w-full h-full object-cover object-center"
-            loading="eager"
-            fetchPriority="high"
-          />
-          {/* Gradient Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-br from-stone-900/70 via-stone-800/50 to-stone-900/70"></div>
-          {/* Subtle Pattern Overlay */}
-          <div className="absolute inset-0 opacity-[0.02]">
-            <div className="absolute inset-0" style={{
-              backgroundImage: `radial - gradient(circle at 1px 1px, rgb(255 255 255) 1px, transparent 0)`,
-              backgroundSize: '40px 40px'
-            }} />
-          </div>
-        </div>
-
-        {/* Content */}
-        <div className="container relative z-10 text-center">
-          <div className="max-w-4xl mx-auto px-6">
-            {/* Logo */}
-            <div className="mb-8 flex justify-center">
-              <div className="relative animate-logo-float">
-                <img
-                  src="/koshino_logo.png"
-                  alt="Koshino Fashion Logo"
-                  className="h-16 md:h-20 lg:h-24 w-auto opacity-90 hover:opacity-100 transition-all duration-300 animate-logo-glow"
-                  loading="eager"
-                  fetchPriority="high"
-                />
-                {/* Subtle glow effect */}
-                <div className="absolute inset-0 bg-white/10 rounded-full blur-xl scale-110 opacity-50 animate-pulse"></div>
-              </div>
-            </div>
-
-            {/* Japanese-inspired Typography with Modern Touch */}
-            <div className="mb-8">
-              <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight mb-6">
-                <span className="block bg-gradient-to-r from-white via-white to-white/90 bg-clip-text text-transparent drop-shadow-2xl">
-                  {language === 'vi' ? 'KOSHIRO' : language === 'ja' ? 'コシロ' : 'KOSHIRO'}
-                </span>
-                <span className="block text-2xl md:text-3xl lg:text-4xl font-semibold text-white/95 mt-4 tracking-widest drop-shadow-lg">
-                  {language === 'vi' ? 'THỜI TRANG NHẬT BẢN' :
-                    language === 'ja' ? '日本ファッション' :
-                      'JAPANESE FASHION'}
-                </span>
-              </h1>
-            </div>
-
-            {/* Minimalist Description */}
-            <p className="text-xl md:text-2xl lg:text-3xl text-white/90 max-w-3xl mx-auto mb-12 leading-relaxed font-medium drop-shadow-md">
-              {language === 'vi' ? 'Tìm kiếm sự cân bằng hoàn hảo giữa truyền thống và hiện đại' :
-                language === 'ja' ? '伝統と現代の完璧なバランスを探す' :
-                  'Finding the perfect balance between tradition and modernity'}
-            </p>
-
-            {/* Modern Zen CTA Button */}
-            <Button
-              variant="outline"
-              size="lg"
-              className="border-2 border-white/40 text-white hover:bg-white hover:text-stone-900 px-10 py-6 rounded-xl font-bold text-lg tracking-wide transition-all duration-300 backdrop-blur-sm bg-white/15 shadow-2xl hover:shadow-white/20 hover:scale-105"
-              onClick={() => {
-                const collectionSection = document.querySelector('[data-section="collection"]');
-                if (collectionSection) {
-                  collectionSection.scrollIntoView({ behavior: 'smooth' });
-                }
-              }}
-            >
-              {language === 'vi' ? 'KHÁM PHÁ' : language === 'ja' ? '探す' : 'EXPLORE'}
-            </Button>
-          </div>
-        </div>
-
-        {/* Custom Scroll Wheel Indicator */}
-        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 z-20" aria-hidden="true">
-          <div className="relative flex flex-col items-center justify-center">
-            {/* Mouse Body */}
-            <div className="relative w-8 h-12 border-[3px] border-white/60 rounded-full bg-white/20 backdrop-blur-md animate-scroll-wheel shadow-lg shadow-white/20">
-              {/* Scroll Wheel */}
-              <div className="absolute top-2 left-1/2 transform -translate-x-1/2 w-1.5 h-3 bg-white rounded-full shadow-sm"></div>
-              {/* Scroll Wheel Lines */}
-              <div className="absolute top-3 left-1/2 transform -translate-x-1/2 w-0.5 h-1.5 bg-white/80 rounded-full"></div>
-              <div className="absolute top-3.5 left-1/2 transform -translate-x-1/2 w-0.5 h-1 bg-white/60 rounded-full"></div>
-            </div>
-            {/* Scroll Animation Lines - Centered below mouse */}
-            <div className="relative mt-2 flex flex-col items-center">
-              <div className="w-1 h-6 bg-gradient-to-b from-white/70 via-white/40 to-white/10 animate-scroll-indicator rounded-full"></div>
-              <div className="w-1 h-5 bg-gradient-to-b from-white/50 via-white/30 to-white/5 animate-scroll-indicator rounded-full mt-1" style={{ animationDelay: '0.3s' }}></div>
-              <div className="w-1 h-4 bg-gradient-to-b from-white/40 via-white/20 to-white/5 animate-scroll-indicator rounded-full mt-1" style={{ animationDelay: '0.6s' }}></div>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* Hero Section */}
+      <KoshiroHero
+        badge={language === 'vi' ? "Bộ sưu tập mới 2024" : language === 'ja' ? "2024年新コレクション" : "New Collection 2024"}
+        title={language === 'vi' ? "KOSHIRO" : language === 'ja' ? "コシロ" : "KOSHIRO"}
+        subtitle={language === 'vi' ? 'Tìm kiếm sự cân bằng hoàn hảo giữa truyền thống và hiện đại' :
+          language === 'ja' ? '伝統と現代の完璧なバランスを探す' :
+            'Finding the perfect balance between tradition and modernity'}
+        primaryAction={{
+          text: language === 'vi' ? 'KHÁM PHÁ' : language === 'ja' ? '探す' : 'EXPLORE',
+          href: '#collection'
+        }}
+        secondaryAction={{
+          text: language === 'vi' ? 'LIÊN HỆ' : language === 'ja' ? 'お問い合わせ' : 'CONTACT',
+          href: '/contact'
+        }}
+        images={[
+          "/images/banners/banner-01.png",
+          "/images/banners/banner-02.png",
+          "/images/banners/banner-03.png",
+          "/images/banners/banner-04.png",
+          "/images/banners/banner-05.png"
+        ]}
+      />
 
       <main className="py-24">
         <div className="container space-y-32">

@@ -144,7 +144,7 @@ const ProductCard = ({ product, viewMode = 'grid', onAddToCart, onAddToWishlist,
   };
 
   const handleCardClick = () => {
-    navigate(`/product/${product._id}`);
+    navigate(`/product/${product.slug || product._id}`);
   };
 
   const handleAddToCart = (e: React.MouseEvent) => {
@@ -256,6 +256,7 @@ const ProductCard = ({ product, viewMode = 'grid', onAddToCart, onAddToWishlist,
                   <MarkdownRenderer
                     content={productDescription || 'Premium Japanese fashion item with authentic design and quality materials.'}
                     className="text-sm"
+                    stripMarkdown
                   />
                 </div>
 
@@ -466,6 +467,7 @@ const ProductCard = ({ product, viewMode = 'grid', onAddToCart, onAddToWishlist,
             <MarkdownRenderer
               content={productDescription || 'Premium Japanese fashion item with authentic design and quality materials.'}
               className="text-xs"
+              stripMarkdown
             />
           </div>
 

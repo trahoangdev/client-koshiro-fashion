@@ -149,7 +149,7 @@ const ContactPage = () => {
               {/* Banner Background */}
               <div className="absolute inset-0">
                 <img
-                  src={settings?.banners?.contact || "/images/banners/banner-09.png"}
+                  src={settings?.banners?.contact || "/images/banners/koshiro-contact-bg.png"}
                   alt="Contact Us Banner"
                   className="w-full h-full object-cover"
                 />

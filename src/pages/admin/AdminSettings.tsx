@@ -284,7 +284,6 @@ export default function AdminSettings() {
       };
 
       // Type assertion needed because settingsToSave is a partial update
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const updatedSettings = await api.updateSettings(settingsToSave as any);
 
       // Reload settings to ensure sync with server

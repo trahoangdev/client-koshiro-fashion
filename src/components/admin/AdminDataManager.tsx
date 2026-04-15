@@ -370,7 +370,7 @@ export default function AdminDataManager({
                   <input
                     type="file"
                     onChange={handleFileSelect}
-                    accept=".csv,.xlsx,.json"
+                    accept=".csv,.json"
                     className="hidden"
                     id="file-upload"
                   />

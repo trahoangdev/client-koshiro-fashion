@@ -453,7 +453,7 @@ export default function AdminActivity() {
           // Trigger download
           const link = document.createElement('a');
           link.href = updatedJob.downloadUrl;
-          const extension = format === 'excel' ? 'xlsx' : format;
+          const extension = format === 'excel' ? 'xls' : format;
           link.download = `activity_log_export_${new Date().toISOString().split('T')[0]}.${extension}`;
           document.body.appendChild(link);
           link.click();

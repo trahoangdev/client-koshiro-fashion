@@ -331,7 +331,7 @@ export default function SizeGuidePage() {
               {/* Banner Background */}
               <div className="absolute inset-0">
                 <img
-                  src={settings?.banners?.sizeGuide || "/images/banners/banner-11.png"}
+                  src={settings?.banners?.sizeGuide || "/images/banners/koshiro-sizeguide-bg.png"}
                   alt="Size Guide Banner"
                   className="w-full h-full object-cover"
                 />

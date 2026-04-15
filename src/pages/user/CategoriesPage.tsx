@@ -237,7 +237,7 @@ const CategoriesPage = () => {
               {/* Banner Background with Gradient */}
               <div className="absolute inset-0">
                 <img
-                  src={settings?.banners?.categories || "/images/banners/banner-04.png"}
+                  src={settings?.banners?.categories || "/images/banners/koshiro-categories-bg.png"}
                   alt="Categories Banner"
                   className="w-full h-full object-cover"
                 />

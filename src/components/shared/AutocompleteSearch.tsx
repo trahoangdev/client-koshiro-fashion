@@ -42,7 +42,7 @@ const AutocompleteSearch: React.FC<AutocompleteSearchProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
-  
+
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceTimer = useRef<NodeJS.Timeout | null>(null);
@@ -65,11 +65,11 @@ const AutocompleteSearch: React.FC<AutocompleteSearchProps> = ({
     const loadInitialData = async () => {
       try {
         // Load trending products to extract popular search terms
-        const productsResponse = await api.getProducts({ 
-          isFeatured: true, 
-          limit: 10 
+        const productsResponse = await api.getProducts({
+          isFeatured: true,
+          limit: 10
         });
-        
+
         // Extract product names as trending searches
         const trending = (productsResponse.products || [])
           .slice(0, 5)
@@ -102,7 +102,7 @@ const AutocompleteSearch: React.FC<AutocompleteSearchProps> = ({
         limit: 5,
         isActive: true,
       });
-      
+
       setSuggestions(response.products || []);
     } catch (error) {
       console.error('Error fetching suggestions:', error);
@@ -120,7 +120,7 @@ const AutocompleteSearch: React.FC<AutocompleteSearchProps> = ({
 
     if (value.trim()) {
       setIsOpen(true);
-      
+
       // Clear previous timer
       if (debounceTimer.current) {
         clearTimeout(debounceTimer.current);
@@ -162,7 +162,7 @@ const AutocompleteSearch: React.FC<AutocompleteSearchProps> = ({
   // Handle search
   const handleSearch = (searchQuery?: string) => {
     const finalQuery = searchQuery || query.trim();
-    
+
     if (!finalQuery) return;
 
     // Save to history
@@ -190,14 +190,14 @@ const AutocompleteSearch: React.FC<AutocompleteSearchProps> = ({
 
   // Handle keyboard navigation
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    const totalItems = suggestions.length + (showHistory ? searchHistory.length : 0) + 
-                       (trendingSearches.length && !query ? trendingSearches.length : 0) + 
-                       categories.length;
+    const totalItems = suggestions.length + (showHistory ? searchHistory.length : 0) +
+      (trendingSearches.length && !query ? trendingSearches.length : 0) +
+      categories.length;
 
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault();
-        setSelectedIndex(prev => 
+        setSelectedIndex(prev =>
           prev < totalItems - 1 ? prev + 1 : prev
         );
         break;
@@ -210,7 +210,7 @@ const AutocompleteSearch: React.FC<AutocompleteSearchProps> = ({
         if (selectedIndex >= 0) {
           // Navigate to selected item
           let currentIndex = 0;
-          
+
           // Check categories
           if (currentIndex + categories.length > selectedIndex) {
             const category = categories[selectedIndex];
@@ -224,7 +224,7 @@ const AutocompleteSearch: React.FC<AutocompleteSearchProps> = ({
           if (currentIndex + suggestions.length > selectedIndex) {
             const product = suggestions[selectedIndex - currentIndex];
             setIsOpen(false);
-            navigate(`/product/${product._id}`);
+            navigate(`/product/${product.slug || product._id}`);
             return;
           }
           currentIndex += suggestions.length;
@@ -314,7 +314,7 @@ const AutocompleteSearch: React.FC<AutocompleteSearchProps> = ({
 
   const t = translations[language as keyof typeof translations] || translations.en;
 
-  const hasResults = 
+  const hasResults =
     (query.trim() && (suggestions.length > 0 || categories.length > 0)) ||
     (!query.trim() && (searchHistory.length > 0 || trendingSearches.length > 0 || categories.length > 0));
 
@@ -364,9 +364,8 @@ const AutocompleteSearch: React.FC<AutocompleteSearchProps> = ({
                         setIsOpen(false);
                         navigate(`/category/${category.slug}`);
                       }}
-                      className={`w-full text-left px-3 py-2 rounded-md hover:bg-accent transition-colors flex items-center space-x-3 ${
-                        isSelected ? 'bg-accent' : ''
-                      }`}
+                      className={`w-full text-left px-3 py-2 rounded-md hover:bg-accent transition-colors flex items-center space-x-3 ${isSelected ? 'bg-accent' : ''
+                        }`}
                     >
                       {category.cloudinaryImages && category.cloudinaryImages.length > 0 ? (
                         <CloudinaryImage
@@ -408,11 +407,10 @@ const AutocompleteSearch: React.FC<AutocompleteSearchProps> = ({
                       type="button"
                       onClick={() => {
                         setIsOpen(false);
-                        navigate(`/product/${product._id}`);
+                        navigate(`/product/${product.slug || product._id}`);
                       }}
-                      className={`w-full text-left px-3 py-2 rounded-md hover:bg-accent transition-colors flex items-center space-x-3 ${
-                        isSelected ? 'bg-accent' : ''
-                      }`}
+                      className={`w-full text-left px-3 py-2 rounded-md hover:bg-accent transition-colors flex items-center space-x-3 ${isSelected ? 'bg-accent' : ''
+                        }`}
                     >
                       {product.cloudinaryImages && product.cloudinaryImages.length > 0 ? (
                         <CloudinaryImage
@@ -430,16 +428,16 @@ const AutocompleteSearch: React.FC<AutocompleteSearchProps> = ({
                       )}
                       <div className="flex-1 min-w-0">
                         <div className="font-medium truncate">
-                          {language === 'vi' 
-                            ? product.name 
-                            : language === 'ja' 
-                              ? product.nameJa || product.name 
+                          {language === 'vi'
+                            ? product.name
+                            : language === 'ja'
+                              ? product.nameJa || product.name
                               : product.nameEn || product.name}
                         </div>
                         <div className="text-sm text-muted-foreground">
                           {formatCurrency(
-                            product.salePrice && product.salePrice < product.price 
-                              ? product.salePrice 
+                            product.salePrice && product.salePrice < product.price
+                              ? product.salePrice
                               : product.price
                           )}
                           {product.salePrice && product.salePrice < product.price && (
@@ -489,9 +487,8 @@ const AutocompleteSearch: React.FC<AutocompleteSearchProps> = ({
                   return (
                     <div
                       key={`${item.query}-${item.timestamp}`}
-                      className={`flex items-center justify-between px-3 py-2 rounded-md hover:bg-accent transition-colors ${
-                        isSelected ? 'bg-accent' : ''
-                      }`}
+                      className={`flex items-center justify-between px-3 py-2 rounded-md hover:bg-accent transition-colors ${isSelected ? 'bg-accent' : ''
+                        }`}
                     >
                       <button
                         type="button"
@@ -528,8 +525,8 @@ const AutocompleteSearch: React.FC<AutocompleteSearchProps> = ({
               </div>
               <div className="flex flex-wrap gap-2">
                 {trendingSearches.map((trending, index) => {
-                  const itemIndex = categories.length + suggestions.length + 
-                                   (showHistory ? searchHistory.length : 0) + index;
+                  const itemIndex = categories.length + suggestions.length +
+                    (showHistory ? searchHistory.length : 0) + index;
                   const isSelected = selectedIndex === itemIndex;
                   return (
                     <Badge

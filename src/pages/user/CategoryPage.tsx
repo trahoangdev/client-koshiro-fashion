@@ -1,8 +1,10 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useCallback, useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { api, Product, Category } from '@/lib/api';
+import { guestCompareService, guestWishlistService } from '@/lib/guestStorage';
+import { useAuth } from '@/contexts';
 import { formatCurrency } from '@/lib/currency';
 import EnhancedProductGrid from '@/components/shared/EnhancedProductGrid';
 import { Button } from '@/components/ui/button';
@@ -58,6 +60,7 @@ const CategoryPage: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { language } = useLanguage();
+  const { isAuthenticated } = useAuth();
   const [category, setCategory] = useState<Category | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
@@ -302,13 +305,13 @@ const CategoryPage: React.FC = () => {
     }
   }, [category, language]);
 
-  const getProductName = (product: Product) => {
+  const getProductName = useCallback((product: Product) => {
     switch (language) {
       case 'vi': return product.name;
       case 'ja': return product.nameJa || product.name;
       default: return product.nameEn || product.name;
     }
-  };
+  }, [language]);
 
   // Advanced filtering logic
   const filteredAndSortedProducts = useMemo(() => {
@@ -380,7 +383,7 @@ const CategoryPage: React.FC = () => {
     });
 
     return filtered;
-  }, [products, searchQuery, priceRange, selectedSizes, selectedColors, inStock, onSale, minRating, sortBy, language, getProductName]);
+  }, [products, searchQuery, priceRange, selectedSizes, selectedColors, inStock, onSale, minRating, sortBy, getProductName]);
 
   useEffect(() => {
     let isMounted = true;
@@ -567,31 +570,8 @@ const CategoryPage: React.FC = () => {
   };
 
   const addToCompare = (product: Product) => {
-    const savedCompareList = localStorage.getItem('koshiro_compare_list');
-    let compareList: Product[] = [];
-
-    if (savedCompareList) {
-      try {
-        compareList = JSON.parse(savedCompareList);
-      } catch (error) {
-        console.error('Error parsing compare list:', error);
-      }
-    }
-
-    if (compareList.length >= 4) {
-      toast({
-        title: language === 'vi' ? "Giới hạn so sánh" :
-          language === 'ja' ? "比較制限" :
-            "Compare Limit",
-        description: language === 'vi' ? "Bạn chỉ có thể so sánh tối đa 4 sản phẩm" :
-          language === 'ja' ? "最大4つの商品を比較できます" :
-            "You can compare up to 4 products",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (compareList.find(p => p._id === product._id)) {
+    // Check if already in compare list
+    if (guestCompareService.isInCompare(product._id)) {
       toast({
         title: language === 'vi' ? "Sản phẩm đã có" :
           language === 'ja' ? "商品は既に追加済み" :
@@ -604,9 +584,23 @@ const CategoryPage: React.FC = () => {
       return;
     }
 
-    const newCompareList = [...compareList, product];
-    localStorage.setItem('koshiro_compare_list', JSON.stringify(newCompareList));
-    window.dispatchEvent(new CustomEvent('compareUpdated'));
+    // Check limit
+    const currentItems = guestCompareService.getCompareList();
+    if (currentItems.length >= 4) {
+      toast({
+        title: language === 'vi' ? "Giới hạn so sánh" :
+          language === 'ja' ? "比較制限" :
+            "Compare Limit",
+        description: language === 'vi' ? "Bạn chỉ có thể so sánh tối đa 4 sản phẩm" :
+          language === 'ja' ? "最大4つの商品を比較できます" :
+            "You can compare up to 4 products",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Add to compare
+    guestCompareService.addToCompare(product);
 
     toast({
       title: language === 'vi' ? "Đã thêm vào so sánh" :
@@ -642,8 +636,13 @@ const CategoryPage: React.FC = () => {
 
   const addToWishlist = async (product: Product) => {
     try {
-      await api.addToWishlist(product._id);
-      window.dispatchEvent(new CustomEvent('wishlistUpdated'));
+      if (isAuthenticated) {
+        await api.addToWishlist(product._id);
+        window.dispatchEvent(new CustomEvent('wishlistUpdated'));
+      } else {
+        guestWishlistService.addToWishlist(product);
+        window.dispatchEvent(new CustomEvent('guestWishlistUpdated'));
+      }
       toast({
         title: language === 'vi' ? 'Thành công' : language === 'ja' ? '成功' : 'Success',
         description: language === 'vi' ? 'Đã thêm sản phẩm vào danh sách yêu thích' :

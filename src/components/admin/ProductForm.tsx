@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { 
+import {
   Save,
   X,
   Upload,
@@ -21,7 +21,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { 
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -36,7 +36,7 @@ import { Category, api, Color } from "@/lib/api";
 import MDEditor from '@uiw/react-md-editor';
 import '@uiw/react-md-editor/markdown-editor.css';
 import '@/styles/markdown-editor.css';
-import CloudinaryImageUpload from './CloudinaryImageUpload';
+import CloudinaryImageUpload from '@/components/shared/CloudinaryImageUpload';
 
 interface CloudinaryImage {
   publicId: string;
@@ -75,6 +75,7 @@ interface ProductFormData {
   isNew: boolean;
   isLimitedEdition: boolean;
   isBestSeller: boolean;
+  slug: string;
   metaTitle: string;
   metaDescription: string;
   weight: number;
@@ -140,8 +141,8 @@ export default function ProductForm({
     const loadColors = async () => {
       try {
         setColorsLoading(true);
-        const response = await api.getColors({ 
-          activeOnly: true, 
+        const response = await api.getColors({
+          activeOnly: true,
           language: language as 'vi' | 'en' | 'ja'
         });
         setApiColors(response.colors || []);
@@ -175,7 +176,7 @@ export default function ProductForm({
       'Bạc': '#C0C0C0',
       'Vàng kim': '#FFD700',
       'Xanh ngọc': '#40E0D0',
-      
+
       // English colors
       'Black': '#000000',
       'White': '#FFFFFF',
@@ -191,7 +192,7 @@ export default function ProductForm({
       'Silver': '#C0C0C0',
       'Gold': '#FFD700',
       'Turquoise': '#40E0D0',
-      
+
       // Japanese colors
       '黒': '#000000',
       '白': '#FFFFFF',
@@ -208,7 +209,7 @@ export default function ProductForm({
       'ゴールド': '#FFD700',
       'ターコイズ': '#40E0D0'
     };
-    
+
     return colorMap[colorName] || '#6b7280';
   };
 
@@ -219,13 +220,13 @@ export default function ProductForm({
       if (typeof color === 'object') {
         return color;
       }
-      
+
       // Find matching default color
       const defaultColor = defaultColors.find(dc => dc.name === color);
       if (defaultColor) {
         return defaultColor;
       }
-      
+
       // For custom colors, try to get hex value from color name
       const hexValue = getColorHex(color);
       return { name: color, value: hexValue };
@@ -255,6 +256,7 @@ export default function ProductForm({
       isNew: mode === 'create', // New products are automatically new
       isLimitedEdition: false,
       isBestSeller: false,
+      slug: '',
       metaTitle: '',
       metaDescription: '',
       weight: 0,
@@ -295,56 +297,56 @@ export default function ProductForm({
 
   // Auto-detect badge statuses from tags
   const detectBadgeFromTags = (tags: string[]) => {
-    const isLimitedEdition = tags.some(tag => 
+    const isLimitedEdition = tags.some(tag =>
       /limited|giới hạn|限定|limited edition|phiên bản giới hạn|限定版/i.test(tag)
     );
-    const isBestSeller = tags.some(tag => 
+    const isBestSeller = tags.some(tag =>
       /bestseller|bán chạy|ベストセラー|best seller|top seller|bán nhiều|人気/i.test(tag)
     );
-    
+
     return { isLimitedEdition, isBestSeller };
   };
 
   // Helper function to validate form data
   const validateFormData = (data: ProductFormData): string[] => {
     const errors: string[] = [];
-    
+
     if (!data.name.trim()) {
-      errors.push(language === 'vi' ? 'Tên sản phẩm là bắt buộc' : 
-                 language === 'ja' ? '商品名は必須です' : 
-                 'Product name is required');
+      errors.push(language === 'vi' ? 'Tên sản phẩm là bắt buộc' :
+        language === 'ja' ? '商品名は必須です' :
+          'Product name is required');
     }
-    
+
     if (!data.categoryId) {
-      errors.push(language === 'vi' ? 'Danh mục là bắt buộc' : 
-                 language === 'ja' ? 'カテゴリは必須です' : 
-                 'Category is required');
+      errors.push(language === 'vi' ? 'Danh mục là bắt buộc' :
+        language === 'ja' ? 'カテゴリは必須です' :
+          'Category is required');
     }
-    
+
     if (data.price <= 0) {
-      errors.push(language === 'vi' ? 'Giá phải lớn hơn 0' : 
-                 language === 'ja' ? '価格は0より大きくなければなりません' : 
-                 'Price must be greater than 0');
+      errors.push(language === 'vi' ? 'Giá phải lớn hơn 0' :
+        language === 'ja' ? '価格は0より大きくなければなりません' :
+          'Price must be greater than 0');
     }
-    
+
     if (data.stock < 0) {
-      errors.push(language === 'vi' ? 'Số lượng tồn kho không được âm' : 
-                 language === 'ja' ? '在庫数量は負の値にできません' : 
-                 'Stock quantity cannot be negative');
+      errors.push(language === 'vi' ? 'Số lượng tồn kho không được âm' :
+        language === 'ja' ? '在庫数量は負の値にできません' :
+          'Stock quantity cannot be negative');
     }
-    
+
     if (data.weight < 0) {
-      errors.push(language === 'vi' ? 'Trọng lượng không được âm' : 
-                 language === 'ja' ? '重量は負の値にできません' : 
-                 'Weight cannot be negative');
+      errors.push(language === 'vi' ? 'Trọng lượng không được âm' :
+        language === 'ja' ? '重量は負の値にできません' :
+          'Weight cannot be negative');
     }
-    
+
     if (data.dimensions.length < 0 || data.dimensions.width < 0 || data.dimensions.height < 0) {
-      errors.push(language === 'vi' ? 'Kích thước không được âm' : 
-                 language === 'ja' ? 'サイズは負の値にできません' : 
-                 'Dimensions cannot be negative');
+      errors.push(language === 'vi' ? 'Kích thước không được âm' :
+        language === 'ja' ? 'サイズは負の値にできません' :
+          'Dimensions cannot be negative');
     }
-    
+
     return errors;
   };
 
@@ -352,19 +354,19 @@ export default function ProductForm({
   const normalizedSelectedColors = useMemo(() => {
     return formData.colors.map((color) => {
       let colorObj: { name: string; value: string };
-      
+
       if (typeof color === 'object') {
         // Already in object format
         colorObj = color;
       } else {
         // Try to find color in API colors first (case-insensitive)
         const normalizedName = color.toLowerCase();
-        const apiColor = apiColors.find(c => 
+        const apiColor = apiColors.find(c =>
           c.name.toLowerCase() === normalizedName ||
           c.nameEn?.toLowerCase() === normalizedName ||
           c.nameJa?.toLowerCase() === normalizedName
         );
-        
+
         if (apiColor) {
           // Use API color for accurate hex value
           colorObj = { name: apiColor.name, value: apiColor.hexValue };
@@ -373,7 +375,7 @@ export default function ProductForm({
           colorObj = { name: color, value: getColorHex(color) };
         }
       }
-      
+
       return colorObj;
     });
   }, [formData.colors, apiColors]);
@@ -391,20 +393,20 @@ export default function ProductForm({
 
   // Debounce onFormChange to prevent excessive updates and render loops
   const formChangeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
+
   useEffect(() => {
     if (!onFormChange) return;
-    
+
     // Clear previous timeout
     if (formChangeTimeoutRef.current) {
       clearTimeout(formChangeTimeoutRef.current);
     }
-    
+
     // Set new timeout
     formChangeTimeoutRef.current = setTimeout(() => {
       onFormChange(formData);
     }, 150); // Debounce 150ms to prevent render loops
-    
+
     // Cleanup
     return () => {
       if (formChangeTimeoutRef.current) {
@@ -465,6 +467,7 @@ export default function ProductForm({
       inventory: 'Inventory',
       media: 'Media',
       seo: 'SEO',
+      slug: 'URL Slug',
       shipping: 'Shipping',
       save: 'Save Product',
       cancel: 'Cancel',
@@ -523,6 +526,7 @@ export default function ProductForm({
       inventory: 'Tồn Kho',
       media: 'Phương Tiện',
       seo: 'SEO',
+      slug: 'Đường dẫn URL',
       shipping: 'Vận Chuyển',
       save: 'Lưu Sản Phẩm',
       cancel: 'Hủy',
@@ -581,6 +585,7 @@ export default function ProductForm({
       inventory: '在庫',
       media: 'メディア',
       seo: 'SEO',
+      slug: 'URLスラッグ',
       shipping: '配送',
       save: '商品を保存',
       cancel: 'キャンセル',
@@ -626,8 +631,8 @@ export default function ProductForm({
     // Try to find closest match for similar colors
     const hexUpper = hex.toUpperCase();
     for (const [colorHex, colorName] of Object.entries(colorMap)) {
-      if (hexUpper.includes(colorHex.substring(1, 4)) || 
-          colorHex.includes(hexUpper.substring(1, 4))) {
+      if (hexUpper.includes(colorHex.substring(1, 4)) ||
+        colorHex.includes(hexUpper.substring(1, 4))) {
         return colorName;
       }
     }
@@ -636,9 +641,23 @@ export default function ProductForm({
     return hex;
   };
 
+  // Generate slug from text
+  const generateSlug = (text: string) => {
+    return text
+      .toString()
+      .toLowerCase()
+      .normalize('NFD') // Decompose combined characters
+      .replace(/[\u0300-\u036f]/g, '') // Remove diacritics
+      .replace(/\s+/g, '-') // Replace spaces with -
+      .replace(/[^\w-]+/g, '') // Remove all non-word chars
+      .replace(/--+/g, '-') // Replace multiple - with single -
+      .replace(/^-+/, '') // Trim - from start
+      .replace(/-+$/, ''); // Trim - from end
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validate form data
     const validationErrors = validateFormData(formData);
     if (validationErrors.length > 0) {
@@ -649,16 +668,16 @@ export default function ProductForm({
       });
       return;
     }
-    
+
     try {
       // Transform colors to string array for backend
       const transformedData = {
         ...formData,
-        colors: formData.colors.map(color => 
+        colors: formData.colors.map(color =>
           typeof color === 'string' ? color : color.name
         )
       };
-      
+
       await onSubmit(transformedData);
       toast({
         title: t.success,
@@ -678,7 +697,7 @@ export default function ProductForm({
     if (trimmedTag && !formData.tags.includes(trimmedTag)) {
       const updatedTags = [...formData.tags, trimmedTag];
       const badgeStatus = detectBadgeFromTags(updatedTags);
-      
+
       setFormData(prev => ({
         ...prev,
         tags: updatedTags,
@@ -686,23 +705,23 @@ export default function ProductForm({
         isBestSeller: badgeStatus.isBestSeller
       }));
       setNewTag('');
-      
+
       toast({
-        title: language === 'vi' ? 'Thêm tag thành công' : 
-               language === 'ja' ? 'タグを追加しました' : 
-               'Tag added successfully',
+        title: language === 'vi' ? 'Thêm tag thành công' :
+          language === 'ja' ? 'タグを追加しました' :
+            'Tag added successfully',
         description: language === 'vi' ? `Đã thêm tag "${trimmedTag}"` :
-                     language === 'ja' ? `タグ"${trimmedTag}"を追加しました` :
-                     `Added tag "${trimmedTag}"`,
+          language === 'ja' ? `タグ"${trimmedTag}"を追加しました` :
+            `Added tag "${trimmedTag}"`,
       });
     } else if (trimmedTag && formData.tags.includes(trimmedTag)) {
       toast({
-        title: language === 'vi' ? 'Tag đã tồn tại' : 
-               language === 'ja' ? 'タグが既に存在します' : 
-               'Tag already exists',
+        title: language === 'vi' ? 'Tag đã tồn tại' :
+          language === 'ja' ? 'タグが既に存在します' :
+            'Tag already exists',
         description: language === 'vi' ? 'Tag này đã được thêm vào danh sách' :
-                     language === 'ja' ? 'このタグは既にリストに追加されています' :
-                     'This tag has already been added to the list',
+          language === 'ja' ? 'このタグは既にリストに追加されています' :
+            'This tag has already been added to the list',
         variant: 'destructive',
       });
     }
@@ -711,7 +730,7 @@ export default function ProductForm({
   const removeTag = (tagToRemove: string) => {
     const updatedTags = formData.tags.filter(tag => tag !== tagToRemove);
     const badgeStatus = detectBadgeFromTags(updatedTags);
-    
+
     setFormData(prev => ({
       ...prev,
       tags: updatedTags,
@@ -728,23 +747,23 @@ export default function ProductForm({
         sizes: [...prev.sizes, trimmedSize]
       }));
       setNewSize('');
-      
+
       toast({
-        title: language === 'vi' ? 'Thêm kích thước thành công' : 
-               language === 'ja' ? 'サイズを追加しました' : 
-               'Size added successfully',
+        title: language === 'vi' ? 'Thêm kích thước thành công' :
+          language === 'ja' ? 'サイズを追加しました' :
+            'Size added successfully',
         description: language === 'vi' ? `Đã thêm kích thước "${trimmedSize}"` :
-                     language === 'ja' ? `サイズ"${trimmedSize}"を追加しました` :
-                     `Added size "${trimmedSize}"`,
+          language === 'ja' ? `サイズ"${trimmedSize}"を追加しました` :
+            `Added size "${trimmedSize}"`,
       });
     } else if (trimmedSize && formData.sizes.includes(trimmedSize)) {
       toast({
-        title: language === 'vi' ? 'Kích thước đã tồn tại' : 
-               language === 'ja' ? 'サイズが既に存在します' : 
-               'Size already exists',
+        title: language === 'vi' ? 'Kích thước đã tồn tại' :
+          language === 'ja' ? 'サイズが既に存在します' :
+            'Size already exists',
         description: language === 'vi' ? 'Kích thước này đã được thêm vào danh sách' :
-                     language === 'ja' ? 'このサイズは既にリストに追加されています' :
-                     'This size has already been added to the list',
+          language === 'ja' ? 'このサイズは既にリストに追加されています' :
+            'This size has already been added to the list',
         variant: 'destructive',
       });
     }
@@ -761,23 +780,23 @@ export default function ProductForm({
     // Validate hex color format
     const isValidHex = /^#[0-9A-Fa-f]{6}$/.test(newColor) || /^#[0-9A-Fa-f]{3}$/.test(newColor);
     const colorName = newColorName.trim() || getColorName(newColor);
-    
+
     if (!colorName || !newColor.trim() || !isValidHex) {
       let errorMessage = '';
       if (!colorName) {
         errorMessage = language === 'vi' ? 'Vui lòng nhập tên màu' :
-                      language === 'ja' ? '色名を入力してください' :
-                      'Please enter color name';
+          language === 'ja' ? '色名を入力してください' :
+            'Please enter color name';
       } else if (!isValidHex) {
         errorMessage = language === 'vi' ? 'Mã màu hex không hợp lệ (ví dụ: #FF0000)' :
-                      language === 'ja' ? '無効な16進数カラーコードです（例：#FF0000）' :
-                      'Invalid hex color code (e.g., #FF0000)';
+          language === 'ja' ? '無効な16進数カラーコードです（例：#FF0000）' :
+            'Invalid hex color code (e.g., #FF0000)';
       }
-      
+
       toast({
-        title: language === 'vi' ? 'Thiếu thông tin' : 
-               language === 'ja' ? '情報が不足しています' : 
-               'Missing information',
+        title: language === 'vi' ? 'Thiếu thông tin' :
+          language === 'ja' ? '情報が不足しています' :
+            'Missing information',
         description: errorMessage,
         variant: 'destructive',
       });
@@ -785,18 +804,18 @@ export default function ProductForm({
     }
 
     // Check if color already exists in formData
-    const colorExistsInForm = formData.colors.some(color => 
+    const colorExistsInForm = formData.colors.some(color =>
       typeof color === 'string' ? color === colorName : color.name === colorName
     );
-    
+
     if (colorExistsInForm) {
       toast({
-        title: language === 'vi' ? 'Màu đã tồn tại' : 
-               language === 'ja' ? '色が既に存在します' : 
-               'Color already exists',
+        title: language === 'vi' ? 'Màu đã tồn tại' :
+          language === 'ja' ? '色が既に存在します' :
+            'Color already exists',
         description: language === 'vi' ? 'Màu này đã được thêm vào danh sách' :
-                     language === 'ja' ? 'この色は既にリストに追加されています' :
-                     'This color has already been added to the list',
+          language === 'ja' ? 'この色は既にリストに追加されています' :
+            'This color has already been added to the list',
         variant: 'destructive',
       });
       return;
@@ -806,7 +825,7 @@ export default function ProductForm({
       setIsCreatingColor(true);
 
       // Check if color exists in API (local state)
-      let colorInApi = apiColors.find(c => 
+      let colorInApi = apiColors.find(c =>
         c.name.toLowerCase() === colorName.toLowerCase() ||
         c.nameEn?.toLowerCase() === colorName.toLowerCase() ||
         c.nameJa?.toLowerCase() === colorName.toLowerCase()
@@ -836,90 +855,90 @@ export default function ProductForm({
 
           const response = await api.createColor(createColorData);
           colorInApi = response.color;
-          
+
           // Check if this is an existing color (backend returns 200 with isExisting flag)
           // TypeScript knows about isExisting now from API type definition
           const isExisting = response.isExisting === true;
-          
+
           // Update apiColors state
           setApiColors(prev => {
             const exists = prev.some(c => c._id === colorInApi._id);
             return exists ? prev : [...prev, colorInApi!];
           });
-          
+
           if (isExisting) {
             toast({
-              title: language === 'vi' ? 'Màu đã tồn tại' : 
-                     language === 'ja' ? '色は既に存在します' : 
-                     'Color already exists',
+              title: language === 'vi' ? 'Màu đã tồn tại' :
+                language === 'ja' ? '色は既に存在します' :
+                  'Color already exists',
               description: language === 'vi' ? `Màu "${colorName}" đã tồn tại trong hệ thống, đang sử dụng màu hiện có` :
-                           language === 'ja' ? `色"${colorName}"は既にシステムに存在します。既存の色を使用しています` :
-                           `Color "${colorName}" already exists in system, using existing color`,
+                language === 'ja' ? `色"${colorName}"は既にシステムに存在します。既存の色を使用しています` :
+                  `Color "${colorName}" already exists in system, using existing color`,
               variant: 'default',
             });
           } else {
             toast({
-              title: language === 'vi' ? 'Đã tạo màu mới' : 
-                     language === 'ja' ? '新しい色を作成しました' : 
-                     'Created new color',
+              title: language === 'vi' ? 'Đã tạo màu mới' :
+                language === 'ja' ? '新しい色を作成しました' :
+                  'Created new color',
               description: language === 'vi' ? `Đã tạo màu "${colorName}" trong hệ thống` :
-                           language === 'ja' ? `システムに"${colorName}"色を作成しました` :
-                           `Created color "${colorName}" in the system`,
+                language === 'ja' ? `システムに"${colorName}"色を作成しました` :
+                  `Created color "${colorName}" in the system`,
             });
           }
         } catch (createError: unknown) {
-              const createErr = createError as { statusCode?: number; message?: string };
-              // Note: Backend now returns existing color with status 200 instead of throwing error
-              // But keep this as fallback for other errors
-              if (createErr?.message?.includes('already exists') || createErr?.statusCode === 409 || createErr?.statusCode === 400) {
-                // Try to fetch all colors and find matching one
-                try {
-                  const allColorsResponse = await api.getColors({ activeOnly: false });
-                  colorInApi = allColorsResponse.colors?.find(c => 
-                    c.name.toLowerCase() === colorName.toLowerCase() ||
-                    c.nameEn?.toLowerCase() === colorName.toLowerCase() ||
-                    c.nameJa?.toLowerCase() === colorName.toLowerCase()
-                  );
-                  
-                  // Update apiColors state
-                  if (colorInApi) {
-                    setApiColors(prev => {
-                      const exists = prev.some(c => c._id === colorInApi._id);
-                      return exists ? prev : [...prev, colorInApi!];
-                    });
-                    
-                    toast({
-                      title: language === 'vi' ? 'Màu đã tồn tại' : 
-                             language === 'ja' ? '色は既に存在します' : 
-                             'Color already exists',
-                      description: language === 'vi' ? `Màu "${colorName}" đã tồn tại trong hệ thống, đang sử dụng màu hiện có` :
-                                   language === 'ja' ? `色"${colorName}"は既にシステムに存在します。既存の色を使用しています` :
-                                   `Color "${colorName}" already exists in system, using existing color`,
-                      variant: 'default',
-                    });
-                  }
-                } catch (retryError) {
-                  console.error('Error fetching colors list:', retryError);
-                  // Continue with local color
-                }
-              } else {
-                console.error('Error creating color:', createError);
-                // If API creation fails, still add to formData as a local color
+          const createErr = createError as { statusCode?: number; message?: string };
+          // Note: Backend now returns existing color with status 200 instead of throwing error
+          // But keep this as fallback for other errors
+          if (createErr?.message?.includes('already exists') || createErr?.statusCode === 409 || createErr?.statusCode === 400) {
+            // Try to fetch all colors and find matching one
+            try {
+              const allColorsResponse = await api.getColors({ activeOnly: false });
+              colorInApi = allColorsResponse.colors?.find(c =>
+                c.name.toLowerCase() === colorName.toLowerCase() ||
+                c.nameEn?.toLowerCase() === colorName.toLowerCase() ||
+                c.nameJa?.toLowerCase() === colorName.toLowerCase()
+              );
+
+              // Update apiColors state
+              if (colorInApi) {
+                setApiColors(prev => {
+                  const exists = prev.some(c => c._id === colorInApi._id);
+                  return exists ? prev : [...prev, colorInApi!];
+                });
+
                 toast({
-                  title: language === 'vi' ? 'Cảnh báo' : 
-                         language === 'ja' ? '警告' : 
-                         'Warning',
-                  description: language === 'vi' ? 'Không thể tạo màu trong hệ thống, chỉ thêm vào sản phẩm này' :
-                               language === 'ja' ? 'システムに色を作成できませんでした。この製品にのみ追加されます' :
-                               'Could not create color in system, only adding to this product',
+                  title: language === 'vi' ? 'Màu đã tồn tại' :
+                    language === 'ja' ? '色は既に存在します' :
+                      'Color already exists',
+                  description: language === 'vi' ? `Màu "${colorName}" đã tồn tại trong hệ thống, đang sử dụng màu hiện có` :
+                    language === 'ja' ? `色"${colorName}"は既にシステムに存在します。既存の色を使用しています` :
+                      `Color "${colorName}" already exists in system, using existing color`,
                   variant: 'default',
                 });
               }
+            } catch (retryError) {
+              console.error('Error fetching colors list:', retryError);
+              // Continue with local color
+            }
+          } else {
+            console.error('Error creating color:', createError);
+            // If API creation fails, still add to formData as a local color
+            toast({
+              title: language === 'vi' ? 'Cảnh báo' :
+                language === 'ja' ? '警告' :
+                  'Warning',
+              description: language === 'vi' ? 'Không thể tạo màu trong hệ thống, chỉ thêm vào sản phẩm này' :
+                language === 'ja' ? 'システムに色を作成できませんでした。この製品にのみ追加されます' :
+                  'Could not create color in system, only adding to this product',
+              variant: 'default',
+            });
+          }
         }
       }
 
       // Add color to formData
-      const colorToAdd = colorInApi 
+      const colorToAdd = colorInApi
         ? { name: colorInApi.name, value: colorInApi.hexValue }
         : { name: colorName, value: newColor.trim() };
 
@@ -931,24 +950,24 @@ export default function ProductForm({
       setNewColorName('');
       setNewColor('#000000'); // Reset to default color
       setDisplayValue('');
-      
+
       toast({
-        title: language === 'vi' ? 'Thêm màu thành công' : 
-               language === 'ja' ? '色を追加しました' : 
-               'Color added successfully',
+        title: language === 'vi' ? 'Thêm màu thành công' :
+          language === 'ja' ? '色を追加しました' :
+            'Color added successfully',
         description: language === 'vi' ? `Đã thêm màu ${colorName} vào sản phẩm` :
-                     language === 'ja' ? `${colorName}色を製品に追加しました` :
-                     `Added color ${colorName} to product`,
+          language === 'ja' ? `${colorName}色を製品に追加しました` :
+            `Added color ${colorName} to product`,
       });
     } catch (error) {
       console.error('Error adding color:', error);
       toast({
-        title: language === 'vi' ? 'Lỗi' : 
-               language === 'ja' ? 'エラー' : 
-               'Error',
+        title: language === 'vi' ? 'Lỗi' :
+          language === 'ja' ? 'エラー' :
+            'Error',
         description: language === 'vi' ? 'Không thể thêm màu' :
-                     language === 'ja' ? '色を追加できませんでした' :
-                     'Failed to add color',
+          language === 'ja' ? '色を追加できませんでした' :
+            'Failed to add color',
         variant: 'destructive',
       });
     } finally {
@@ -959,7 +978,7 @@ export default function ProductForm({
   const removeColor = (colorToRemove: string) => {
     setFormData(prev => ({
       ...prev,
-      colors: prev.colors.filter(color => 
+      colors: prev.colors.filter(color =>
         typeof color === 'string' ? color !== colorToRemove : color.name !== colorToRemove
       )
     }));
@@ -974,21 +993,21 @@ export default function ProductForm({
       }));
       setNewMaterial('');
       toast({
-        title: language === 'vi' ? 'Thêm chất liệu thành công' : 
-               language === 'ja' ? '素材を追加しました' : 
-               'Material added successfully',
+        title: language === 'vi' ? 'Thêm chất liệu thành công' :
+          language === 'ja' ? '素材を追加しました' :
+            'Material added successfully',
         description: language === 'vi' ? `Đã thêm chất liệu "${trimmedMaterial}"` :
-                     language === 'ja' ? `素材"${trimmedMaterial}"を追加しました` :
-                     `Added material "${trimmedMaterial}"`,
+          language === 'ja' ? `素材"${trimmedMaterial}"を追加しました` :
+            `Added material "${trimmedMaterial}"`,
       });
     } else if (trimmedMaterial && formData.materials.includes(trimmedMaterial)) {
       toast({
-        title: language === 'vi' ? 'Chất liệu đã tồn tại' : 
-               language === 'ja' ? '素材が既に存在します' : 
-               'Material already exists',
+        title: language === 'vi' ? 'Chất liệu đã tồn tại' :
+          language === 'ja' ? '素材が既に存在します' :
+            'Material already exists',
         description: language === 'vi' ? 'Chất liệu này đã được thêm vào danh sách' :
-                     language === 'ja' ? 'この素材は既にリストに追加されています' :
-                     'This material has already been added to the list',
+          language === 'ja' ? 'この素材は既にリストに追加されています' :
+            'This material has already been added to the list',
         variant: 'destructive',
       });
     }
@@ -1070,8 +1089,25 @@ export default function ProductForm({
               <Input
                 id="name"
                 value={formData.name}
-                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                onChange={(e) => {
+                  const name = e.target.value;
+                  const newSlug = mode === 'create' ? generateSlug(name) : formData.slug;
+                  setFormData(prev => ({
+                    ...prev,
+                    name,
+                    slug: newSlug
+                  }));
+                }}
                 required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="slug-preview" className="text-muted-foreground">{t.slug}</Label>
+              <Input
+                id="slug-preview"
+                value={formData.slug}
+                readOnly
+                className="bg-muted text-muted-foreground"
               />
             </div>
             <div className="space-y-2">
@@ -1340,7 +1376,7 @@ export default function ProductForm({
               </div>
               <div className="space-y-4">
                 <Label className="text-base font-semibold">{t.colors}</Label>
-                
+
                 {/* Selected Colors Display */}
                 {formData.colors.length > 0 && (
                   <div className="space-y-2">
@@ -1351,17 +1387,17 @@ export default function ProductForm({
                       {normalizedSelectedColors.map((colorObj) => {
                         // Use stable key with name and value to avoid re-render issues
                         const colorKey = `selected-${colorObj.name}-${colorObj.value}`;
-                        
+
                         return (
                           <div
                             key={colorKey}
                             className="group relative flex items-center gap-2 px-3 py-1.5 rounded-lg border-2 transition-all hover:scale-105 hover:shadow-md"
-                            style={{ 
+                            style={{
                               backgroundColor: colorObj.value,
                               borderColor: colorObj.value === '#FFFFFF' || colorObj.value === '#ffffff' ? '#e5e7eb' : colorObj.value,
                             }}
                           >
-                            <span 
+                            <span
                               className="text-sm font-medium"
                               style={{ color: colorObj.value === '#FFFFFF' || colorObj.value === '#ffffff' || colorObj.value === '#FFFF00' || colorObj.value === '#ffff00' ? '#000' : '#fff' }}
                             >
@@ -1402,10 +1438,10 @@ export default function ProductForm({
                     <div className="flex flex-wrap gap-2 p-3 rounded-lg border bg-muted/20">
                       {apiColors.length > 0 ? apiColors.map(color => {
                         const colorName = language === 'en' ? (color.nameEn || color.name) :
-                                         language === 'ja' ? (color.nameJa || color.name) :
-                                         color.name;
+                          language === 'ja' ? (color.nameJa || color.name) :
+                            color.name;
                         const colorHex = color.hexValue;
-                        const isSelected = formData.colors.some(c => 
+                        const isSelected = formData.colors.some(c =>
                           typeof c === 'string' ? c === color.name : c.name === color.name
                         );
                         return (
@@ -1416,9 +1452,9 @@ export default function ProductForm({
                               if (isSelected) {
                                 removeColor(color.name);
                               } else {
-                                setFormData(prev => ({ 
-                                  ...prev, 
-                                  colors: [...prev.colors, { name: color.name, value: colorHex }] 
+                                setFormData(prev => ({
+                                  ...prev,
+                                  colors: [...prev.colors, { name: color.name, value: colorHex }]
                                 }));
                                 // Auto-fill color picker for editing
                                 setNewColor(colorHex);
@@ -1428,13 +1464,13 @@ export default function ProductForm({
                             }}
                             className={`
                               px-4 py-2 rounded-lg font-medium text-sm transition-all
-                              ${isSelected 
-                                ? 'ring-2 ring-offset-2 ring-primary shadow-md scale-105' 
+                              ${isSelected
+                                ? 'ring-2 ring-offset-2 ring-primary shadow-md scale-105'
                                 : 'hover:scale-105 hover:shadow-md opacity-90 hover:opacity-100'
                               }
                             `}
-                            style={{ 
-                              backgroundColor: colorHex, 
+                            style={{
+                              backgroundColor: colorHex,
                               color: colorHex === '#FFFFFF' || colorHex === '#FFFF00' ? '#000' : '#fff',
                               border: `2px solid ${isSelected ? '#3b82f6' : 'transparent'}`
                             }}
@@ -1444,9 +1480,9 @@ export default function ProductForm({
                         );
                       }) : (
                         <p className="text-sm text-muted-foreground p-4">
-                          {language === 'vi' ? 'Không có màu sắc có sẵn' : 
-                           language === 'ja' ? '利用可能な色がありません' : 
-                           'No colors available'}
+                          {language === 'vi' ? 'Không có màu sắc có sẵn' :
+                            language === 'ja' ? '利用可能な色がありません' :
+                              'No colors available'}
                         </p>
                       )}
                     </div>
@@ -1458,16 +1494,16 @@ export default function ProductForm({
                   <Label className="text-sm font-medium">
                     {language === 'vi' ? 'Tùy Chỉnh Màu Sắc' : language === 'ja' ? 'カスタム色' : 'Custom Color'}
                   </Label>
-                  
+
                   {/* Color Name Input */}
                   <div className="space-y-2">
                     <Label className="text-xs text-muted-foreground">
                       {language === 'vi' ? 'Tên màu' : language === 'ja' ? '色名' : 'Color name'}
                     </Label>
                     <Input
-                      placeholder={language === 'vi' ? 'Nhập tên màu (ví dụ: Đỏ, Xanh lá, ...)' : 
-                                 language === 'ja' ? '色名を入力（例：赤、緑など）' : 
-                                 'Enter color name (e.g., Red, Green, ...)'}
+                      placeholder={language === 'vi' ? 'Nhập tên màu (ví dụ: Đỏ, Xanh lá, ...)' :
+                        language === 'ja' ? '色名を入力（例：赤、緑など）' :
+                          'Enter color name (e.g., Red, Green, ...)'}
                       value={newColorName || getColorName(newColor)}
                       onChange={(e) => setNewColorName(e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addColor())}
@@ -1496,14 +1532,14 @@ export default function ProductForm({
                         title={`${getColorName(newColor)} (${newColor})`}
                       />
                     </div>
-                    
+
                     {/* Color Preview */}
                     <div className="flex flex-col gap-2">
                       <Label className="text-xs text-muted-foreground">
                         {language === 'vi' ? 'Xem trước' : language === 'ja' ? 'プレビュー' : 'Preview'}
                       </Label>
                       <div className="flex items-center gap-2">
-                        <div 
+                        <div
                           className="w-12 h-12 rounded-lg border-2 shadow-md"
                           style={{ backgroundColor: newColor }}
                           title={`${getColorName(newColor)} (${newColor})`}
@@ -1524,14 +1560,14 @@ export default function ProductForm({
                           value={newColor.toUpperCase()}
                           onChange={(e) => {
                             const inputValue = e.target.value.toUpperCase();
-                            
+
                             if (inputValue.startsWith('#') || /^[0-9A-Fa-f]/.test(inputValue)) {
                               let hexValue = inputValue;
-                              
+
                               if (hexValue && !hexValue.startsWith('#')) {
                                 hexValue = '#' + hexValue;
                               }
-                              
+
                               if (/^#[0-9A-Fa-f]{6}$/.test(hexValue) || /^#[0-9A-Fa-f]{3}$/.test(hexValue)) {
                                 setNewColor(hexValue);
                                 setDisplayValue(hexValue);
@@ -1559,8 +1595,8 @@ export default function ProductForm({
 
                   {/* Add Color Button */}
                   <div className="flex items-center gap-2 pt-2">
-                    <Button 
-                      type="button" 
+                    <Button
+                      type="button"
                       onClick={addColor}
                       className="flex-1"
                       disabled={!newColorName.trim() && getColorName(newColor) === 'Unknown'}
@@ -1569,9 +1605,9 @@ export default function ProductForm({
                       {t.addColor}
                     </Button>
                     {(newColorName || newColor !== '#000000') && (
-                      <Button 
-                        type="button" 
-                        variant="ghost" 
+                      <Button
+                        type="button"
+                        variant="ghost"
                         size="sm"
                         onClick={() => {
                           setNewColorName('');
@@ -1627,9 +1663,9 @@ export default function ProductForm({
               <Label>{t.materials}</Label>
               <div className="flex flex-wrap gap-2 mb-2">
                 {formData.materials.map(material => (
-                  <Badge 
-                    key={material} 
-                    variant="secondary" 
+                  <Badge
+                    key={material}
+                    variant="secondary"
                     className="cursor-pointer hover:opacity-80 transition-opacity"
                     onClick={() => removeMaterial(material)}
                   >
@@ -1639,9 +1675,9 @@ export default function ProductForm({
               </div>
               <div className="flex gap-2">
                 <Input
-                  placeholder={language === 'vi' ? 'Nhập chất liệu (ví dụ: 100% Lụa, Cotton, Polyester...)' : 
-                             language === 'ja' ? '素材を入力（例：100%シルク、綿、ポリエステル...）' : 
-                             'Enter material (e.g., 100% Silk, Cotton, Polyester...)'}
+                  placeholder={language === 'vi' ? 'Nhập chất liệu (ví dụ: 100% Lụa, Cotton, Polyester...)' :
+                    language === 'ja' ? '素材を入力（例：100%シルク、綿、ポリエステル...）' :
+                      'Enter material (e.g., 100% Silk, Cotton, Polyester...)'}
                   value={newMaterial}
                   onChange={(e) => setNewMaterial(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addMaterial())}
@@ -1652,8 +1688,8 @@ export default function ProductForm({
               </div>
               <p className="text-xs text-muted-foreground">
                 {language === 'vi' ? 'Gợi ý: 100% Lụa, Cotton 70% Polyester 30%, Vải lanh, Satin...' :
-                 language === 'ja' ? '推奨：100%シルク、綿70%ポリエステル30%、リネン、サテン...' :
-                 'Suggestions: 100% Silk, 70% Cotton 30% Polyester, Linen, Satin...'}
+                  language === 'ja' ? '推奨：100%シルク、綿70%ポリエステル30%、リネン、サテン...' :
+                    'Suggestions: 100% Silk, 70% Cotton 30% Polyester, Linen, Satin...'}
               </p>
             </div>
 
@@ -1665,15 +1701,15 @@ export default function ProductForm({
                 <Label htmlFor="origin">{t.origin}</Label>
                 <Input
                   id="origin"
-                  placeholder={language === 'vi' ? 'Nhập xuất xứ (ví dụ: Nhật Bản, Việt Nam, ...)' : 
-                             language === 'ja' ? '原産国を入力（例：日本、ベトナム...）' : 
-                             'Enter origin (e.g., Japan, Vietnam, ...)'}
+                  placeholder={language === 'vi' ? 'Nhập xuất xứ (ví dụ: Nhật Bản, Việt Nam, ...)' :
+                    language === 'ja' ? '原産国を入力（例：日本、ベトナム...）' :
+                      'Enter origin (e.g., Japan, Vietnam, ...)'}
                   value={formData.origin}
                   onChange={(e) => setFormData(prev => ({ ...prev, origin: e.target.value }))}
                   className="w-full"
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="originEn">{t.originEn}</Label>
                 <Input
@@ -1684,7 +1720,7 @@ export default function ProductForm({
                   className="w-full"
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="originJa">{t.originJa}</Label>
                 <Input
@@ -1695,11 +1731,11 @@ export default function ProductForm({
                   className="w-full"
                 />
               </div>
-              
+
               <p className="text-xs text-muted-foreground">
                 {language === 'vi' ? 'Quốc gia hoặc vùng sản xuất sản phẩm cho từng ngôn ngữ' :
-                 language === 'ja' ? '各言語の製品の製造国または地域' :
-                 'Country or region where the product is manufactured for each language'}
+                  language === 'ja' ? '各言語の製品の製造国または地域' :
+                    'Country or region where the product is manufactured for each language'}
               </p>
             </div>
 
@@ -1719,9 +1755,9 @@ export default function ProductForm({
                     const value = parseFloat(e.target.value);
                     setFormData(prev => ({ ...prev, weight: isNaN(value) ? 0 : value }));
                   }}
-                  placeholder={language === 'vi' ? 'Nhập trọng lượng (kg)' : 
-                             language === 'ja' ? '重量を入力（kg）' : 
-                             'Enter weight (kg)'}
+                  placeholder={language === 'vi' ? 'Nhập trọng lượng (kg)' :
+                    language === 'ja' ? '重量を入力（kg）' :
+                      'Enter weight (kg)'}
                 />
                 <span className="text-sm text-muted-foreground whitespace-nowrap">kg</span>
               </div>
@@ -1799,8 +1835,8 @@ export default function ProductForm({
               </div>
               <p className="text-xs text-muted-foreground">
                 {language === 'vi' ? 'Kích thước khi đóng gói (Dài x Rộng x Cao)' :
-                 language === 'ja' ? 'パッケージサイズ（長さ x 幅 x 高さ）' :
-                 'Package dimensions (Length x Width x Height)'}
+                  language === 'ja' ? 'パッケージサイズ（長さ x 幅 x 高さ）' :
+                    'Package dimensions (Length x Width x Height)'}
               </p>
             </div>
 
@@ -1812,16 +1848,16 @@ export default function ProductForm({
                 <Label htmlFor="careInstructions">{t.careInstructions}</Label>
                 <Textarea
                   id="careInstructions"
-                  placeholder={language === 'vi' ? 'Hướng dẫn bảo quản và giặt ủi (ví dụ: Giặt tay, Không sử dụng chất tẩy, Ủi ở nhiệt độ thấp...)' : 
-                             language === 'ja' ? 'お手入れ方法（例：手洗い、漂白剤を使用しない、低温でアイロンをかける...）' : 
-                             'Care instructions (e.g., Hand wash, Do not bleach, Iron on low heat...)'}
+                  placeholder={language === 'vi' ? 'Hướng dẫn bảo quản và giặt ủi (ví dụ: Giặt tay, Không sử dụng chất tẩy, Ủi ở nhiệt độ thấp...)' :
+                    language === 'ja' ? 'お手入れ方法（例：手洗い、漂白剤を使用しない、低温でアイロンをかける...）' :
+                      'Care instructions (e.g., Hand wash, Do not bleach, Iron on low heat...)'}
                   value={formData.careInstructions}
                   onChange={(e) => setFormData(prev => ({ ...prev, careInstructions: e.target.value }))}
                   rows={3}
                   className="resize-none"
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="careInstructionsEn">{t.careInstructionsEn}</Label>
                 <Textarea
@@ -1833,7 +1869,7 @@ export default function ProductForm({
                   className="resize-none"
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="careInstructionsJa">{t.careInstructionsJa}</Label>
                 <Textarea
@@ -1845,11 +1881,11 @@ export default function ProductForm({
                   className="resize-none"
                 />
               </div>
-              
+
               <p className="text-xs text-muted-foreground">
                 {language === 'vi' ? 'Nhập hướng dẫn cách bảo quản và chăm sóc sản phẩm cho từng ngôn ngữ' :
-                 language === 'ja' ? '各言語の製品の保管とお手入れ方法を入力' :
-                 'Enter instructions for product care and maintenance for each language'}
+                  language === 'ja' ? '各言語の製品の保管とお手入れ方法を入力' :
+                    'Enter instructions for product care and maintenance for each language'}
               </p>
             </div>
           </CardContent>
@@ -1864,6 +1900,22 @@ export default function ProductForm({
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            {mode !== 'create' && (
+              <div className="space-y-2">
+                <Label htmlFor="slug">{t.slug}</Label>
+                <Input
+                  id="slug"
+                  value={formData.slug}
+                  onChange={(e) => setFormData(prev => ({ ...prev, slug: e.target.value }))}
+                  placeholder="product-url-slug"
+                />
+                <p className="text-xs text-muted-foreground">
+                  {language === 'vi' ? 'Để trống để tự động tạo từ tên sản phẩm' :
+                    language === 'ja' ? '商品名から自動生成するには空のままにしてください' :
+                      'Leave empty to auto-generate from product name'}
+                </p>
+              </div>
+            )}
             <div className="space-y-2">
               <Label htmlFor="metaTitle">{t.metaTitle}</Label>
               <Input

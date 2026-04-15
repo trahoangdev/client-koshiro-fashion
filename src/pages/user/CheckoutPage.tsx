@@ -667,7 +667,7 @@ const CheckoutPage = () => {
               {/* Banner Background */}
               <div className="absolute inset-0">
                 <img
-                  src={settings?.banners?.checkout || "/images/banners/banner-15.png"}
+                  src={settings?.banners?.checkout || "/images/banners/koshiro-checkout-bg.png"}
                   alt="Checkout Banner"
                   className="w-full h-full object-cover"
                 />

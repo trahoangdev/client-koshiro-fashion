@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X, ShoppingBag, ShoppingCart, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -30,6 +30,11 @@ const MiniCart: React.FC<MiniCartProps> = ({
   const { language } = useLanguage();
   const [showAnimation, setShowAnimation] = useState(false);
 
+  const handleClose = useCallback(() => {
+    setShowAnimation(false);
+    setTimeout(() => onClose(), 200); // Wait for animation
+  }, [onClose]);
+
   useEffect(() => {
     if (isOpen) {
       // Trigger animation
@@ -46,12 +51,7 @@ const MiniCart: React.FC<MiniCartProps> = ({
     } else {
       setShowAnimation(false);
     }
-  }, [isOpen]);
-
-  const handleClose = () => {
-    setShowAnimation(false);
-    setTimeout(() => onClose(), 200); // Wait for animation
-  };
+  }, [isOpen, handleClose]);
 
   const handleViewCart = () => {
     handleClose();

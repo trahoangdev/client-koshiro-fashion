@@ -411,7 +411,7 @@ const ReturnsPage = () => {
               {/* Banner Background */}
               <div className="absolute inset-0">
                 <img
-                  src={settings?.banners?.returns || "/images/banners/banner-08.png"}
+                  src={settings?.banners?.returns || "/images/banners/koshiro-returns-bg.png"}
                   alt="Returns & Refunds Banner"
                   className="w-full h-full object-cover"
                 />

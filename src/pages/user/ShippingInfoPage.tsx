@@ -358,7 +358,7 @@ const ShippingInfoPage = () => {
               {/* Banner Background */}
               <div className="absolute inset-0">
                 <img
-                  src={settings?.banners?.shipping || "/images/banners/banner-07.png"}
+                  src={settings?.banners?.shipping || "/images/banners/koshiro-shipping-bg.png"}
                   alt="Shipping Information Banner"
                   className="w-full h-full object-cover"
                 />

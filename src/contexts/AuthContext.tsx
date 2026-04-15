@@ -49,7 +49,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         if (serverItem) {
           // Item exists in server cart, update quantity (merge)
           const newQuantity = serverItem.quantity + localItem.quantity;
-          await api.updateCartItem(localItem.productId, newQuantity);
+          await api.updateCartItem(
+            localItem.productId,
+            newQuantity,
+            localItem.selectedSize,
+            localItem.selectedColor
+          );
         } else {
           // Item doesn't exist in server cart, add it with size and color
           await api.addToCart(

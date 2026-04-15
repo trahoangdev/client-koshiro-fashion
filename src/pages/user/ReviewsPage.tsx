@@ -261,7 +261,7 @@ const ReviewsPage = () => {
               {/* Banner Background */}
               <div className="absolute inset-0">
                 <img
-                  src={settings?.banners?.reviews || "/images/banners/banner-12.png"}
+                  src={settings?.banners?.reviews || "/images/banners/koshiro-reviews-bg.png"}
                   alt="Reviews Banner"
                   className="w-full h-full object-cover"
                 />

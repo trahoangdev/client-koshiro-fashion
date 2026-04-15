@@ -429,7 +429,7 @@ const FAQPage = () => {
               {/* Banner Background */}
               <div className="absolute inset-0">
                 <img
-                  src={settings?.banners?.faq || "/images/banners/banner-05.png"}
+                  src={settings?.banners?.faq || "/images/banners/koshiro-faq-bg.png"}
                   alt="FAQ Banner"
                   className="w-full h-full object-cover"
                 />

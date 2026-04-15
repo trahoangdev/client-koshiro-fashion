@@ -313,7 +313,7 @@ export default function AdminPaymentsPage() {
         
         // Load payment methods, transactions, refunds, and stats in parallel
         const [methodsResponse, transactionsResponse, refundsResponse, statsResponse] = await Promise.all([
-          api.getPaymentMethods(),
+          api.getAdminPaymentMethods(),
           api.getTransactions({ page: 1, limit: 100 }),
           api.getRefunds({ page: 1, limit: 100 }),
           api.getPaymentStats()
@@ -631,7 +631,7 @@ export default function AdminPaymentsPage() {
   const handleCreateMethod = async (methodData: CreateMethodData) => {
     try {
       setIsSubmitting(true);
-      const response = await api.createPaymentMethod(methodData);
+      const response = await api.createAdminPaymentMethod(methodData);
       
       // Ensure the method object has all required properties
       const newMethod: AdminPaymentMethod = {
@@ -672,7 +672,7 @@ export default function AdminPaymentsPage() {
   const handleUpdateMethod = async (id: string, methodData: CreateMethodData) => {
     try {
       setIsSubmitting(true);
-      const response = await api.updatePaymentMethod(id, methodData);
+      const response = await api.updateAdminPaymentMethod(id, methodData);
       setPaymentMethods(prev => 
         prev.map(method => method._id === id ? response.method : method)
       );
@@ -696,7 +696,7 @@ export default function AdminPaymentsPage() {
 
   const handleDeleteMethod = async (id: string) => {
     try {
-      await api.deletePaymentMethod(id);
+      await api.deleteAdminPaymentMethod(id);
       setPaymentMethods(prev => prev.filter(method => method._id !== id));
       toast({
         title: "Success",

@@ -754,48 +754,16 @@ export default function AdminApiPage() {
     });
   };
 
-  const handleRegenerateKey = (keyId: string) => {
-    const newKey = `ak_live_${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`;
-    setApiKeys(prev => prev.map(k => 
-      k._id === keyId ? { ...k, key: newKey, updatedAt: new Date().toISOString() } : k
-    ));
-    toast({
-      title: "Key Regenerated",
-      description: "API key has been regenerated successfully.",
-    });
+  const handleRegenerateKey = async (keyId: string) => {
+    await handleRegenerateApiKey(keyId);
   };
 
-  const handleTestConnection = (integrationId: string) => {
-    toast({
-      title: "Testing Connection",
-      description: "Testing integration connection...",
-    });
-    // Simulate API call
-    setTimeout(() => {
-      toast({
-        title: "Connection Test Complete",
-        description: "Integration connection test completed successfully.",
-      });
-    }, 2000);
+  const handleTestConnection = async (integrationId: string) => {
+    await handleTestIntegration(integrationId);
   };
 
-  const handleSyncNow = (integrationId: string) => {
-    toast({
-      title: "Sync Started",
-      description: "Integration sync has been started.",
-    });
-    // Simulate sync process
-    setTimeout(() => {
-      setIntegrations(prev => prev.map(i => 
-        i._id === integrationId 
-          ? { ...i, lastSync: new Date().toISOString(), successCount: i.successCount + 1 }
-          : i
-      ));
-      toast({
-        title: "Sync Complete",
-        description: "Integration sync completed successfully.",
-      });
-    }, 3000);
+  const handleSyncNow = async (integrationId: string) => {
+    await handleSyncIntegration(integrationId);
   };
 
   const handleDeleteKey = (key: ApiKey) => {
