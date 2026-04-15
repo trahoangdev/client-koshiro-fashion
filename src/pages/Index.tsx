@@ -270,7 +270,7 @@ const Index = () => {
 
       // Add to cart via API if authenticated
       if (isAuthenticated) {
-        await api.addToCart(product._id, 1);
+        await api.addToCart(product._id, 1, selectedSize, selectedColor);
         // Dispatch custom event to notify Header to refresh cart count
         window.dispatchEvent(new CustomEvent('cartUpdated'));
       }
@@ -330,7 +330,7 @@ const Index = () => {
             `${item.product._id} -${item.selectedColor} -${item.selectedSize} ` === itemId
           );
           if (item) {
-            await api.removeFromCart(item.product._id);
+            await api.removeFromCart(item.product._id, item.selectedSize, item.selectedColor);
             setTimeout(() => {
               window.dispatchEvent(new CustomEvent('cartUpdated'));
             }, 100);
@@ -354,7 +354,7 @@ const Index = () => {
           `${item.product._id} -${item.selectedColor} -${item.selectedSize} ` === itemId
         );
         if (item) {
-          await api.updateCartItem(item.product._id, quantity);
+          await api.updateCartItem(item.product._id, quantity, item.selectedSize, item.selectedColor);
 
           // Wait a bit to ensure API call is complete, then dispatch event
           setTimeout(() => {
@@ -393,7 +393,7 @@ const Index = () => {
           `${item.product._id} -${item.selectedColor} -${item.selectedSize} ` === itemId
         );
         if (item) {
-          await api.removeFromCart(item.product._id);
+          await api.removeFromCart(item.product._id, item.selectedSize, item.selectedColor);
 
           // Wait a bit to ensure API call is complete, then dispatch event
           setTimeout(() => {

@@ -69,7 +69,7 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
     try {
       setIsLoading(true);
       setError(null);
-      const loadedSettings = await api.getSettings();
+      const loadedSettings = await api.getPublicSettings();
       setSettings(loadedSettings);
       
       // Apply appearance settings

@@ -244,7 +244,7 @@ export interface Order {
         email: string;
         phone: string;
     };
-    status: 'pending' | 'processing' | 'completed' | 'cancelled';
+    status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'completed' | 'cancelled' | 'returned' | 'refunded';
     items: OrderItem[];
     totalAmount: number;
     shippingAddress: {
@@ -255,7 +255,7 @@ export interface Order {
         district: string;
     };
     paymentMethod: string;
-    paymentStatus: 'pending' | 'paid' | 'failed';
+    paymentStatus: 'pending' | 'paid' | 'failed' | 'refunded';
     notes?: string;
     createdAt: string;
     updatedAt: string;
