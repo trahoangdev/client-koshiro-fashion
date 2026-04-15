@@ -616,7 +616,6 @@ const CategoryPage: React.FC = () => {
         language === 'ja' ? "商品が比較リストに追加されました" :
           "Product has been added to compare list",
     });
-  });
 };
 
 const addToCart = async (product: Product) => {
