@@ -489,7 +489,7 @@ const ProductDetail: React.FC = () => {
     }
 
     try {
-      await api.addToCart(product._id, quantity);
+      await api.addToCart(product._id, quantity, selectedSize || undefined, selectedColor || undefined);
 
       // Wait a bit to ensure API call is complete, then dispatch event
       setTimeout(() => {
@@ -688,7 +688,7 @@ const ProductDetail: React.FC = () => {
 
     try {
       // Add to cart first, then navigate to checkout
-      await api.addToCart(product._id, quantity);
+      await api.addToCart(product._id, quantity, selectedSize || undefined, selectedColor || undefined);
 
       // Wait a bit to ensure API call is complete, then dispatch event
       setTimeout(() => {

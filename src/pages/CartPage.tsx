@@ -111,7 +111,7 @@ const CartPage: React.FC = () => {
 
     try {
       setUpdating(productId);
-      await api.updateCartItem(productId, newQuantity);
+      await api.updateCartItem(productId, newQuantity, selectedSize, selectedColor);
 
       // Wait a bit to ensure API call is complete, then dispatch event
       setTimeout(() => {
@@ -120,7 +120,9 @@ const CartPage: React.FC = () => {
       }, 100);
 
       setCartItems(prev => prev.map(item =>
-        item.productId === productId
+        item.productId === productId &&
+        item.selectedSize === selectedSize &&
+        item.selectedColor === selectedColor
           ? { ...item, quantity: newQuantity }
           : item
       ));
@@ -164,7 +166,7 @@ const CartPage: React.FC = () => {
     }
 
     try {
-      await api.removeFromCart(productId);
+      await api.removeFromCart(productId, selectedSize, selectedColor);
 
       // Wait a bit to ensure API call is complete, then dispatch event
       setTimeout(() => {
@@ -172,7 +174,13 @@ const CartPage: React.FC = () => {
         window.dispatchEvent(new CustomEvent('cartUpdated'));
       }, 100);
 
-      setCartItems(prev => prev.filter(item => item.productId !== productId));
+      setCartItems(prev => prev.filter(item =>
+        !(
+          item.productId === productId &&
+          item.selectedSize === selectedSize &&
+          item.selectedColor === selectedColor
+        )
+      ));
 
       toast({
         title: language === 'vi' ? "Xóa sản phẩm" :
