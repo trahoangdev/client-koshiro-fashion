@@ -96,6 +96,9 @@ const CloudinaryVideoUpload = memo(function CloudinaryVideoUpload({
 
       const response = await fetch('/api/upload/videos', {
         method: 'POST',
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token') || ''}`,
+        },
         body: formData,
       });
 
