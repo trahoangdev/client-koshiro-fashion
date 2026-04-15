@@ -1,5 +1,4 @@
 import { Order, Product, User, Category, api } from './api';
-import * as XLSX from 'xlsx';
 
 export interface ExportJob {
   id: string;
@@ -34,6 +33,53 @@ interface ParsedData {
   [key: string]: string | number | boolean | null | undefined;
 }
 
+const EXCEL_MIME_TYPE = 'application/vnd.ms-excel;charset=utf-8';
+
+function escapeXml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
+
+function toSpreadsheetXml(rows: ExportableData[], sheetName = 'Data'): string {
+  const normalizedRows = rows.length > 0 ? rows : [{ Message: 'No data available' }];
+  const headers = Object.keys(normalizedRows[0]);
+
+  const headerCells = headers
+    .map(header => `<Cell><Data ss:Type="String">${escapeXml(header)}</Data></Cell>`)
+    .join('');
+
+  const dataRows = normalizedRows
+    .map(row => {
+      const cells = headers.map(header => {
+        const value = row[header];
+        const text = value === null || value === undefined ? '' : String(value);
+        return `<Cell><Data ss:Type="String">${escapeXml(text)}</Data></Cell>`;
+      }).join('');
+
+      return `<Row>${cells}</Row>`;
+    })
+    .join('');
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+  xmlns:o="urn:schemas-microsoft-com:office:office"
+  xmlns:x="urn:schemas-microsoft-com:office:excel"
+  xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
+  xmlns:html="http://www.w3.org/TR/REC-html40">
+  <Worksheet ss:Name="${escapeXml(sheetName)}">
+    <Table>
+      <Row>${headerCells}</Row>
+      ${dataRows}
+    </Table>
+  </Worksheet>
+</Workbook>`;
+}
+
 class ExportImportService {
   private exportJobs: ExportJob[] = [];
   private importJobs: ImportJob[] = [];
@@ -65,17 +111,6 @@ class ExportImportService {
   }
 
   async exportToExcel(data: ExportableData[]): Promise<Blob> {
-    if (data.length === 0) {
-      // Create empty workbook
-      const workbook = XLSX.utils.book_new();
-      const worksheet = XLSX.utils.aoa_to_sheet([['No data available']]);
-      XLSX.utils.book_append_sheet(workbook, worksheet, 'Data');
-      const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-      return new Blob([excelBuffer], { 
-        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
-      });
-    }
-
     try {
       // Clean data to ensure all values are serializable
       const cleanData = data.map(row => {
@@ -94,44 +129,14 @@ class ExportImportService {
         return cleanRow;
       });
 
-      // Create workbook and worksheet
-      const workbook = XLSX.utils.book_new();
-      const worksheet = XLSX.utils.json_to_sheet(cleanData);
-
-      // Set column widths for better formatting
-      const colWidths = Object.keys(cleanData[0]).map(key => ({
-        wch: Math.max(key.length, 15) // Minimum width of 15 characters
-      }));
-      worksheet['!cols'] = colWidths;
-
-      // Add worksheet to workbook
-      XLSX.utils.book_append_sheet(workbook, worksheet, 'Data');
-
-      // Generate Excel file as buffer
-      const excelBuffer = XLSX.write(workbook, { 
-        bookType: 'xlsx', 
-        type: 'array',
-        cellStyles: false, // Disable cell styles to avoid potential issues
-        compression: true  // Enable compression for better compatibility
-      });
-
-      return new Blob([excelBuffer], { 
-        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
-      });
+      return new Blob([toSpreadsheetXml(cleanData)], { type: EXCEL_MIME_TYPE });
     } catch (error) {
       console.error('Excel export error:', error);
-      // Fallback: create a simple CSV-like Excel file
-      const workbook = XLSX.utils.book_new();
-      const worksheet = XLSX.utils.aoa_to_sheet([
-        ['Export Error'],
-        ['Failed to create Excel file'],
-        ['Error:', String(error)]
-      ]);
-      XLSX.utils.book_append_sheet(workbook, worksheet, 'Error');
-      const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-      return new Blob([excelBuffer], { 
-        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
-      });
+      const fallbackRows = [
+        { Message: 'Failed to create Excel file' },
+        { Message: String(error) }
+      ];
+      return new Blob([toSpreadsheetXml(fallbackRows, 'Error')], { type: EXCEL_MIME_TYPE });
     }
   }
 
@@ -444,7 +449,7 @@ class ExportImportService {
       case 'json':
         return 'application/json';
       case 'excel':
-        return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+        return EXCEL_MIME_TYPE;
       default:
         return 'text/plain';
     }

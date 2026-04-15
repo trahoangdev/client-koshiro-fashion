@@ -29,7 +29,7 @@ function cleanMarkdown(text: string): string {
     // Clean up multiple consecutive asterisks in the middle of text that don't form valid bold/italic
     .replace(/(\S)\*{3,}(\S)/g, '$1 $2')
     // Clean up lines that are just asterisks or underscores (malformed horizontal rules)
-    .replace(/^[\s]*[\*_]{1,2}[\s]*$/gm, '')
+    .replace(/^[\s]*[*_]{1,2}[\s]*$/gm, '')
     // Trim extra whitespace
     .trim();
 }
@@ -65,11 +65,11 @@ function stripMarkdownSyntax(text: string): string {
     // Remove images
     .replace(/!\[([^\]]*)\]\([^)]+\)/g, '')
     // Remove horizontal rules
-    .replace(/^[\*\-_]{3,}$/gm, '')
+    .replace(/^[*_-]{3,}$/gm, '')
     // Remove blockquotes
     .replace(/^>\s+/gm, '')
     // Remove list markers
-    .replace(/^[\*\-+]\s+/gm, '')
+    .replace(/^[*+-]\s+/gm, '')
     .replace(/^\d+\.\s+/gm, '')
     // Clean up extra whitespace
     .replace(/\n{3,}/g, '\n\n')
