@@ -255,10 +255,12 @@ export default function AdminActivity() {
 
   useEffect(() => {
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     filterActivities();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activities, searchTerm, selectedCategory, selectedSeverity, dateRange]);
 
   const loadData = async () => {

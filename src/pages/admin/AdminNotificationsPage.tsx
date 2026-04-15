@@ -48,6 +48,8 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts";
 import { Notification } from "@/lib/api";
 
+type NotificationCategory = Notification['category'];
+
 interface NotificationSettings {
   email: boolean;
   push: boolean;
@@ -121,6 +123,7 @@ export default function AdminNotificationsPage() {
 
   useEffect(() => {
     filterNotifications();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [notifications, searchTerm, filterType, filterCategory, filterStatus]);
 
   const filterNotifications = () => {
@@ -192,7 +195,7 @@ export default function AdminNotificationsPage() {
 
   const handleArchiveNotification = async (id: string) => {
     try {
-      await archiveNotification(id);
+      await deleteNotification(id);
       toast({
         title: language === 'vi' ? "Đã lưu trữ thông báo" : 
                language === 'ja' ? "通知がアーカイブされました" : 
@@ -585,7 +588,7 @@ export default function AdminNotificationsPage() {
                     </div>
                     <div className="grid gap-2">
                       <Label htmlFor="category">Category</Label>
-                      <Select value={formData.category} onValueChange={(value: string) => setFormData(prev => ({ ...prev, category: value }))}>
+                      <Select value={formData.category} onValueChange={(value: NotificationCategory) => setFormData(prev => ({ ...prev, category: value }))}>
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
@@ -1011,7 +1014,7 @@ export default function AdminNotificationsPage() {
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="edit-category">Category</Label>
-                  <Select value={formData.category} onValueChange={(value: string) => setFormData(prev => ({ ...prev, category: value }))}>
+                  <Select value={formData.category} onValueChange={(value: NotificationCategory) => setFormData(prev => ({ ...prev, category: value }))}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>

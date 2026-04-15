@@ -241,6 +241,7 @@ export default function AdminInventoryPage() {
   useEffect(() => {
     loadInventory();
     loadStockMovements();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadInventory = async () => {

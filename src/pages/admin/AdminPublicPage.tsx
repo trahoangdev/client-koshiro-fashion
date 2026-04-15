@@ -68,6 +68,7 @@ export default function AdminPublicPage() {
                 loadSettings();
             }
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [authLoading, isAuthenticated, user, navigate]);
 
     const loadSettings = async () => {
