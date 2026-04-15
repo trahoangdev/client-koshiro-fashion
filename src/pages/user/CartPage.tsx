@@ -1,0 +1,603 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useSettings } from '@/contexts/SettingsContext';
+import { useAuth } from '@/contexts';
+import { formatCurrency } from '@/lib/currency';
+import { api, Product } from '@/lib/api';
+import { guestCartService, GuestCartItem } from '@/lib/guestStorage';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Separator } from '@/components/ui/separator';
+import { Loader2, ShoppingCart, Trash2, Plus, Minus, ArrowLeft, CreditCard, Truck } from 'lucide-react';
+import { logger } from '@/lib/logger';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+
+interface CartItem {
+  productId: string;
+  product: Product;
+  quantity: number;
+  selectedSize?: string;
+  selectedColor?: string;
+}
+
+const CartPage: React.FC = () => {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const { language } = useLanguage();
+  const { settings } = useSettings();
+  const { isAuthenticated } = useAuth();
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState<string | null>(null);
+
+  const getProductImage = (product: Product | undefined) => {
+    if (!product) return '/placeholder.svg';
+    if (product.cloudinaryImages && product.cloudinaryImages.length > 0) {
+      return product.cloudinaryImages[0].secureUrl;
+    }
+    if (product.images && product.images.length > 0) {
+      return product.images[0];
+    }
+    return '/placeholder.svg';
+  };
+
+  const cartItemsCount = cartItems.reduce((count, item) => count + item.quantity, 0);
+
+  // Load cart - from API if authenticated, from localStorage if guest
+  useEffect(() => {
+    const loadCart = async () => {
+      try {
+        setLoading(true);
+
+        if (isAuthenticated) {
+          // Load from API for authenticated users
+          const response = await api.getCart();
+          if (response && response.items && Array.isArray(response.items)) {
+            const cartItemsData = response.items
+              .filter((item: {
+                productId: string;
+                quantity: number;
+                size?: string;
+                color?: string;
+                product: Product;
+              }) => item && item.product && item.product._id)
+              .map((item: {
+                productId: string;
+                quantity: number;
+                size?: string;
+                color?: string;
+                product: Product;
+              }) => ({
+                productId: item.productId,
+                product: item.product,
+                quantity: item.quantity,
+                selectedSize: item.size,
+                selectedColor: item.color
+              }));
+            setCartItems(cartItemsData);
+          } else {
+            setCartItems([]);
+          }
+        } else {
+          // Load from localStorage for guests
+          const guestCart = guestCartService.getCart();
+          setCartItems(guestCart.map(item => ({
+            productId: item.productId,
+            product: item.product,
+            quantity: item.quantity,
+            selectedSize: item.selectedSize,
+            selectedColor: item.selectedColor
+          })));
+        }
+      } catch (error) {
+        logger.error('Error loading cart', error);
+        toast({
+          title: language === 'vi' ? "Lỗi tải dữ liệu" :
+            language === 'ja' ? "データ読み込みエラー" :
+              "Error Loading Data",
+          description: language === 'vi' ? "Không thể tải thông tin giỏ hàng" :
+            language === 'ja' ? "カート情報を読み込めませんでした" :
+              "Unable to load cart information",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadCart();
+
+    // Listen for guest cart updates
+    const handleGuestCartUpdate = () => {
+      if (!isAuthenticated) {
+        const guestCart = guestCartService.getCart();
+        setCartItems(guestCart.map(item => ({
+          productId: item.productId,
+          product: item.product,
+          quantity: item.quantity,
+          selectedSize: item.selectedSize,
+          selectedColor: item.selectedColor
+        })));
+      }
+    };
+
+    window.addEventListener('guestCartUpdated', handleGuestCartUpdate);
+    return () => window.removeEventListener('guestCartUpdated', handleGuestCartUpdate);
+  }, [isAuthenticated, toast, language]);
+
+  const updateQuantity = async (productId: string, newQuantity: number, selectedSize?: string, selectedColor?: string) => {
+    if (newQuantity < 1) return;
+
+    try {
+      setUpdating(productId);
+
+      if (isAuthenticated) {
+        // Update via API for authenticated users
+        await api.updateCartItem(productId, newQuantity);
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('cartUpdated'));
+        }, 100);
+      } else {
+        // Update localStorage for guests
+        guestCartService.updateQuantity(productId, newQuantity, selectedSize, selectedColor);
+      }
+
+      setCartItems(prev => prev.map(item =>
+        item.productId === productId &&
+        item.selectedSize === selectedSize &&
+        item.selectedColor === selectedColor
+          ? { ...item, quantity: newQuantity }
+          : item
+      ));
+
+      toast({
+        title: language === 'vi' ? "Cập nhật số lượng" :
+          language === 'ja' ? "数量を更新" :
+            "Quantity Updated",
+        description: language === 'vi' ? "Số lượng đã được cập nhật" :
+          language === 'ja' ? "数量が更新されました" :
+            "Quantity has been updated",
+      });
+    } catch (error) {
+      logger.error('Error updating quantity', error);
+      toast({
+        title: language === 'vi' ? "Lỗi" :
+          language === 'ja' ? "エラー" :
+            "Error",
+        description: language === 'vi' ? "Không thể cập nhật số lượng" :
+          language === 'ja' ? "数量を更新できませんでした" :
+            "Could not update quantity",
+        variant: "destructive",
+      });
+    } finally {
+      setUpdating(null);
+    }
+  };
+
+  const removeItem = async (productId: string, selectedSize?: string, selectedColor?: string) => {
+    try {
+      if (isAuthenticated) {
+        await api.removeFromCart(productId);
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('cartUpdated'));
+        }, 100);
+      } else {
+        guestCartService.removeFromCart(productId, selectedSize, selectedColor);
+      }
+
+      setCartItems(prev => prev.filter(item =>
+        !(
+          item.productId === productId &&
+          item.selectedSize === selectedSize &&
+          item.selectedColor === selectedColor
+        )
+      ));
+
+      toast({
+        title: language === 'vi' ? "Xóa sản phẩm" :
+          language === 'ja' ? "商品を削除" :
+            "Item Removed",
+        description: language === 'vi' ? "Sản phẩm đã được xóa khỏi giỏ hàng" :
+          language === 'ja' ? "商品がカートから削除されました" :
+            "Item has been removed from cart",
+      });
+    } catch (error) {
+      logger.error('Error removing item', error);
+      toast({
+        title: language === 'vi' ? "Lỗi" :
+          language === 'ja' ? "エラー" :
+            "Error",
+        description: language === 'vi' ? "Không thể xóa sản phẩm" :
+          language === 'ja' ? "商品を削除できませんでした" :
+            "Could not remove item",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleClearCart = async () => {
+    try {
+      setLoading(true);
+
+      if (isAuthenticated) {
+        await api.clearCart();
+        window.dispatchEvent(new CustomEvent('cartUpdated'));
+      } else {
+        guestCartService.clearCart();
+      }
+
+      setCartItems([]);
+
+      toast({
+        title: language === 'vi' ? "Thành công" : language === 'ja' ? "成功" : "Success",
+        description: language === 'vi' ? "Đã xóa tất cả sản phẩm" : language === 'ja' ? "カートを空にしました" : "All items removed",
+      });
+    } catch (error) {
+      logger.error('Error clearing cart', error);
+      toast({
+        title: language === 'vi' ? "Lỗi" : language === 'ja' ? "エラー" : "Error",
+        description: language === 'vi' ? "Không thể xóa giỏ hàng" : language === 'ja' ? "カートを空にできませんでした" : "Could not clear cart",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCheckout = () => {
+    if (!isAuthenticated) {
+      // Redirect to login with return URL
+      toast({
+        title: language === 'vi' ? "Cần đăng nhập" :
+          language === 'ja' ? "ログインが必要です" :
+            "Login Required",
+        description: language === 'vi' ? "Vui lòng đăng nhập để tiến hành thanh toán" :
+          language === 'ja' ? "チェックアウトするにはログインしてください" :
+            "Please login to proceed to checkout",
+      });
+      navigate('/login?redirect=/checkout');
+      return;
+    }
+    navigate('/checkout');
+  };
+
+  const calculateSubtotal = () => {
+    return cartItems.reduce((total, item) => total + (item.product.price * item.quantity), 0);
+  };
+
+  const calculateShipping = () => {
+    return calculateSubtotal() > 2000000 ? 0 : 50000;
+  };
+
+  const calculateTax = () => {
+    return calculateSubtotal() * 0.1;
+  };
+
+  const calculateTotal = () => {
+    return calculateSubtotal() + calculateShipping() + calculateTax();
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex items-center justify-center h-64">
+            <Card className="rounded-xl border-2 shadow-lg p-8">
+              <CardContent className="flex flex-col items-center space-y-4">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <span className="text-lg font-medium">{language === 'vi' ? "Đang tải..." : language === 'ja' ? "読み込み中..." : "Loading..."}</span>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (cartItems.length === 0) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-2xl mx-auto">
+            <Card className="rounded-xl border-2 shadow-xl overflow-hidden">
+              <CardContent className="p-12 text-center">
+                <div className="flex justify-center mb-6">
+                  <div className="p-4 rounded-full bg-muted/50">
+                    <ShoppingCart className="h-16 w-16 text-muted-foreground" />
+                  </div>
+                </div>
+                <h1 className="text-3xl font-bold mb-3">
+                  {language === 'vi' ? "Giỏ hàng trống" : language === 'ja' ? "カートは空です" : "Your cart is empty"}
+                </h1>
+                <p className="text-muted-foreground mb-8 text-lg">
+                  {language === 'vi' ? "Bạn chưa có sản phẩm nào trong giỏ hàng" : language === 'ja' ? "カートに商品がありません" : "You don't have any items in your cart"}
+                </p>
+                <Button
+                  onClick={() => navigate('/')}
+                  size="lg"
+                  className="rounded-xl font-semibold px-8"
+                >
+                  {language === 'vi' ? "Tiếp tục mua sắm" : language === 'ja' ? "買い物を続ける" : "Continue Shopping"}
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+      <div className="container mx-auto px-4 py-8">
+        {/* Hero Section */}
+        <section className="text-center mb-8">
+          <div className="relative overflow-hidden rounded-2xl shadow-2xl">
+            <div className="absolute inset-0">
+              <img
+                src={settings?.banners?.cart || "/images/banners/koshiro-cart-bg.png"}
+                alt="Cart Banner"
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/50 to-black/60"></div>
+            </div>
+
+            <div className="relative z-10 p-12 text-white">
+              <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-white via-white to-white/80 bg-clip-text text-transparent">
+                {language === 'vi' ? "Giỏ hàng" : language === 'ja' ? "ショッピングカート" : "Shopping Cart"}
+              </h1>
+              <div className="flex justify-center gap-2">
+                <Badge variant="secondary" className="bg-white/20 backdrop-blur-sm text-white text-lg px-6 py-2 border border-white/30 font-semibold">
+                  <ShoppingCart className="h-5 w-5 mr-2" />
+                  {cartItems.length} {language === 'vi' ? "sản phẩm" : language === 'ja' ? "商品" : "items"}
+                </Badge>
+                {!isAuthenticated && (
+                  <Badge variant="outline" className="bg-amber-500/20 backdrop-blur-sm text-amber-100 text-sm px-4 py-2 border border-amber-300/30">
+                    {language === 'vi' ? "Chế độ khách" : language === 'ja' ? "ゲストモード" : "Guest Mode"}
+                  </Badge>
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Toolbar */}
+        <div className="flex items-center justify-between mb-8 p-4 rounded-xl border-2 bg-background/95 backdrop-blur-sm shadow-sm">
+          <Button
+            variant="outline"
+            onClick={() => navigate('/')}
+            className="rounded-lg font-medium border-2 hover:bg-primary/5 hover:text-primary hover:border-primary transition-all"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            {language === 'vi' ? "Tiếp tục mua sắm" : language === 'ja' ? "買い物を続ける" : "Continue Shopping"}
+          </Button>
+
+          {cartItems.length >= 3 && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="rounded-lg text-destructive hover:bg-destructive/10 hover:text-destructive font-medium transition-all"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  {language === 'vi' ? "Xóa tất cả" : language === 'ja' ? "すべて削除" : "Clear All"}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>{language === 'vi' ? "Xóa tất cả sản phẩm?" : language === 'ja' ? "すべての商品を削除しますか？" : "Clear all items?"}</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    {language === 'vi'
+                      ? "Hành động này không thể hoàn tác. Tất cả sản phẩm trong giỏ hàng của bạn sẽ bị xóa."
+                      : language === 'ja'
+                        ? "この操作は取り消せません。カート内のすべての商品が削除されます。"
+                        : "This action cannot be undone. This will permanently remove all items from your cart."}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>{language === 'vi' ? "Hủy" : language === 'ja' ? "キャンセル" : "Cancel"}</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleClearCart} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                    {language === 'vi' ? "Xóa" : language === 'ja' ? "削除" : "Clear"}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Cart Items */}
+          <div className="lg:col-span-2 space-y-4">
+            {cartItems.map((item) => (
+              <Card key={item.product?._id || item.productId} className="overflow-hidden rounded-xl border-2 shadow-lg hover:shadow-xl transition-all">
+                <div className="flex">
+                  <div className="w-32 flex-shrink-0 bg-muted rounded-l-xl overflow-hidden">
+                    <img
+                      src={getProductImage(item.product)}
+                      alt={item.product?.name || 'Product'}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+
+                  <div className="flex-1 p-6 flex flex-col">
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="flex-1">
+                        <h3 className="font-bold text-xl mb-2 group-hover:text-primary transition-colors">
+                          {item.product?.name || 'Product'}
+                        </h3>
+                        <p className="text-muted-foreground text-sm mb-3">
+                          {typeof item.product?.categoryId === 'string'
+                            ? 'Category'
+                            : item.product?.categoryId?.name || 'Category'}
+                        </p>
+                        <div className="flex items-center space-x-2 mb-3">
+                          {item.selectedSize && (
+                            <Badge variant="secondary" className="text-xs font-medium px-2 py-1 rounded-md">
+                              {language === 'vi' ? "Size" : language === 'ja' ? "サイズ" : "Size"}: {item.selectedSize}
+                            </Badge>
+                          )}
+                          {item.selectedColor && (
+                            <Badge variant="secondary" className="text-xs font-medium px-2 py-1 rounded-md">
+                              {language === 'vi' ? "Màu" : language === 'ja' ? "色" : "Color"}: {item.selectedColor}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeItem(item.product?._id || item.productId, item.selectedSize, item.selectedColor)}
+                        disabled={updating === (item.product?._id || item.productId)}
+                        className="rounded-lg hover:bg-destructive/10 hover:text-destructive transition-all ml-2"
+                      >
+                        {updating === (item.product?._id || item.productId) ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-4 mt-auto border-t">
+                      <div className="flex items-center space-x-2 bg-muted/30 rounded-lg p-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => updateQuantity(item.product?._id || item.productId, item.quantity - 1, item.selectedSize, item.selectedColor)}
+                          disabled={item.quantity <= 1 || updating === (item.product?._id || item.productId)}
+                          className="rounded-md h-8 w-8 p-0 hover:bg-background"
+                        >
+                          <Minus className="h-4 w-4" />
+                        </Button>
+
+                        <Input
+                          type="number"
+                          min="1"
+                          max={item.product?.stock || 1}
+                          value={item.quantity}
+                          onChange={(e) => updateQuantity(item.product?._id || item.productId, parseInt(e.target.value) || 1, item.selectedSize, item.selectedColor)}
+                          className="w-14 text-center rounded-md border-0 bg-background font-semibold h-8 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                          disabled={updating === (item.product?._id || item.productId)}
+                        />
+
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => updateQuantity(item.product?._id || item.productId, item.quantity + 1, item.selectedSize, item.selectedColor)}
+                          disabled={item.quantity >= (item.product?.stock || 1) || updating === (item.product?._id || item.productId)}
+                          className="rounded-md h-8 w-8 p-0 hover:bg-background"
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      </div>
+
+                      <div className="text-right ml-4">
+                        <div className="text-xl font-bold text-primary mb-1">
+                          {formatCurrency((item.product?.price || 0) * item.quantity, language)}
+                        </div>
+                        {item.product?.originalPrice && item.product.originalPrice > (item.product?.price || 0) && (
+                          <div className="text-sm text-muted-foreground line-through">
+                            {formatCurrency(item.product.originalPrice * item.quantity, language)}
+                          </div>
+                        )}
+                        {item.product?.price && item.product.originalPrice && item.product.originalPrice > item.product.price && (
+                          <Badge variant="destructive" className="text-xs mt-1">
+                            -{Math.round(((item.product.originalPrice - item.product.price) / item.product.originalPrice) * 100)}%
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+
+          {/* Order Summary */}
+          <div className="lg:col-span-1">
+            <Card className="rounded-xl border-2 shadow-xl sticky top-4">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg font-bold">{language === 'vi' ? "Tóm tắt đơn hàng" : language === 'ja' ? "注文サマリー" : "Order Summary"}</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-3 p-3 rounded-lg bg-muted/30">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-muted-foreground">{language === 'vi' ? "Tạm tính" : language === 'ja' ? "小計" : "Subtotal"}</span>
+                    <span className="font-semibold">{formatCurrency(calculateSubtotal(), language)}</span>
+                  </div>
+
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-muted-foreground">{language === 'vi' ? "Phí vận chuyển" : language === 'ja' ? "配送料" : "Shipping"}</span>
+                    <span className={calculateShipping() === 0 ? 'text-green-600 font-semibold' : 'font-semibold'}>
+                      {calculateShipping() === 0 ? language === 'vi' ? "Miễn phí" : language === 'ja' ? "送料無料" : "Free" : formatCurrency(calculateShipping(), language)}
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-muted-foreground">{language === 'vi' ? "Thuế" : language === 'ja' ? "税金" : "Tax"}</span>
+                    <span className="font-semibold">{formatCurrency(calculateTax(), language)}</span>
+                  </div>
+
+                  <Separator className="my-2" />
+
+                  <div className="flex justify-between items-center pt-2">
+                    <span className="text-lg font-bold">{language === 'vi' ? "Tổng cộng" : language === 'ja' ? "合計" : "Total"}</span>
+                    <span className="text-xl font-bold text-primary">{formatCurrency(calculateTotal(), language)}</span>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <Button
+                    className="w-full rounded-xl font-semibold text-lg h-12 shadow-lg hover:shadow-xl transition-all"
+                    size="lg"
+                    onClick={handleCheckout}
+                  >
+                    <CreditCard className="h-5 w-5 mr-2" />
+                    {!isAuthenticated
+                      ? (language === 'vi' ? "Đăng nhập để thanh toán" : language === 'ja' ? "ログインしてチェックアウト" : "Login to Checkout")
+                      : (language === 'vi' ? "Thanh toán" : language === 'ja' ? "チェックアウト" : "Proceed to Checkout")
+                    }
+                  </Button>
+
+                  {!isAuthenticated && (
+                    <p className="text-xs text-center text-muted-foreground">
+                      {language === 'vi'
+                        ? "Giỏ hàng của bạn sẽ được lưu khi đăng nhập"
+                        : language === 'ja'
+                          ? "カートはログイン時に保存されます"
+                          : "Your cart will be saved when you log in"}
+                    </p>
+                  )}
+
+                  <div className="flex items-center space-x-2 p-3 rounded-lg bg-muted/30 text-sm">
+                    <Truck className="h-4 w-4 text-primary" />
+                    <span className="text-muted-foreground">
+                      {language === 'vi' ? "Dự kiến giao hàng" : language === 'ja' ? "配送予定日" : "Estimated Delivery"}: {language === 'vi' ? "3-5 ngày làm việc" : language === 'ja' ? "3-5営業日" : "3-5 business days"}
+                    </span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default CartPage;
