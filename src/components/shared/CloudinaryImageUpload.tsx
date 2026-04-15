@@ -6,6 +6,7 @@ import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { X, Upload, Image as ImageIcon, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { API_BASE_URL, getAuthToken } from '@/lib/env';
 
 interface CloudinaryImage {
   publicId: string;
@@ -164,10 +165,11 @@ export const CloudinaryImageUpload: React.FC<CloudinaryImageUploadProps> = memo(
         });
       }, 150); // Increased interval to reduce frequency
 
-      const response = await fetch('/api/products/upload-images', {
+      const token = getAuthToken();
+      const response = await fetch(`${API_BASE_URL}/products/upload-images`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
         },
         body: formData
       });
@@ -250,11 +252,12 @@ export const CloudinaryImageUpload: React.FC<CloudinaryImageUploadProps> = memo(
     isDeletingRef.current = publicId;
     
     try {
-      const response = await fetch('/api/products/delete-images', {
+      const token = getAuthToken();
+      const response = await fetch(`${API_BASE_URL}/products/delete-images`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
         },
         body: JSON.stringify({ publicIds: [publicId] })
       });

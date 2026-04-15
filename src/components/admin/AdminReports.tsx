@@ -136,13 +136,15 @@ export default function AdminReports() {
           api.getProducts({ page: 1, limit: 100 })
         ]);
 
+        const products = productsResponse.products || [];
+
         // Transform data for reports
         const transformedData: ReportData = {
           salesReport: {
             totalSales: statsResponse.totalRevenue,
             totalOrders: statsResponse.totalOrders,
             averageOrderValue: statsResponse.totalRevenue / statsResponse.totalOrders || 0,
-            topProducts: productsResponse.data.slice(0, 10).map(product => ({
+            topProducts: products.slice(0, 10).map(product => ({
               name: product.name,
               sales: Math.floor(Math.random() * 100) + 10, // Mock data
               quantity: Math.floor(Math.random() * 50) + 5,
@@ -186,7 +188,7 @@ export default function AdminReports() {
             totalProducts: statsResponse.totalProducts,
             lowStockProducts: Math.floor(statsResponse.totalProducts * 0.2),
             outOfStockProducts: Math.floor(statsResponse.totalProducts * 0.05),
-            topSellingProducts: productsResponse.data.slice(0, 10).map(product => ({
+            topSellingProducts: products.slice(0, 10).map(product => ({
               name: product.name,
               category: typeof product.categoryId === 'object' ? product.categoryId.name : 'Unknown',
               stock: product.stock,

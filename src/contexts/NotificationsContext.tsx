@@ -20,6 +20,8 @@ interface NotificationsContextType {
   bulkDelete: (ids: string[]) => Promise<void>;
 }
 
+type CreateNotificationPayload = Parameters<typeof api.createNotification>[0];
+
 const NotificationsContext = createContext<NotificationsContextType | undefined>(undefined);
 
 interface NotificationsProviderProps {
@@ -155,7 +157,21 @@ export const NotificationsProvider: React.FC<NotificationsProviderProps> = ({ ch
     if (!isAdmin) return;
 
     try {
-      await api.createNotification(notificationData);
+      if (!notificationData.title || !notificationData.message || !notificationData.type || !notificationData.category) {
+        throw new Error('title, message, type and category are required to create a notification');
+      }
+
+      const payload: CreateNotificationPayload = {
+        title: notificationData.title,
+        message: notificationData.message,
+        type: notificationData.type,
+        category: notificationData.category,
+        userId: notificationData.userId,
+        actionUrl: notificationData.actionUrl,
+        expiresAt: notificationData.expiresAt
+      };
+
+      await api.createNotification(payload);
       await refreshNotifications();
       logger.debug('Notification created');
     } catch (err: unknown) {
