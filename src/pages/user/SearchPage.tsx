@@ -93,6 +93,7 @@ const SearchPage: React.FC = () => {
         sortBy: 'relevance'
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialQuery]);
 
   const handleSearch = async (filters: SearchFilters) => {

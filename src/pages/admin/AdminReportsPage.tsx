@@ -118,6 +118,7 @@ export default function AdminReportsPage() {
 
   useEffect(() => {
     loadReportData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeRange]);
 
   const loadReportData = async () => {

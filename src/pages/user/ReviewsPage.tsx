@@ -40,7 +40,7 @@ const ReviewsPage = () => {
       try {
         setIsLoading(true);
         const response = await api.getReviews({ limit: 50 });
-        setReviews(response.reviews);
+        setReviews(response.data);
       } catch (error) {
         console.error('Error loading reviews:', error);
         toast({
@@ -100,7 +100,7 @@ const ReviewsPage = () => {
 
       // Reload reviews to show the new one
       const updatedReviews = await api.getReviews({ limit: 50 });
-      setReviews(updatedReviews.reviews);
+      setReviews(updatedReviews.data);
 
       setNewReview({ rating: 5, title: '', comment: '' });
       setShowReviewForm(false);

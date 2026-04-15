@@ -91,6 +91,15 @@ interface UserStats {
   totalRevenue: number;
 }
 
+const getUserRoleName = (role: UserType['role']): string => (
+  typeof role === 'string' ? role : role?.name || ''
+);
+
+const getUserRoleKey = (role: UserType['role']): 'admin' | 'customer' => {
+  const normalizedRole = getUserRoleName(role).toLowerCase();
+  return normalizedRole.includes('admin') ? 'admin' : 'customer';
+};
+
 export default function AdminUsers() {
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -313,10 +322,12 @@ export default function AdminUsers() {
 
   useEffect(() => {
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     filterAndSortUsers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [users, searchTerm, selectedRole, selectedStatus, dateRange, sortBy, sortOrder]);
 
   const loadData = async () => {
@@ -331,8 +342,8 @@ export default function AdminUsers() {
         active: response.data.filter(u => u.status === 'active').length,
         inactive: response.data.filter(u => u.status === 'inactive').length,
         blocked: response.data.filter(u => u.status === 'blocked').length,
-        customers: response.data.filter(u => u.role === 'customer').length,
-        admins: response.data.filter(u => u.role === 'admin').length,
+        customers: response.data.filter(u => getUserRoleKey(u.role) === 'customer').length,
+        admins: response.data.filter(u => getUserRoleKey(u.role) === 'admin').length,
         newThisMonth: response.data.filter(u => {
           const userDate = new Date(u.createdAt);
           const now = new Date();
@@ -367,7 +378,7 @@ export default function AdminUsers() {
 
     // Filter by role
     if (selectedRole !== "all") {
-      filtered = filtered.filter(user => user.role === selectedRole);
+      filtered = filtered.filter(user => getUserRoleKey(user.role) === selectedRole);
     }
 
     // Filter by status
@@ -429,8 +440,8 @@ export default function AdminUsers() {
           bValue = b.email;
           break;
         case "role":
-          aValue = a.role;
-          bValue = b.role;
+          aValue = getUserRoleName(a.role);
+          bValue = getUserRoleName(b.role);
           break;
         case "status":
           aValue = a.status;
@@ -646,13 +657,13 @@ export default function AdminUsers() {
     );
   };
 
-  const getRoleBadge = (role: string) => {
+  const getRoleBadge = (role: UserType['role']) => {
     const roleConfig = {
       admin: { label: t.admin, variant: "default" as const, icon: Shield },
       customer: { label: t.customer, variant: "secondary" as const, icon: User }
     };
     
-    const config = roleConfig[role as keyof typeof roleConfig] || roleConfig.customer;
+    const config = roleConfig[getUserRoleKey(role)] || roleConfig.customer;
     const Icon = config.icon;
     
     return (
@@ -704,7 +715,7 @@ export default function AdminUsers() {
         name: user.name,
         email: user.email,
         phone: user.phone || '',
-        role: user.role,
+        role: getUserRoleName(user.role),
         status: user.status,
         isActive: user.isActive,
         totalOrders: user.totalOrders,
