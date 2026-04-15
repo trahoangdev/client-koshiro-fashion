@@ -3,6 +3,7 @@ import { Upload, X, Play, Loader2, Video, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import { API_BASE_URL, getAuthToken } from '@/lib/env';
 
 interface CloudinaryVideo {
   publicId: string;
@@ -27,7 +28,7 @@ const CloudinaryVideoUpload = memo(function CloudinaryVideoUpload({
   existingVideos = [],
   maxFiles = 5,
   maxSize = 100 * 1024 * 1024, // 100MB
-  acceptedTypes = ['video/mp4', 'video/webm', 'video/ogg', 'video/avi', 'video/mov', 'video/wmv']
+  acceptedTypes = ['video/mp4', 'video/webm', 'video/ogg', 'video/avi', 'video/mov', 'video/quicktime', 'video/wmv']
 }: CloudinaryVideoUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [uploadedVideos, setUploadedVideos] = useState<CloudinaryVideo[]>(existingVideos);
@@ -94,16 +95,17 @@ const CloudinaryVideoUpload = memo(function CloudinaryVideoUpload({
         formData.append('videos', file);
       });
 
-      const response = await fetch('/api/upload/videos', {
+      const response = await fetch(`${API_BASE_URL}/upload/videos`, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('token') || ''}`,
+          Authorization: `Bearer ${getAuthToken() || ''}`,
         },
         body: formData,
       });
 
       if (!response.ok) {
-        throw new Error('Upload failed');
+        const errorBody = await response.json().catch(() => null);
+        throw new Error(errorBody?.message || 'Upload failed');
       }
 
       const result = await response.json();
@@ -291,6 +293,7 @@ const CloudinaryVideoUpload = memo(function CloudinaryVideoUpload({
                           Video {index + 1}
                         </span>
                         <Button
+                          type="button"
                           variant="ghost"
                           size="sm"
                           onClick={() => handleRemoveVideo(video.publicId)}

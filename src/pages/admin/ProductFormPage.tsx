@@ -44,6 +44,13 @@ interface ProductFormData {
       original: string;
     };
   }>;
+  videos: Array<{
+    publicId: string;
+    secureUrl: string;
+    duration?: number;
+    format: string;
+    bytes: number;
+  }>;
   sizes: string[];
   colors: Array<string | { name: string; value: string }>;
   stock: number;
@@ -238,6 +245,13 @@ export default function ProductFormPage() {
               categoryId: typeof product.categoryId === 'string' ? product.categoryId : product.categoryId._id,
               images: product.images || [],
               cloudinaryImages: product.cloudinaryImages || [],
+              videos: product.videos?.map(video => ({
+                publicId: video.publicId || '',
+                secureUrl: video.secureUrl || video.url || '',
+                duration: video.duration,
+                format: video.format || '',
+                bytes: video.bytes || 0
+              })).filter(video => video.publicId && video.secureUrl) || [],
               sizes: product.sizes || [],
               colors: product.colors || [],
               stock: product.stock,
@@ -288,6 +302,7 @@ export default function ProductFormPage() {
             categoryId: '',
             images: [],
             cloudinaryImages: [],
+            videos: [],
             sizes: [],
             colors: [],
             stock: 0,

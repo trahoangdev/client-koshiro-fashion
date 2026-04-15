@@ -555,11 +555,16 @@ const ProductDetail: React.FC = () => {
         // Add videos (if product has videos property)
         if (response.product.videos && Array.isArray(response.product.videos)) {
           response.product.videos.forEach((video, index) => {
+            const videoUrl = video.secureUrl || video.url;
+            if (!videoUrl) {
+              return;
+            }
+
             media.push({
               id: `video-${index}`,
               type: 'video',
-              url: video.url,
-              thumbnail: video.thumbnail || response.product.images[0],
+              url: videoUrl,
+              thumbnail: video.thumbnail || response.product.cloudinaryImages?.[0]?.responsiveUrls?.medium || response.product.images[0],
               alt: `${response.product.name} video ${index + 1}`
             });
           });

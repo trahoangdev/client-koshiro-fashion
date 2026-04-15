@@ -41,6 +41,7 @@ const ProductMediaGallery: React.FC<ProductMediaGalleryProps> = ({
   const [selectedMediaIndex, setSelectedMediaIndex] = useState(0);
   const [isImageZoomed, setIsImageZoomed] = useState(false);
   const [videoPlaying, setVideoPlaying] = useState<{ [key: string]: boolean }>({});
+  const [videoAspectRatio, setVideoAspectRatio] = useState<number | null>(null);
 
   if (mediaItems.length === 0) {
     return (
@@ -64,7 +65,10 @@ const ProductMediaGallery: React.FC<ProductMediaGalleryProps> = ({
           {mediaItems.map((media, index) => (
             <button
               key={media.id}
-              onClick={() => setSelectedMediaIndex(index)}
+              onClick={() => {
+                setSelectedMediaIndex(index);
+                if (media.type !== 'video') setVideoAspectRatio(null);
+              }}
               className={`w-20 h-20 bg-white rounded-lg overflow-hidden border-2 transition-all duration-200 hover:border-primary/50 relative ${
                 selectedMediaIndex === index ? 'border-primary ring-2 ring-primary/20' : 'border-border'
               }`}
@@ -96,15 +100,21 @@ const ProductMediaGallery: React.FC<ProductMediaGalleryProps> = ({
 
       {/* Main Media Display - Right Side */}
       <div className="flex-1">
-        <div className="aspect-square bg-white rounded-2xl shadow-xl overflow-hidden border relative group">
+        <div className={`bg-white rounded-2xl shadow-xl overflow-hidden border relative group ${currentMedia?.type === 'video' ? '' : 'aspect-square'}`}>
           {currentMedia?.type === 'video' ? (
-            <div className="relative w-full h-full">
+            <div className="relative w-full" style={videoAspectRatio ? { aspectRatio: videoAspectRatio } : undefined}>
               <video
                 key={currentMedia.id}
                 src={currentMedia.url}
                 poster={currentMedia.thumbnail}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain rounded-2xl bg-black"
                 controls
+                onLoadedMetadata={(e) => {
+                  const video = e.currentTarget;
+                  if (video.videoWidth && video.videoHeight) {
+                    setVideoAspectRatio(video.videoWidth / video.videoHeight);
+                  }
+                }}
                 onPlay={() => setVideoPlaying({ [currentMedia.id]: true })}
                 onPause={() => setVideoPlaying({ [currentMedia.id]: false })}
               />

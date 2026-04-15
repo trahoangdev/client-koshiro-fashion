@@ -590,6 +590,7 @@ class ApiClient extends HttpClient {
     categoryId: string;
     images: string[];
     cloudinaryImages?: CloudinaryImage[];
+    videos?: ProductVideo[];
     sizes: string[];
     colors: string[];
     stock: number;
@@ -626,6 +627,7 @@ class ApiClient extends HttpClient {
     categoryId?: string;
     images?: string[];
     cloudinaryImages?: CloudinaryImage[];
+    videos?: ProductVideo[];
     sizes?: string[];
     colors?: string[];
     stock?: number;

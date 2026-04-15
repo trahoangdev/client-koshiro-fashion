@@ -37,6 +37,7 @@ import MDEditor from '@uiw/react-md-editor';
 import '@uiw/react-md-editor/markdown-editor.css';
 import '@/styles/markdown-editor.css';
 import CloudinaryImageUpload from '@/components/shared/CloudinaryImageUpload';
+import CloudinaryVideoUpload from '@/components/shared/CloudinaryVideoUpload';
 
 interface CloudinaryImage {
   publicId: string;
@@ -53,6 +54,14 @@ interface CloudinaryImage {
   };
 }
 
+interface CloudinaryVideo {
+  publicId: string;
+  secureUrl: string;
+  duration?: number;
+  format: string;
+  bytes: number;
+}
+
 interface ProductFormData {
   name: string;
   nameEn: string;
@@ -65,6 +74,7 @@ interface ProductFormData {
   categoryId: string;
   images: string[]; // Legacy field for backward compatibility
   cloudinaryImages: CloudinaryImage[]; // New Cloudinary images
+  videos: CloudinaryVideo[];
   sizes: string[];
   colors: Array<string | { name: string; value: string }>;
   stock: number;
@@ -246,6 +256,7 @@ export default function ProductForm({
       categoryId: '',
       images: [], // Legacy field
       cloudinaryImages: [], // New Cloudinary images
+      videos: [],
       sizes: [],
       colors: [],
       stock: 0,
@@ -428,6 +439,7 @@ export default function ProductForm({
       originalPrice: 'Original Price',
       category: 'Category',
       images: 'Product Images',
+      videos: 'Product Videos',
       sizes: 'Available Sizes',
       colors: 'Available Colors',
       stock: 'Stock Quantity',
@@ -487,6 +499,7 @@ export default function ProductForm({
       originalPrice: 'Giá Gốc',
       category: 'Danh Mục',
       images: 'Hình Ảnh Sản Phẩm',
+      videos: 'Video Sản Phẩm',
       sizes: 'Kích Thước Có Sẵn',
       colors: 'Màu Sắc Có Sẵn',
       stock: 'Số Lượng Tồn Kho',
@@ -546,6 +559,7 @@ export default function ProductForm({
       originalPrice: '原価',
       category: 'カテゴリ',
       images: '商品画像',
+      videos: '商品動画',
       sizes: '利用可能なサイズ',
       colors: '利用可能な色',
       stock: '在庫数量',
@@ -1051,6 +1065,20 @@ export default function ProductForm({
     setFormData(prev => ({
       ...prev,
       cloudinaryImages: prev.cloudinaryImages.filter(img => !publicIds.includes(img.publicId))
+    }));
+  };
+
+  const handleCloudinaryVideosUploaded = (newVideos: CloudinaryVideo[]) => {
+    setFormData(prev => ({
+      ...prev,
+      videos: [...prev.videos, ...newVideos]
+    }));
+  };
+
+  const handleCloudinaryVideosRemoved = (publicIds: string[]) => {
+    setFormData(prev => ({
+      ...prev,
+      videos: prev.videos.filter(video => !publicIds.includes(video.publicId))
     }));
   };
 
@@ -1644,6 +1672,20 @@ export default function ProductForm({
                 maxFiles={10}
                 maxSize={10 * 1024 * 1024} // 10MB
                 acceptedTypes={['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']}
+              />
+            </div>
+
+            <Separator />
+
+            <div className="space-y-2">
+              <Label>{t.videos}</Label>
+              <CloudinaryVideoUpload
+                onVideosUploaded={handleCloudinaryVideosUploaded}
+                onVideosRemoved={handleCloudinaryVideosRemoved}
+                existingVideos={formData.videos}
+                maxFiles={5}
+                maxSize={100 * 1024 * 1024}
+                acceptedTypes={['video/mp4', 'video/webm', 'video/ogg', 'video/avi', 'video/mov', 'video/quicktime', 'video/wmv']}
               />
             </div>
           </CardContent>

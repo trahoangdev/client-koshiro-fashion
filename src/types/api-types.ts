@@ -31,10 +31,14 @@ export interface RegisterRequest {
 
 // Product Types
 export interface ProductVideo {
-    url: string;
+    publicId?: string;
+    secureUrl?: string;
+    url?: string;
     thumbnail?: string;
     title?: string;
     duration?: number;
+    format?: string;
+    bytes?: number;
 }
 
 export interface CloudinaryImage {
