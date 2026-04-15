@@ -1,6 +1,16 @@
+import { API_BASE_URL, HttpClient } from './httpClient';
 import { logger } from './logger';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+import { createAuthApi, type AuthApi } from './api/authApi';
+import {
+  createCatalogApi,
+  type CartResponse,
+  type CatalogApi,
+  type CategoryProductsResponse,
+  type CategoryQuery,
+  type ProductQuery,
+  type ReviewsQuery,
+  type ReviewStats
+} from './api/catalogApi';
 
 import {
   ApiResponse,
@@ -124,193 +134,44 @@ export type {
 };
 
 // API Client
-class ApiClient {
-  private baseURL: string;
-  private token: string | null;
+class ApiClient extends HttpClient {
+  private readonly authApi: AuthApi;
+  private readonly catalogApi: CatalogApi;
 
   constructor(baseURL: string) {
-    this.baseURL = baseURL;
-    this.token = localStorage.getItem('token');
-  }
-
-  // Method to update token
-  updateToken(token: string | null) {
-    this.token = token;
-    if (token) {
-      localStorage.setItem('token', token);
-    } else {
-      localStorage.removeItem('token');
-    }
-  }
-
-  private async request<T>(
-    endpoint: string,
-    options: RequestInit = {}
-  ): Promise<T> {
-    const url = `${this.baseURL}${endpoint}`;
-    const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData;
-
-    const headers: HeadersInit = {
-      ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
-      ...options.headers,
-    };
-
-    if (this.token) {
-      (headers as Record<string, string>).Authorization = `Bearer ${this.token}`;
-      logger.debug(`API Request to ${endpoint} with token`, { token: this.token.substring(0, 20) + '...' });
-    } else {
-      logger.debug(`API Request to ${endpoint} without token`);
-    }
-
-    const config: RequestInit = {
-      ...options,
-      headers,
-    };
-
-    try {
-      const response = await fetch(url, config);
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        logger.error(`API Error for ${endpoint}`, errorData);
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      // If response has success field and it's false, throw error
-      if (data && typeof data === 'object' && 'success' in data && data.success === false) {
-        logger.error(`API Error for ${endpoint}`, data);
-        const errorMessage = data.message || 'Request failed';
-        throw new Error(errorMessage);
-      }
-
-      logger.debug(`API Success for ${endpoint}`, data);
-      return data;
-    } catch (error) {
-      logger.error('API request failed', error);
-      throw error;
-    }
+    super(baseURL);
+    this.authApi = createAuthApi({
+      request: this.request.bind(this),
+      updateToken: this.updateToken.bind(this),
+    });
+    this.catalogApi = createCatalogApi({
+      request: this.request.bind(this),
+    });
   }
 
   // Auth methods
   async login(credentials: LoginRequest): Promise<AuthResponse> {
-    try {
-      const response = await this.request<{ message: string; token: string; user: User }>('/auth/login', {
-        method: 'POST',
-        body: JSON.stringify(credentials),
-      });
-
-      if (response.token) {
-        this.token = response.token;
-        localStorage.setItem('token', response.token);
-      }
-
-      return {
-        token: response.token,
-        user: response.user
-      };
-    } catch (error) {
-      logger.error('Login API error', error);
-      throw error;
-    }
+    return this.authApi.login(credentials);
   }
 
   async adminLogin(credentials: LoginRequest): Promise<AuthResponse> {
-    try {
-      const response = await this.request<{ message: string; token: string; user: User }>('/auth/admin/login', {
-        method: 'POST',
-        body: JSON.stringify(credentials),
-      });
-
-      if (response.token) {
-        this.token = response.token;
-        localStorage.setItem('token', response.token);
-      }
-
-      return {
-        token: response.token,
-        user: response.user
-      };
-    } catch (error) {
-      logger.error('Admin login API error', error);
-      throw error;
-    }
+    return this.authApi.adminLogin(credentials);
   }
 
   async register(userData: RegisterRequest): Promise<AuthResponse> {
-    try {
-      const response = await this.request<{ message: string; token: string; user: User }>('/auth/register', {
-        method: 'POST',
-        body: JSON.stringify(userData),
-      });
-
-      if (response.token) {
-        this.token = response.token;
-        localStorage.setItem('token', response.token);
-      }
-
-      return {
-        token: response.token,
-        user: response.user
-      };
-    } catch (error) {
-      logger.error('Register API error', error);
-      throw error;
-    }
+    return this.authApi.register(userData);
   }
 
   async googleLogin(token: string): Promise<AuthResponse> {
-    try {
-      const response = await this.request<{ message: string; token: string; user: User }>('/auth/google', {
-        method: 'POST',
-        body: JSON.stringify({ token }),
-      });
-
-      if (response.token) {
-        this.token = response.token;
-        localStorage.setItem('token', response.token);
-      }
-
-      return {
-        token: response.token,
-        user: response.user
-      };
-    } catch (error) {
-      logger.error('Google login API error', error);
-      throw error;
-    }
+    return this.authApi.googleLogin(token);
   }
 
   async facebookLogin(token: string): Promise<AuthResponse> {
-    try {
-      const response = await this.request<{ message: string; token: string; user: User }>('/auth/facebook', {
-        method: 'POST',
-        body: JSON.stringify({ token }),
-      });
-
-      if (response.token) {
-        this.token = response.token;
-        localStorage.setItem('token', response.token);
-      }
-
-      return {
-        token: response.token,
-        user: response.user
-      };
-    } catch (error) {
-      logger.error('Facebook login API error', error);
-      throw error;
-    }
+    return this.authApi.facebookLogin(token);
   }
 
   async getProfile(): Promise<{ user: User }> {
-    try {
-      return await this.request<{ user: User }>('/auth/profile');
-    } catch (error) {
-      logger.error('Get profile API error', error);
-      throw error;
-    }
+    return this.authApi.getProfile();
   }
 
   async updateProfile(userData: {
@@ -343,63 +204,23 @@ class ApiClient {
       };
     };
   }): Promise<{ message: string; user: User }> {
-    try {
-      return await this.request<{ message: string; user: User }>('/auth/profile', {
-        method: 'PUT',
-        body: JSON.stringify(userData),
-      });
-    } catch (error) {
-      logger.error('Update profile API error', error);
-      throw error;
-    }
+    return this.authApi.updateProfile(userData);
   }
 
   async changePassword(currentPassword: string, newPassword: string): Promise<{ message: string }> {
-    try {
-      return await this.request<{ message: string }>('/auth/change-password', {
-        method: 'POST',
-        body: JSON.stringify({ currentPassword, newPassword }),
-      });
-    } catch (error) {
-      logger.error('Change password API error', error);
-      throw error;
-    }
+    return this.authApi.changePassword(currentPassword, newPassword);
   }
 
   async deleteAccount(password: string): Promise<{ message: string }> {
-    try {
-      return await this.request<{ message: string }>('/auth/account', {
-        method: 'DELETE',
-        body: JSON.stringify({ password }),
-      });
-    } catch (error) {
-      logger.error('Delete account API error', error);
-      throw error;
-    }
+    return this.authApi.deleteAccount(password);
   }
 
   async forgotPassword(email: string): Promise<{ message: string }> {
-    try {
-      return await this.request<{ message: string }>('/auth/forgot-password', {
-        method: 'POST',
-        body: JSON.stringify({ email }),
-      });
-    } catch (error) {
-      logger.error('Forgot password API error', error);
-      throw error;
-    }
+    return this.authApi.forgotPassword(email);
   }
 
   async resetPassword(token: string, newPassword: string): Promise<{ message: string }> {
-    try {
-      return await this.request<{ message: string }>('/auth/reset-password', {
-        method: 'POST',
-        body: JSON.stringify({ token, newPassword }),
-      });
-    } catch (error) {
-      logger.error('Reset password API error', error);
-      throw error;
-    }
+    return this.authApi.resetPassword(token, newPassword);
   }
 
 
@@ -488,19 +309,9 @@ class ApiClient {
     }
   }
 
-  logout(): void {
-    this.token = null;
-    localStorage.removeItem('token');
-  }
-
   // Address methods
   async getUserAddresses(): Promise<{ addresses: Address[] }> {
-    try {
-      return await this.request<{ addresses: Address[] }>('/auth/addresses');
-    } catch (error) {
-      logger.error('Get addresses API error', error);
-      throw error;
-    }
+    return this.authApi.getUserAddresses();
   }
 
   async addAddress(addressData: {
@@ -514,15 +325,7 @@ class ApiClient {
     country: string;
     isDefault?: boolean;
   }): Promise<{ message: string; address: Address }> {
-    try {
-      return await this.request<{ message: string; address: Address }>('/auth/addresses', {
-        method: 'POST',
-        body: JSON.stringify(addressData),
-      });
-    } catch (error) {
-      logger.error('Add address API error', error);
-      throw error;
-    }
+    return this.authApi.addAddress(addressData);
   }
 
   async updateAddress(id: string, addressData: {
@@ -536,152 +339,52 @@ class ApiClient {
     country?: string;
     isDefault?: boolean;
   }): Promise<{ message: string; address: Address }> {
-    try {
-      return await this.request<{ message: string; address: Address }>(`/auth/addresses/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify(addressData),
-      });
-    } catch (error) {
-      logger.error('Update address API error', error);
-      throw error;
-    }
+    return this.authApi.updateAddress(id, addressData);
   }
 
   async deleteAddress(id: string): Promise<{ message: string }> {
-    try {
-      return await this.request<{ message: string }>(`/auth/addresses/${id}`, {
-        method: 'DELETE',
-      });
-    } catch (error) {
-      logger.error('Delete address API error', error);
-      throw error;
-    }
+    return this.authApi.deleteAddress(id);
   }
 
   async setDefaultAddress(id: string): Promise<{ message: string }> {
-    try {
-      return await this.request<{ message: string }>(`/auth/addresses/${id}/default`, {
-        method: 'PUT',
-      });
-    } catch (error) {
-      logger.error('Set default address API error', error);
-      throw error;
-    }
+    return this.authApi.setDefaultAddress(id);
   }
 
   // Product methods
-  async getProducts(params?: {
-    page?: number;
-    limit?: number;
-    category?: string;
-    search?: string;
-    minPrice?: number;
-    maxPrice?: number;
-    isActive?: boolean;
-    isFeatured?: boolean;
-    sortBy?: string;
-    sortOrder?: 'asc' | 'desc';
-  }): Promise<{ products: Product[] }> {
-    const searchParams = new URLSearchParams();
-
-    if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined) {
-          searchParams.append(key, value.toString());
-        }
-      });
-    }
-
-    const queryString = searchParams.toString();
-    const endpoint = `/products${queryString ? `?${queryString}` : ''}`;
-
-    return this.request<{ products: Product[] }>(endpoint);
+  getProducts(params?: ProductQuery): Promise<{ products: Product[] }> {
+    return this.catalogApi.getProducts(params);
   }
 
-  async getProduct(id: string, trackView: boolean = false): Promise<{ product: Product }> {
-    const url = trackView ? `/products/${id}?trackView=true` : `/products/${id}`;
-    return this.request<{ product: Product }>(url);
+  getProduct(id: string, trackView: boolean = false): Promise<{ product: Product }> {
+    return this.catalogApi.getProduct(id, trackView);
   }
 
-  async getFeaturedProducts(limit: number = 6): Promise<{ products: Product[] }> {
-    return this.request<{ products: Product[] }>(`/products/featured?limit=${limit}`);
+  getFeaturedProducts(limit: number = 6): Promise<{ products: Product[] }> {
+    return this.catalogApi.getFeaturedProducts(limit);
   }
 
-  async searchProducts(query: string, limit: number = 10): Promise<{ products: Product[] }> {
-    return this.request<{ products: Product[] }>(`/products/search?q=${encodeURIComponent(query)}&limit=${limit}`);
+  searchProducts(query: string, limit: number = 10): Promise<{ products: Product[] }> {
+    return this.catalogApi.searchProducts(query, limit);
   }
 
   // Category methods
-  async getCategories(params?: {
-    isActive?: boolean;
-    parentId?: string;
-  }): Promise<{ categories: Category[] }> {
-    const searchParams = new URLSearchParams();
-
-    if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined) {
-          searchParams.append(key, value.toString());
-        }
-      });
-    }
-
-    const queryString = searchParams.toString();
-    const endpoint = `/categories${queryString ? `?${queryString}` : ''}`;
-
-    return this.request<{ categories: Category[] }>(endpoint);
+  getCategories(params?: CategoryQuery): Promise<{ categories: Category[] }> {
+    return this.catalogApi.getCategories(params);
   }
 
-  async getCategoryTree(params?: {
-    isActive?: boolean;
-  }): Promise<{ categories: Category[] }> {
-    const searchParams = new URLSearchParams();
-
-    if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined) {
-          searchParams.append(key, value.toString());
-        }
-      });
-    }
-
-    const queryString = searchParams.toString();
-    const endpoint = `/categories/tree${queryString ? `?${queryString}` : ''}`;
-
-    return this.request<{ categories: Category[] }>(endpoint);
+  getCategoryTree(params?: Pick<CategoryQuery, 'isActive'>): Promise<{ categories: Category[] }> {
+    return this.catalogApi.getCategoryTree(params);
   }
 
-  async getCategoryBySlug(slug: string): Promise<{ category: Category }> {
-    return this.request<{ category: Category }>(`/categories/slug/${slug}`);
+  getCategoryBySlug(slug: string): Promise<{ category: Category }> {
+    return this.catalogApi.getCategoryBySlug(slug);
   }
 
-  async getCategoryWithProducts(
+  getCategoryWithProducts(
     id: string,
     params?: { page?: number; limit?: number }
-  ): Promise<{
-    category: Category;
-    products: Product[];
-    pagination: {
-      page: number;
-      limit: number;
-      total: number;
-      pages: number;
-    };
-  }> {
-    const searchParams = new URLSearchParams();
-
-    if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined) {
-          searchParams.append(key, value.toString());
-        }
-      });
-    }
-
-    const queryString = searchParams.toString();
-    const endpoint = `/categories/${id}/products${queryString ? `?${queryString}` : ''}`;
-
-    return this.request(endpoint);
+  ): Promise<CategoryProductsResponse> {
+    return this.catalogApi.getCategoryWithProducts(id, params);
   }
 
   // Order methods
@@ -787,63 +490,31 @@ class ApiClient {
   }
 
   // Review methods
-  async getReviews(params?: {
-    page?: number;
-    limit?: number;
-    productId?: string;
-    rating?: number;
-    sortBy?: string;
-    sortOrder?: 'asc' | 'desc';
-  }): Promise<PaginationResponse<Review>> {
-    const searchParams = new URLSearchParams();
-
-    if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined) {
-          searchParams.append(key, value.toString());
-        }
-      });
-    }
-
-    const queryString = searchParams.toString();
-    const endpoint = `/reviews${queryString ? `?${queryString}` : ''}`;
-
-    return this.request<PaginationResponse<Review>>(endpoint);
+  getReviews(params?: ReviewsQuery): Promise<PaginationResponse<Review>> {
+    return this.catalogApi.getReviews(params);
   }
 
-  async getReviewStats(productId?: string): Promise<{
-    totalReviews: number;
-    averageRating: number;
-    ratingDistribution: { _id: number; count: number }[];
-  }> {
-    const endpoint = productId ? `/reviews/stats?productId=${productId}` : '/reviews/stats';
-    return this.request(endpoint);
+  getReviewStats(productId?: string): Promise<ReviewStats> {
+    return this.catalogApi.getReviewStats(productId);
   }
 
-  async createReview(reviewData: CreateReviewRequest): Promise<{ message: string; review: Review }> {
-    return this.request<{ message: string; review: Review }>('/reviews', {
-      method: 'POST',
-      body: JSON.stringify(reviewData),
-    });
+  createReview(reviewData: CreateReviewRequest): Promise<{ message: string; review: Review }> {
+    return this.catalogApi.createReview(reviewData);
   }
 
-  async markReviewHelpful(reviewId: string): Promise<{ message: string }> {
-    return this.request<{ message: string }>(`/reviews/${reviewId}/helpful`, {
-      method: 'POST',
-    });
+  markReviewHelpful(reviewId: string): Promise<{ message: string }> {
+    return this.catalogApi.markReviewHelpful(reviewId);
   }
 
-  async updateReview(reviewId: string, updateData: Partial<CreateReviewRequest & { verified: boolean }>): Promise<{ message: string; review: Review }> {
-    return this.request<{ message: string; review: Review }>(`/reviews/${reviewId}`, {
-      method: 'PUT',
-      body: JSON.stringify(updateData),
-    });
+  updateReview(
+    reviewId: string,
+    updateData: Partial<CreateReviewRequest & { verified: boolean }>
+  ): Promise<{ message: string; review: Review }> {
+    return this.catalogApi.updateReview(reviewId, updateData);
   }
 
-  async deleteReview(reviewId: string): Promise<{ message: string }> {
-    return this.request<{ message: string }>(`/reviews/${reviewId}`, {
-      method: 'DELETE',
-    });
+  deleteReview(reviewId: string): Promise<{ message: string }> {
+    return this.catalogApi.deleteReview(reviewId);
   }
 
   // Health check
@@ -1138,73 +809,41 @@ class ApiClient {
 
 
   // Wishlist methods
-  async getWishlist(): Promise<Product[]> {
-    return this.request<Product[]>('/wishlist');
+  getWishlist(): Promise<Product[]> {
+    return this.catalogApi.getWishlist();
   }
 
-  async addToWishlist(productId: string): Promise<{ message: string }> {
-    return this.request<{ message: string }>('/wishlist', {
-      method: 'POST',
-      body: JSON.stringify({ productId }),
-    });
+  addToWishlist(productId: string): Promise<{ message: string }> {
+    return this.catalogApi.addToWishlist(productId);
   }
 
-  async removeFromWishlist(productId: string): Promise<{ message: string }> {
-    return this.request<{ message: string }>(`/wishlist/${productId}`, {
-      method: 'DELETE',
-    });
+  removeFromWishlist(productId: string): Promise<{ message: string }> {
+    return this.catalogApi.removeFromWishlist(productId);
   }
 
-  async clearWishlist(): Promise<{ message: string }> {
-    return this.request<{ message: string }>('/wishlist', {
-      method: 'DELETE',
-    });
+  clearWishlist(): Promise<{ message: string }> {
+    return this.catalogApi.clearWishlist();
   }
 
   // Cart methods
-  async getCart(): Promise<{
-    items: Array<{
-      productId: string;
-      quantity: number;
-      size?: string;
-      color?: string;
-      product: Product;
-    }>; total: number
-  }> {
-    return this.request<{
-      items: Array<{
-        productId: string;
-        quantity: number;
-        size?: string;
-        color?: string;
-        product: Product;
-      }>; total: number
-    }>('/cart');
+  getCart(): Promise<CartResponse> {
+    return this.catalogApi.getCart();
   }
 
-  async addToCart(productId: string, quantity: number = 1, size?: string, color?: string): Promise<{ message: string }> {
-    return this.request<{ message: string }>('/cart', {
-      method: 'POST',
-      body: JSON.stringify({ productId, quantity, size, color }),
-    });
+  addToCart(productId: string, quantity: number = 1, size?: string, color?: string): Promise<{ message: string }> {
+    return this.catalogApi.addToCart(productId, quantity, size, color);
   }
 
-  async updateCartItem(productId: string, quantity: number, size?: string, color?: string): Promise<{ message: string }> {
-    return this.request<{ message: string }>(`/cart/${productId}`, {
-      method: 'PUT',
-      body: JSON.stringify({ quantity, size, color }),
-    });
+  updateCartItem(productId: string, quantity: number, size?: string, color?: string): Promise<{ message: string }> {
+    return this.catalogApi.updateCartItem(productId, quantity, size, color);
   }
 
-  async removeFromCart(productId: string, size?: string, color?: string): Promise<{ message: string }> {
-    return this.request<{ message: string }>(`/cart/${productId}`, {
-      method: 'DELETE',
-      body: JSON.stringify({ size, color }),
-    });
+  removeFromCart(productId: string, size?: string, color?: string): Promise<{ message: string }> {
+    return this.catalogApi.removeFromCart(productId, size, color);
   }
 
-  async clearCart(): Promise<{ message: string }> {
-    return this.request('/cart', { method: 'DELETE' });
+  clearCart(): Promise<{ message: string }> {
+    return this.catalogApi.clearCart();
   }
 
   // Dashboard Analytics
