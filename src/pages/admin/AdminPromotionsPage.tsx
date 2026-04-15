@@ -208,6 +208,7 @@ export default function AdminPromotionsPage() {
   // Load promotions data
   useEffect(() => {
     loadPromotions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadPromotions = async () => {

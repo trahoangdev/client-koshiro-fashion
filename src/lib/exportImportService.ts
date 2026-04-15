@@ -1,5 +1,7 @@
 import { Order, Product, User, Category, api } from './api';
 
+type CreateCategoryInput = Parameters<typeof api.createCategory>[0];
+
 export interface ExportJob {
   id: string;
   type: 'products' | 'orders' | 'customers' | 'categories' | 'all';
@@ -320,7 +322,7 @@ class ExportImportService {
               await api.createUser(transformedData as any);
               break;
             case 'categories':
-              await api.createCategory(transformedData as Partial<Category>);
+              await api.createCategory(transformedData as CreateCategoryInput);
               break;
             case 'inventory':
               // For inventory, we might need to create or update inventory items
@@ -510,7 +512,7 @@ class ExportImportService {
       name: user.name,
       email: user.email,
       phone: user.phone || '',
-      role: user.role,
+      role: typeof user.role === 'string' ? user.role : user.role?.name || '',
       status: user.status,
       isActive: user.isActive,
       totalOrders: user.totalOrders,
@@ -615,6 +617,7 @@ class ExportImportService {
           description: data.description || '',
           descriptionEn: data.descriptionEn || data.description || '',
           descriptionJa: data.descriptionJa || data.description || '',
+          slug: data.slug || String(data.name).toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
           image: data.image || '',
           isActive: data.isActive === 'true' || data.isActive === true
         };
