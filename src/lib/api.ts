@@ -32,6 +32,66 @@ import {
   CartItem
 } from '../types/api-types';
 
+type OrderStatus = 'pending' | 'processing' | 'shipped' | 'delivered' | 'completed' | 'cancelled' | 'returned' | 'refunded';
+type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded';
+
+export interface ApiKey {
+  _id: string;
+  name: string;
+  key: string;
+  description: string;
+  permissions: string[];
+  isActive: boolean;
+  lastUsed?: string;
+  usageCount: number;
+  rateLimit: number;
+  expiresAt?: string;
+  createdBy?: string | { _id: string; name: string; email: string };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Integration {
+  _id: string;
+  name: string;
+  nameEn?: string;
+  nameJa?: string;
+  type: 'payment' | 'shipping' | 'email' | 'sms' | 'analytics' | 'social' | 'other';
+  provider: string;
+  status: 'active' | 'inactive' | 'error' | 'pending';
+  description: string;
+  descriptionEn?: string;
+  descriptionJa?: string;
+  config: Record<string, unknown>;
+  webhookUrl?: string;
+  lastSync?: string;
+  errorCount: number;
+  successCount: number;
+  lastError?: string;
+  createdBy?: string | { _id: string; name: string; email: string };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ApiLog {
+  _id: string;
+  apiKey: string;
+  endpoint: string;
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+  statusCode: number;
+  responseTime: number;
+  ipAddress: string;
+  userAgent?: string;
+  error?: string;
+  timestamp: string;
+}
+
+interface ApiManagementResponse<T> {
+  success: boolean;
+  data: T;
+  message?: string;
+}
+
 // Re-export types for backward compatibility
 export type {
   ApiResponse,
@@ -88,9 +148,10 @@ class ApiClient {
     options: RequestInit = {}
   ): Promise<T> {
     const url = `${this.baseURL}${endpoint}`;
+    const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData;
 
     const headers: HeadersInit = {
-      'Content-Type': 'application/json',
+      ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
       ...options.headers,
     };
 
@@ -195,6 +256,50 @@ class ApiClient {
       };
     } catch (error) {
       logger.error('Register API error', error);
+      throw error;
+    }
+  }
+
+  async googleLogin(token: string): Promise<AuthResponse> {
+    try {
+      const response = await this.request<{ message: string; token: string; user: User }>('/auth/google', {
+        method: 'POST',
+        body: JSON.stringify({ token }),
+      });
+
+      if (response.token) {
+        this.token = response.token;
+        localStorage.setItem('token', response.token);
+      }
+
+      return {
+        token: response.token,
+        user: response.user
+      };
+    } catch (error) {
+      logger.error('Google login API error', error);
+      throw error;
+    }
+  }
+
+  async facebookLogin(token: string): Promise<AuthResponse> {
+    try {
+      const response = await this.request<{ message: string; token: string; user: User }>('/auth/facebook', {
+        method: 'POST',
+        body: JSON.stringify({ token }),
+      });
+
+      if (response.token) {
+        this.token = response.token;
+        localStorage.setItem('token', response.token);
+      }
+
+      return {
+        token: response.token,
+        user: response.user
+      };
+    } catch (error) {
+      logger.error('Facebook login API error', error);
       throw error;
     }
   }
@@ -637,8 +742,8 @@ class ApiClient {
     };
     paymentMethod: string;
     notes?: string;
-    status?: 'pending' | 'processing' | 'shipped' | 'delivered' | 'completed' | 'cancelled';
-    paymentStatus?: 'pending' | 'paid' | 'failed';
+    status?: OrderStatus;
+    paymentStatus?: PaymentStatus;
     trackingNumber?: string;
   }): Promise<{ message: string; order: Order }> {
     // Use admin route if userId is provided (admin creating order for customer)
@@ -662,8 +767,8 @@ class ApiClient {
   }
 
   async updateOrder(id: string, orderData: {
-    status?: 'pending' | 'processing' | 'shipped' | 'delivered' | 'completed' | 'cancelled';
-    paymentStatus?: 'pending' | 'paid' | 'failed';
+    status?: OrderStatus;
+    paymentStatus?: PaymentStatus;
     paymentMethod?: string;
     notes?: string;
     trackingNumber?: string;
@@ -1015,23 +1120,24 @@ class ApiClient {
     }>('/cart');
   }
 
-  async addToCart(productId: string, quantity: number = 1): Promise<{ message: string }> {
+  async addToCart(productId: string, quantity: number = 1, size?: string, color?: string): Promise<{ message: string }> {
     return this.request<{ message: string }>('/cart', {
       method: 'POST',
-      body: JSON.stringify({ productId, quantity }),
+      body: JSON.stringify({ productId, quantity, size, color }),
     });
   }
 
-  async updateCartItem(productId: string, quantity: number): Promise<{ message: string }> {
+  async updateCartItem(productId: string, quantity: number, size?: string, color?: string): Promise<{ message: string }> {
     return this.request<{ message: string }>(`/cart/${productId}`, {
       method: 'PUT',
-      body: JSON.stringify({ quantity }),
+      body: JSON.stringify({ quantity, size, color }),
     });
   }
 
-  async removeFromCart(productId: string): Promise<{ message: string }> {
+  async removeFromCart(productId: string, size?: string, color?: string): Promise<{ message: string }> {
     return this.request<{ message: string }>(`/cart/${productId}`, {
       method: 'DELETE',
+      body: JSON.stringify({ size, color }),
     });
   }
 
@@ -1111,6 +1217,10 @@ class ApiClient {
     return this.request<Settings>('/settings');
   }
 
+  async getPublicSettings(): Promise<Settings> {
+    return this.request<Settings>('/settings/public');
+  }
+
   async updateSettings(settings: Settings): Promise<Settings> {
     return this.request<Settings>('/settings', {
       method: 'PUT',
@@ -1185,14 +1295,14 @@ class ApiClient {
   }
 
   // Enhanced Order Management APIs
-  async updateOrderStatus(id: string, status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'completed' | 'cancelled'): Promise<{ message: string; order: Order }> {
+  async updateOrderStatus(id: string, status: OrderStatus): Promise<{ message: string; order: Order }> {
     return this.request<{ message: string; order: Order }>(`/admin/orders/${id}/status`, {
       method: 'PUT',
       body: JSON.stringify({ status }),
     });
   }
 
-  async bulkUpdateOrderStatus(orderIds: string[], status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'completed' | 'cancelled'): Promise<{ message: string; updatedCount: number }> {
+  async bulkUpdateOrderStatus(orderIds: string[], status: OrderStatus): Promise<{ message: string; updatedCount: number }> {
     return this.request<{ message: string; updatedCount: number }>('/admin/orders/bulk-status', {
       method: 'PUT',
       body: JSON.stringify({ orderIds, status }),
@@ -1304,9 +1414,172 @@ class ApiClient {
     dateTo?: string;
     format?: 'pdf' | 'excel' | 'csv';
   }): Promise<{ downloadUrl: string }> {
-    return this.request<{ downloadUrl: string }>('/admin/reports/generate', {
+    return this.request<{ downloadUrl: string }>('/admin/reports', {
       method: 'POST',
       body: JSON.stringify({ type, ...params }),
+    });
+  }
+
+  // API keys and integrations management
+  async getApiKeys(params?: { page?: number; limit?: number; search?: string; status?: 'all' | 'active' | 'inactive' }): Promise<ApiManagementResponse<{
+    apiKeys: ApiKey[];
+    pagination: { page: number; limit: number; total: number; pages: number };
+  }>> {
+    const searchParams = new URLSearchParams();
+    if (params?.page) searchParams.append('page', params.page.toString());
+    if (params?.limit) searchParams.append('limit', params.limit.toString());
+    if (params?.search) searchParams.append('search', params.search);
+    if (params?.status) searchParams.append('status', params.status);
+
+    const queryString = searchParams.toString();
+    return this.request(`/admin/api/keys${queryString ? `?${queryString}` : ''}`);
+  }
+
+  async createApiKey(data: {
+    name: string;
+    description: string;
+    permissions: string[];
+    rateLimit?: number;
+    expiresAt?: string;
+  }): Promise<ApiManagementResponse<ApiKey>> {
+    return this.request('/admin/api/keys', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateApiKey(id: string, data: Partial<ApiKey>): Promise<ApiManagementResponse<ApiKey>> {
+    return this.request(`/admin/api/keys/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteApiKey(id: string): Promise<ApiManagementResponse<null>> {
+    return this.request(`/admin/api/keys/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async regenerateApiKey(id: string): Promise<ApiManagementResponse<ApiKey>> {
+    return this.request(`/admin/api/keys/${id}/regenerate`, {
+      method: 'POST',
+    });
+  }
+
+  async getIntegrations(params?: { page?: number; limit?: number; search?: string; type?: string; status?: string }): Promise<ApiManagementResponse<{
+    integrations: Integration[];
+    pagination: { page: number; limit: number; total: number; pages: number };
+  }>> {
+    const searchParams = new URLSearchParams();
+    if (params?.page) searchParams.append('page', params.page.toString());
+    if (params?.limit) searchParams.append('limit', params.limit.toString());
+    if (params?.search) searchParams.append('search', params.search);
+    if (params?.type) searchParams.append('type', params.type);
+    if (params?.status) searchParams.append('status', params.status);
+
+    const queryString = searchParams.toString();
+    return this.request(`/admin/api/integrations${queryString ? `?${queryString}` : ''}`);
+  }
+
+  async createIntegration(data: Partial<Integration>): Promise<ApiManagementResponse<Integration>> {
+    return this.request('/admin/api/integrations', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateIntegration(id: string, data: Partial<Integration>): Promise<ApiManagementResponse<Integration>> {
+    return this.request(`/admin/api/integrations/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteIntegration(id: string): Promise<ApiManagementResponse<null>> {
+    return this.request(`/admin/api/integrations/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async testIntegration(id: string): Promise<ApiManagementResponse<{ success: boolean }>> {
+    return this.request(`/admin/api/integrations/${id}/test`, {
+      method: 'POST',
+    });
+  }
+
+  async syncIntegration(id: string): Promise<ApiManagementResponse<{ success: boolean }>> {
+    return this.request(`/admin/api/integrations/${id}/sync`, {
+      method: 'POST',
+    });
+  }
+
+  async getApiLogs(params?: { page?: number; limit?: number; apiKey?: string; endpoint?: string; statusCode?: number; startDate?: string; endDate?: string }): Promise<ApiManagementResponse<{
+    logs: ApiLog[];
+    pagination: { page: number; limit: number; total: number; pages: number };
+  }>> {
+    const searchParams = new URLSearchParams();
+    if (params?.page) searchParams.append('page', params.page.toString());
+    if (params?.limit) searchParams.append('limit', params.limit.toString());
+    if (params?.apiKey) searchParams.append('apiKey', params.apiKey);
+    if (params?.endpoint) searchParams.append('endpoint', params.endpoint);
+    if (params?.statusCode) searchParams.append('statusCode', params.statusCode.toString());
+    if (params?.startDate) searchParams.append('startDate', params.startDate);
+    if (params?.endDate) searchParams.append('endDate', params.endDate);
+
+    const queryString = searchParams.toString();
+    return this.request(`/admin/api/logs${queryString ? `?${queryString}` : ''}`);
+  }
+
+  async getApiStats(): Promise<ApiManagementResponse<{
+    apiStats: {
+      totalRequests: number;
+      successRequests: number;
+      errorRequests: number;
+      successRate: number;
+      avgResponseTime: number;
+      uniqueApiKeys: number;
+      uniqueEndpoints: number;
+    };
+    apiKeyStats: { totalKeys: number; activeKeys: number; expiredKeys: number };
+    integrationStats: { totalIntegrations: number; activeIntegrations: number; errorIntegrations: number };
+  }>> {
+    return this.request('/admin/api/stats');
+  }
+
+  async clearApiLogs(olderThan?: string): Promise<ApiManagementResponse<{ deletedCount: number }>> {
+    return this.request('/admin/api/logs', {
+      method: 'DELETE',
+      body: JSON.stringify({ olderThan }),
+    });
+  }
+
+  async exportApiKeys(format: 'json' | 'csv' = 'json', includeInactive = false): Promise<Blob> {
+    const searchParams = new URLSearchParams();
+    searchParams.append('format', format);
+    searchParams.append('includeInactive', includeInactive.toString());
+
+    const headers: HeadersInit = {};
+    if (this.token) {
+      (headers as Record<string, string>).Authorization = `Bearer ${this.token}`;
+    }
+
+    const response = await fetch(`${this.baseURL}/admin/api/export?${searchParams}`, { headers });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+    }
+
+    return response.blob();
+  }
+
+  async importApiKeys(data: unknown, overwrite = false): Promise<ApiManagementResponse<{
+    apiKeys: { created: number; updated: number; errors: number };
+    integrations: { created: number; updated: number; errors: number };
+  }>> {
+    return this.request('/admin/api/import', {
+      method: 'POST',
+      body: JSON.stringify({ data, overwrite }),
     });
   }
 
@@ -1384,6 +1657,10 @@ class ApiClient {
       method: 'PUT',
       body: JSON.stringify({ notificationIds }),
     });
+  }
+
+  async bulkDeleteNotifications(notificationIds: string[]): Promise<{ message: string; deletedCount: number }> {
+    return this.bulkDelete(notificationIds);
   }
 
   async deleteNotification(id: string): Promise<{ message: string }> {
@@ -1685,7 +1962,7 @@ class ApiClient {
   }
 
   // Admin Payment APIs
-  async getPaymentMethods(): Promise<Array<{
+  async getAdminPaymentMethods(): Promise<Array<{
     _id: string;
     name: string;
     nameEn?: string;
@@ -1707,7 +1984,7 @@ class ApiClient {
     return this.request('/admin/payments/methods');
   }
 
-  async createPaymentMethod(methodData: {
+  async createAdminPaymentMethod(methodData: {
     name: string;
     nameEn?: string;
     nameJa?: string;
@@ -1749,7 +2026,7 @@ class ApiClient {
     });
   }
 
-  async updatePaymentMethod(id: string, methodData: {
+  async updateAdminPaymentMethod(id: string, methodData: {
     name?: string;
     nameEn?: string;
     nameJa?: string;
@@ -1791,10 +2068,26 @@ class ApiClient {
     });
   }
 
-  async deletePaymentMethod(id: string): Promise<{ message: string }> {
+  async deleteAdminPaymentMethod(id: string): Promise<{ message: string }> {
     return this.request(`/admin/payments/methods/${id}`, {
       method: 'DELETE',
     });
+  }
+
+  async getPaymentMethods() {
+    return this.getAdminPaymentMethods();
+  }
+
+  async createPaymentMethod(methodData: Parameters<ApiClient['createAdminPaymentMethod']>[0]) {
+    return this.createAdminPaymentMethod(methodData);
+  }
+
+  async updatePaymentMethod(id: string, methodData: Parameters<ApiClient['updateAdminPaymentMethod']>[1]) {
+    return this.updateAdminPaymentMethod(id, methodData);
+  }
+
+  async deletePaymentMethod(id: string) {
+    return this.deleteAdminPaymentMethod(id);
   }
 
   async getTransactions(params?: {
