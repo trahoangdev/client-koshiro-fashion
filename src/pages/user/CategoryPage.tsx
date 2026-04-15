@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useCallback, useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -305,13 +305,13 @@ const CategoryPage: React.FC = () => {
     }
   }, [category, language]);
 
-  const getProductName = (product: Product) => {
+  const getProductName = useCallback((product: Product) => {
     switch (language) {
       case 'vi': return product.name;
       case 'ja': return product.nameJa || product.name;
       default: return product.nameEn || product.name;
     }
-  };
+  }, [language]);
 
   // Advanced filtering logic
   const filteredAndSortedProducts = useMemo(() => {
@@ -383,7 +383,7 @@ const CategoryPage: React.FC = () => {
     });
 
     return filtered;
-  }, [products, searchQuery, priceRange, selectedSizes, selectedColors, inStock, onSale, minRating, sortBy, language, getProductName]);
+  }, [products, searchQuery, priceRange, selectedSizes, selectedColors, inStock, onSale, minRating, sortBy, getProductName]);
 
   useEffect(() => {
     let isMounted = true;
