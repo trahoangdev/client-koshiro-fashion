@@ -727,7 +727,7 @@ export default function AdminUsers() {
         if (updatedJob?.status === 'completed' && updatedJob.downloadUrl) {
           const link = document.createElement('a');
           link.href = updatedJob.downloadUrl;
-          const fileExtension = format === 'excel' ? 'xlsx' : format;
+          const fileExtension = format === 'excel' ? 'xls' : format;
           link.download = `users_${new Date().toISOString().split('T')[0]}.${fileExtension}`;
           document.body.appendChild(link);
           link.click();
